@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>NYC Photo Guide — v7 Hybrid</title>
+<title>NYC Photo Guide — v7.1 Hybrid</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 :root{
@@ -54,7 +54,6 @@ main{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(36
 .pillset{display:flex;gap:.4rem;flex-wrap:wrap}
 .pill{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .5rem;border-radius:999px;border:1px solid var(--border);background:#0b1326;color:#cfe1ff;font-size:.78rem}
 .edit-banner{position:sticky;top:98px;z-index:19;background:#10203c;border:1px dashed #3b4f77;color:#e6edf6;padding:.5rem .75rem;border-radius:.6rem}
-.legend{display:flex;gap:.5rem;flex-wrap:wrap}
 .mapWrap{position:sticky;top:130px;height:calc(100vh - 160px)}
 #leaflet,#gmap{height:100%;border:1px solid var(--border);border-radius:1rem}
 .modeTabs{display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap}
@@ -69,38 +68,32 @@ main{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(36
 <body>
 <header>
   <div class="header-inner">
-    <h1>NYC Photo Guide — v7 (Hybrid)</h1>
+    <h1>NYC Photo Guide — v7.1 (Hybrid)</h1>
     <div class="controls">
       <span class="chip">Visit days (NYC time):</span>
       <input id="dateA" type="date" value="2025-10-03"/>
       <input id="dateB" type="date" value="2025-10-04"/>
       <span class="chip">Show days:</span>
-      <label class="chip" for="day1"><input id="day1" type="checkbox" name="day" value="2025-10-03" checked/> Fri 10/03</label>
-      <label class="chip" for="day2"><input id="day2" type="checkbox" name="day" value="2025-10-04" checked/> Sat 10/04</label>
+      <label class="chip"><input type="checkbox" name="day" value="2025-10-03" checked/> Fri 10/03</label>
+      <label class="chip"><input type="checkbox" name="day" value="2025-10-04" checked/> Sat 10/04</label>
       <span class="chip">Blocks:</span>
       <label class="chip"><input type="checkbox" name="block" value="Morning" checked/> Morning</label>
       <label class="chip"><input type="checkbox" name="block" value="Afternoon" checked/> Afternoon</label>
       <label class="chip"><input type="checkbox" name="block" value="Evening" checked/> Evening</label>
       <label class="chip"><input type="checkbox" name="block" value="Night" checked/> Night</label>
       <span class="chip">Rank <span id="rankLabel">#1–#5</span></span>
-      <input id="rankMin" type="range" min="1" max="5" value="1" title="Min rank"/>
-      <input id="rankMax" type="range" min="1" max="5" value="5" title="Max rank"/>
-      <label class="chip"><input type="checkbox" id="proOnly"/> Pro only</label>
+      <input id="rankMin" type="range" min="1" max="5" value="1"/>
+      <input id="rankMax" type="range" min="1" max="5" value="5"/>
+      <label class="chip"><input type="checkbox" id="proOnly"/> Pro only (#1–#2)</label>
       <label class="chip"><input type="checkbox" id="rain"/> Rain plan</label>
       <label class="chip"><input type="checkbox" id="wind"/> Wind‑safe</label>
-      <input id="q" type="search" placeholder="Search..." />
-      <button id="clear">Reset</button>
+      <input id="q" type="search" placeholder="Search…"/>
       <button id="expandAll">Expand all</button>
       <button id="collapseAll">Collapse all</button>
       <button id="exportCSV">Export CSV</button>
       <button id="exportKML">Export KML</button>
       <button id="print">Print</button>
       <button id="theme">Theme</button>
-      <button id="editMode">Edit pins</button>
-      <button id="editA">Edit anchor</button>
-      <button id="editM">Edit micro</button>
-      <button id="savePins">Save</button>
-      <button id="resetPins">Reset edits</button>
       <button id="exportJSON">Export JSON</button>
       <label class="chip">Import <input type="file" id="importJSON" accept="application/json"/></label>
     </div>
@@ -109,13 +102,10 @@ main{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(36
 
 <main>
   <div class="sidebar">
-    <div id="editBanner" class="edit-banner" style="display:none">
-      Pin Edit mode is ON — <b id="editModeWhat">drag anchors (blue) or micro‑pins (teal)</b>. Micro‑pins are stored as offsets and auto‑adjust when you move the anchor. Your changes save locally.
-    </div>
     <div class="panel">
       <div class="modeTabs">
-        <button id="modeGoogle">Google Maps (online)</button>
-        <button id="modeLeaflet">Leaflet (offline)</button>
+        <button id="modeGoogle" title="Use Google Maps with Places, Street View, ETA, directions">Google Maps (online)</button>
+        <button id="modeLeaflet" title="Use Leaflet/OSM offline fallback">Leaflet (offline)</button>
       </div>
       <div id="lightpanels" class="grid"></div>
     </div>
@@ -141,37 +131,31 @@ main{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(36
 </main>
 
 <footer class="panel" style="max-width:1280px;margin:1rem auto">
-  v7 Hybrid — Google Maps + Places (photos, reverse geocode, directions, Street View) with Leaflet fallback and live NOAA tides.
+  v7.1 Hybrid — Google Maps + Places (photos, reverse geocode, directions, Street View) with Leaflet fallback and live NOAA tides.
 </footer>
 
 <script>
 
-// SunCalc (subset) by Vladimir Agafonkin, MIT — minimal moon/sun rise/set for one day
 (function(){
   const PI = Math.PI, rad = PI/180;
-  const sin = Math.sin, cos = Math.cos, tan = Math.tan, asin = Math.asin, acos = Math.acos, atan2 = Math.atan2;
-  const dayMs = 86400000;
+  const sin = Math.sin, cos = Math.cos, asin = Math.asin, acos = Math.acos, atan2 = Math.atan2;
   function toJulian(date){ return date/86400000 - 0.5 + 2440588; }
   function fromJulian(j){ return new Date((j + 0.5 - 2440588)*86400000); }
   function toDays(date){ return toJulian(date) - 2451545; }
-  const e = rad*23.4397; // obliquity
-  function rightAscension(l,b){ return atan2(sin(l)*cos(e) - tan(b)*sin(e), cos(l)); }
-  function declination(l,b){ return asin(sin(b)*cos(e) + cos(b)*sin(e)*sin(l)); }
-  function azimuthHAngle(H,phi,dec){ return atan2(sin(H), cos(H)*sin(phi) - tan(dec)*cos(phi)); }
-  function altitudeHAngle(H,phi,dec){ return asin(sin(phi)*sin(dec) + cos(phi)*cos(dec)*cos(H)); }
+  const e = rad*23.4397;
+  function rightAscension(l,b){ return atan2(Math.sin(l)*Math.cos(e) - Math.tan(b)*Math.sin(e), Math.cos(l)); }
+  function declination(l,b){ return asin(Math.sin(b)*Math.cos(e) + Math.cos(b)*Math.sin(e)*Math.sin(l)); }
   function siderealTime(d, lw){ return rad*(280.16 + 360.9856235*d) - lw; }
   function solarMeanAnomaly(d){ return rad*(357.5291 + 0.98560028*d); }
-  function eclipticLongitude(M){ const C = rad*(1.9148*sin(M) + 0.02*sin(2*M) + 0.0003*sin(3*M)); const P = rad*102.9372; return M + C + P + PI; }
+  function eclipticLongitude(M){ const C = rad*(1.9148*Math.sin(M) + 0.02*Math.sin(2*M) + 0.0003*Math.sin(3*M)); const P = rad*102.9372; return M + C + P + PI; }
   function sunCoords(d){ const M = solarMeanAnomaly(d), L = eclipticLongitude(M); return { dec: declination(L,0), ra: rightAscension(L,0) }; }
   function julianCycle(d, lw){ return Math.round(d - 0.0009 - lw/(2*PI)); }
   function approxTransit(Ht, lw, n){ return 0.0009 + (Ht + lw)/(2*PI) + n; }
-  function solarTransitJ(ds, M, L){ return 2451545 + ds + 0.0053*sin(M) - 0.0069*sin(2*L); }
-  function hourAngle(h, phi, d){ return acos((sin(h) - sin(phi)*sin(d)) / (cos(phi)*cos(d))); }
-  function observerAngle(height){ return -2.076*Math.sqrt(height)/60 * rad; } // refraction
+  function solarTransitJ(ds, M, L){ return 2451545 + ds + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L); }
+  function hourAngle(h, phi, d){ return acos((Math.sin(h) - Math.sin(phi)*Math.sin(d)) / (Math.cos(phi)*Math.cos(d))); }
   function getSetJ(h, lw, phi, dec, n, M, L){ const w = hourAngle(h, phi, dec), a = approxTransit(w, lw, n); return solarTransitJ(a, M, L); }
 
   window.SunCalc = {
-    // returns sun times for given date and location
     getSunTimes: function(date, lat, lng){
       const lw = rad*-lng, phi = rad*lat, d = toDays(date);
       const n = julianCycle(d, lw);
@@ -181,7 +165,7 @@ main{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(36
       const dec = declination(L, 0);
       const Jnoon = solarTransitJ(ds, M, L);
 
-      const h0 = (-0.833)*rad; // sunrise/set angle
+      const h0 = (-0.833)*rad;
       const Jset = getSetJ(h0, lw, phi, dec, n, M, L);
       const Jrise = Jnoon - (Jset - Jnoon);
       const hCivil = (-6)*rad;
@@ -195,38 +179,41 @@ main{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(36
         dusk: fromJulian(Jcset)
       };
     },
-
-    // simplified moon times using phase and altitude interpolation
     getMoonTimes: function(date, lat, lng){
-      // based on https://github.com/mourner/suncalc
       function moonCoords(d){
+        const rad = Math.PI/180;
         const L = rad*(218.316 + 13.176396*d),
               M = rad*(134.963 + 13.064993*d),
               F = rad*(93.272 + 13.229350*d);
         let l = L + rad*6.289*Math.sin(M);
         let b = rad*5.128*Math.sin(F);
         let dt= 385001 - 20905*Math.cos(M);
-        return { ra: rightAscension(l,b), dec: declination(l,b), dist: dt };
+        const e = (23.4397*rad);
+        function RA(l,b){ return Math.atan2(Math.sin(l)*Math.cos(e) - Math.tan(b)*Math.sin(e), Math.cos(l)); }
+        function DEC(l,b){ return Math.asin(Math.sin(b)*Math.cos(e) + Math.cos(b)*Math.sin(e)*Math.sin(l)); }
+        return { ra: RA(l,b), dec: DEC(l,b), dist: dt };
       }
-      function getMoonIllum(d, sun){ const sdist=149598000; const m=moonCoords(d); const phi = Math.acos(Math.sin(sun.dec)*Math.sin(m.dec) + Math.cos(sun.dec)*Math.cos(m.dec)*Math.cos(sun.ra-m.ra)); const inc=Math.atan2(sdist*Math.sin(phi), m.dist - sdist*Math.cos(phi)); const phase=(1+Math.cos(inc))/2; return {frac:phase}; }
-      const t = date.setHours(0,0,0,0), hc = 0.133*rad;
-      const h0 = SunCalc.getSunTimes(date, lat, lng);
-      const d = toDays(new Date(t)) - 0.5 - lng/360;
-      const sun = sunCoords(d);
-      let rise, set;
-      let h1, h2, h3, a, b, xe, ye, dxe, dye, roots, x1, x2, dx;
-      function altitude(d){ const m = moonCoords(d); const H = siderealTime(d, rad*-lng) - m.ra; return altitudeHAngle(H, rad*lat, m.dec) - 0.017; }
-      h1 = altitude(d-1); h2 = altitude(d); h3 = altitude(d+1);
-      a = (h1 + h3)/2 - h2; b = (h3 - h1)/2; xe = -b/(2*a); ye = (a*xe+b)*xe + h2; dxe = Math.sqrt(b*b - 4*a*(h2-hc));
-      if (isNaN(dxe)) { // no rise/set on this date (high lat)
-        rise = set = null;
-      } else {
-        x1 = ( -b - dxe)/(2*a); x2 = ( -b + dxe)/(2*a);
-        if (x1 > -1 && x1 < 1) rise = fromJulian(2451545 + d + x1);
-        if (x2 > -1 && x2 < 1) set  = fromJulian(2451545 + d + x2);
+      function toJulian(date){ return date/86400000 - 0.5 + 2440588; }
+      function fromJulian(j){ return new Date((j + 0.5 - 2440588)*86400000); }
+      function toDays(date){ return toJulian(date) - 2451545; }
+      const lw = -lng*Math.PI/180, phi = lat*Math.PI/180;
+      const d = toDays(new Date(date.setHours(0,0,0,0))) - 0.5 - lng/360;
+      function altitude(d){
+        const m = moonCoords(d), H = siderealTime(d, lw) - m.ra;
+        return Math.asin(Math.sin(phi)*Math.sin(m.dec) + Math.cos(phi)*Math.cos(m.dec)*Math.cos(H)) - 0.017;
       }
-      const illum = getMoonIllum(d, sun).frac;
-      return {rise, set, illum};
+      const h1 = altitude(d-1), h2 = altitude(d), h3 = altitude(d+1);
+      const a = (h1 + h3)/2 - h2, b = (h3 - h1)/2, hc = 0.133*Math.PI/180;
+      const dxe = Math.sqrt(Math.max(0, b*b - 4*a*(h2-hc)));
+      let rise=null,set=null;
+      if(dxe!==0){
+        const x1 = (-b - dxe)/(2*a), x2 = (-b + dxe)/(2*a);
+        if (x1>-1 && x1<1) rise = fromJulian(2451545 + d + x1);
+        if (x2>-1 && x2<1) set  = fromJulian(2451545 + d + x2);
+      }
+      const sun = (function(d){ const M = (357.5291 + 0.98560028*d)*Math.PI/180; const C = (1.9148*Math.sin(M)+0.02*Math.sin(2*M)+0.0003*Math.sin(3*M))*Math.PI/180; const P=102.9372*Math.PI/180; const L=M+C+P+Math.PI; const dec=Math.asin(Math.sin(0)*Math.cos(23.4397*Math.PI/180)+Math.cos(0)*Math.sin(23.4397*Math.PI/180)*Math.sin(L)); const ra=Math.atan2(Math.sin(L)*Math.cos(23.4397*Math.PI/180)-Math.tan(0)*Math.sin(23.4397*Math.PI/180), Math.cos(L)); return {dec,ra}; })(d);
+      const m = moonCoords(d); const sdist=149598000; const phiA = Math.acos(Math.sin(sun.dec)*Math.sin(m.dec) + Math.cos(sun.dec)*Math.cos(m.dec)*Math.cos(sun.ra-m.ra)); const inc=Math.atan2(sdist*Math.sin(phiA), m.dist - sdist*Math.cos(phiA)); const illumination=(1+Math.cos(inc))/2;
+      return {rise,set,illum:illumination};
     }
   };
 })();
@@ -234,266 +221,164 @@ main{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(36
 </script>
 <script>
 
-// ---- Config ----
-const CFG = {
-  apiKey: "AIzaSyDsq2ztFeFfmgqiRIZZtK5R7aCVGF66-80",
-  domain: "nyc.vastempty.space",
-  dataVersion: "v7-hybrid",
-  nyc: {lat: 40.7128, lon: -74.0060}
-};
+const CFG = { apiKey: "AIzaSyDsq2ztFeFfmgqiRIZZtK5R7aCVGF66-80", nyc:{lat:40.7128,lon:-74.0060}, dataVersion:"v7.1" };
+let LOCATIONS = [{"id": "bk_dumbo_keyhole", "name": "DUMBO \u2014 Washington & Water (Manhattan Bridge Keyhole)", "day": "2025-10-03", "block": "Morning", "rank": 1, "bearing": "NNE toward Manhattan", "whyNow": "Side-lit steel and cobbles; fewer crowds early.", "gear": "16\u201324\u202fmm for wide frame; 35\u202fmm for tighter car\u2011free moments.", "notes": "Arrive before delivery trucks; street cleaning can create wet reflections.", "rainFriendly": true, "windSafe": true, "settings": "Handheld: 1/250s+ @ f/5.6\u20138 ISO 100\u2013400; long exposure only before traffic starts.", "activeAnchor": 0, "anchors": [{"label": "Main view", "lat": 40.703307, "lon": -73.990039}, {"label": "Alternate mid\u2011block", "lat": 40.703519, "lon": -73.989764}], "micro": [{"title": "Centerline", "r": 0.0, "bearing": 0.0, "dir": "NNE", "detail": "Feet on the cobbles at the crown of Washington St; watch parked cars."}, {"title": "Crosswalk step\u2011back", "r": 10.0, "bearing": 200.0, "dir": "NNE", "detail": "Step back to clear parked vans; compress the arch a touch."}, {"title": "Corner curb", "r": 22.0, "bearing": 225.0, "dir": "NNE", "detail": "Use the curb for a low angle with cobble lead\u2011in."}], "pins": [{"title": "Parking gap watch", "detail": "Scan for a temporary car gap on the west side; shoot fast."}, {"title": "Reflections after wash", "detail": "City wash leaves sheen on cobbles\u2014polarizer helps manage glare."}, {"title": "Taxi streaks", "detail": "If traffic starts, drag the shutter 1/8\u20131/2s for motion streaks."}], "shots": [{"title": "Keyhole classic (16\u201324\u202fmm)", "detail": "Frame the ESB in the bridge opening; keep verticals straight."}, {"title": "Mid\u2011block symmetry (24\u201335\u202fmm)", "detail": "Full arch dominance; align the center seam with the roadway stripe."}, {"title": "Low\u2011angle cobbles (16\u201320\u202fmm)", "detail": "Camera just above ground for texture; mind passerby feet."}, {"title": "Backlit silhouettes (sunrise)", "detail": "Silhouette walkers crossing the street; expose for sky."}, {"title": "Tight ESB crop (35\u201350\u202fmm)", "detail": "Pull a graphic ESB framed by steel; wait for clean sidewalk."}]}];
 
-let LOCATIONS = [{"id": "bk_dumbo_keyhole", "name": "DUMBO \u2014 Washington & Water (Manhattan Bridge Keyhole)", "day": "2025-10-03", "block": "Morning", "rank": 1, "bearing": "NNE toward Manhattan", "whyNow": "Side-lit steel and cobbles; fewer crowds early.", "gear": "16\u201324\u202fmm for wide frame; 35\u202fmm for tighter car\u2011free moments.", "notes": "Arrive before delivery trucks; street cleaning can create wet reflections.", "rainFriendly": true, "windSafe": true, "settings": "Handheld: 1/250s+ @ f/5.6\u20138 ISO 100\u2013400; long exposure only before traffic starts.", "activeAnchor": 0, "anchors": [{"label": "Main view", "lat": 40.703307, "lon": -73.990039}, {"label": "Alternate mid\u2011block", "lat": 40.703519, "lon": -73.989764}], "micro": [{"title": "Centerline", "r": 0.0, "bearing": 0.0, "dir": "NNE", "detail": "Feet on the cobbles at the crown of Washington St; watch parked cars."}, {"title": "Crosswalk step\u2011back", "r": 10.0, "bearing": 200.0, "dir": "NNE", "detail": "Step back to clear parked vans; compress the arch a touch."}, {"title": "Corner curb", "r": 22.0, "bearing": 225.0, "dir": "NNE", "detail": "Use the curb for a low angle with cobble lead\u2011in."}], "pins": [{"title": "Parking gap watch", "detail": "Scan for a temporary car gap on the west side; shoot fast."}, {"title": "Reflections after wash", "detail": "City wash leaves sheen on cobbles\u2014polarizer helps manage glare."}, {"title": "Taxi streaks", "detail": "If traffic starts, drag the shutter 1/8\u20131/2s for motion streaks."}], "shots": [{"title": "Keyhole classic (16\u201324\u202fmm)", "detail": "Frame the ESB in the bridge opening; keep verticals straight."}, {"title": "Mid\u2011block symmetry (24\u201335\u202fmm)", "detail": "Full arch dominance; align the center seam with the roadway stripe."}, {"title": "Low\u2011angle cobbles (16\u201320\u202fmm)", "detail": "Camera just above ground for texture; mind passerby feet."}, {"title": "Backlit silhouettes (sunrise)", "detail": "Silhouette walkers crossing the street; expose for sky."}, {"title": "Tight ESB crop (35\u201350\u202fmm)", "detail": "Pull a graphic ESB framed by steel; wait for clean sidewalk."}]}, {"id": "bk_bridge_park_pier1", "name": "Brooklyn Bridge Park \u2014 Pier 1", "day": "2025-10-03", "block": "Evening", "rank": 2, "bearing": "W toward Lower Manhattan", "whyNow": "Sun behind skyline; blue\u2011hour lights along piers.", "gear": "24\u201370\u202fmm for skyline; 16\u201324\u202fmm for pilings foreground.", "notes": "Tripod friendly boardwalk; watch joggers and bikes.", "rainFriendly": true, "windSafe": false, "settings": "Tripod at blue hour: f/8\u201311 ISO 100, 5\u201330\u202fs; ND for earlier golden hour smoothing.", "activeAnchor": 0, "anchors": [{"label": "Boardwalk elbow", "lat": 40.702292, "lon": -73.999641}, {"label": "Pilings rail", "lat": 40.702689, "lon": -73.998473}], "micro": [{"title": "Pilings center", "r": 55.0, "bearing": 310.0, "dir": "WNW", "detail": "Center the pilings array as foreground texture."}, {"title": "Boardwalk edge", "r": 18.0, "bearing": 40.0, "dir": "NW", "detail": "Wood rail as a leading line into the skyline."}, {"title": "Low rail slot", "r": 8.0, "bearing": 20.0, "dir": "NW", "detail": "Lens through the rail gap for a graphic frame."}], "pins": [{"title": "Skip high tide wind", "detail": "Chop ruins reflections; calmer after wind shifts (NOAA tides below)."}, {"title": "Ferries & wakes", "detail": "Time long exposure between ferry wakes to keep water uniform."}, {"title": "Blue\u2011hour peak", "detail": "5\u201310 minutes after civil dusk, lights balance with sky."}], "shots": [{"title": "Skyline wide (16\u201320\u202fmm)", "detail": "Include both bridges + pilings; level carefully."}, {"title": "Compression at 70\u202fmm", "detail": "Tighten composition on One WTC + Woolworth alignment."}, {"title": "Reflections blend", "detail": "Bracket for highlights; blend to taste for clean signage."}, {"title": "ND silk water", "detail": "6\u201310 stop ND in golden hour for smooth East River."}, {"title": "People blur", "detail": "1/2\u20132 s blur joggers & bikes as dynamic foreground."}]}, {"id": "wtc_oculus", "name": "The Oculus & WTC Plaza", "day": "2025-10-04", "block": "Afternoon", "rank": 1, "bearing": "Mixed; interior soft bounce and plaza cross\u2011light", "whyNow": "Predictable interior light and manageable crowds mid\u2011day.", "gear": "16\u201324\u202fmm interior sweeps; 35/1.4 for shallow DOF details.", "notes": "Tripods often restricted; handheld or mini support only.", "rainFriendly": true, "windSafe": true, "settings": "Interior: 1/125s @ f/4\u20135.6 ISO 400\u20131600; exterior: f/5.6\u20138 ISO 100\u2013400.", "activeAnchor": 0, "anchors": [{"label": "Oculus \u2014 interior hall", "lat": 40.711509, "lon": -74.011253}, {"label": "WTC Plaza \u2014 Church St", "lat": 40.711997, "lon": -74.012843}], "micro": [{"title": "Center nave", "r": 0.0, "bearing": 0.0, "dir": "N", "detail": "Symmetry from the center marble seam."}, {"title": "Balcony rail", "r": 12.0, "bearing": 320.0, "dir": "NW", "detail": "Top balcony for layered ribs; watch reflections."}, {"title": "Plaza sculpture", "r": 85.0, "bearing": 260.0, "dir": "W", "detail": "Use Oculus ribs as a backdrop for plaza life."}], "pins": [{"title": "Security & permits", "detail": "Be courteous; no tripods in peak times without permits."}, {"title": "Reflections & polish", "detail": "Marble glare\u2014mind polarizer angles; keep lines clean."}, {"title": "Shops as color", "detail": "Use storefronts for color accents in white-on-white space."}], "shots": [{"title": "Ultra-wide nave (16\u202fmm)", "detail": "Ceiling sweep with centered symmetry."}, {"title": "Stair abstract (35\u201350\u202fmm)", "detail": "Repeat patterns; isolate figures against white ribs."}, {"title": "Plaza life (24\u201335\u202fmm)", "detail": "People against ribs; wait for clean silhouettes."}, {"title": "Blue hour exterior", "detail": "Ribs glow; include One WTC spire for context."}, {"title": "Detail textures", "detail": "Close textures of joints/ribs with 50/1.8 shallow DOF."}]}];
-
-// Try to import legacy data from v6 localStorage automatically
-(function importLegacy(){
-  try{
-    const s = localStorage.getItem('nyc_photo_guide_v6');
-    if(s && !LOCATIONS?.length){
-      const o = JSON.parse(s);
-      if(o.LOCATIONS) { LOCATIONS = o.LOCATIONS; console.info('Imported legacy v6 LOCATIONS from localStorage.'); }
-    }
-  }catch(e){}
-})();
-
-// ---- State ----
+// State
 let state = {
   dayMap: {"2025-10-03":"2025-10-03","2025-10-04":"2025-10-04"},
   day: new Set(["2025-10-03","2025-10-04"]),
   blocks: new Set(["Morning","Afternoon","Evening","Night"]),
-  rankMin:1, rankMax:5, proOnly:false, q:"",
-  rain:false, wind:false,
-  expandAll:false,
-  editMode:false, editWhat:"anchor",
-  mapMode:"auto" // auto | google | leaflet
+  rankMin:1, rankMax:5, proOnly:false, q:"", rain:false, wind:false, expandAll:false,
+  mapMode:"auto", editMode:false, editWhat:"anchor"
 };
-
 let TIMES = {};
 
-// ---- Utilities ----
+// Utils
 function toFixed6(n){ return +n.toFixed(6); }
-function deg(card){ const m={'N':0,'NNE':22.5,'NE':45,'ENE':67.5,'E':90,'ESE':112.5,'SE':135,'SSE':157.5,'S':180,'SSW':202.5,'SW':225,'WSW':247.5,'W':270,'WNW':292.5,'NW':315,'NNW':337.5}; return m[(card||'N').toUpperCase()] ?? 0; }
-function metersToLatLon(lat, meters, heading){ const dlat=(meters*Math.cos(heading*Math.PI/180))/111111.0; const dlon=(meters*Math.sin(heading*Math.PI/180))/(111111.0*Math.cos(lat*Math.PI/180)); return {dlat, dlon}; }
-function distBearing(from, to){
-  const R=6371000, φ1=from[0]*Math.PI/180, φ2=to[0]*Math.PI/180, Δφ=(to[0]-from[0])*Math.PI/180, Δλ=(to[1]-from[1])*Math.PI/180;
-  const a=Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2; const d=2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-  const y=Math.sin(Δλ)*Math.cos(φ2); const x=Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
-  let b=(Math.atan2(y,x)*180/Math.PI + 360) % 360; return {r:d,b:b};
-}
-function activeAnchor(loc){ return loc.anchors[loc.activeAnchor || 0]; }
-function computeMicroAbs(loc){
-  const a=activeAnchor(loc);
-  return (loc.micro||[]).map(m=>{
-    const off = metersToLatLon(a.lat, m.r, m.bearing);
-    return { title:m.title, lat: toFixed6(a.lat + off.dlat), lon: toFixed6(a.lon + off.dlon), dir:m.dir, r:m.r, bearing:m.bearing, detail:m.detail };
-  });
-}
+function metersToLatLon(lat, meters, heading){ const dlat=(meters*Math.cos(heading*Math.PI/180))/111111.0; const dlon=(meters*Math.sin(heading*Math.PI/180))/(111111.0*Math.cos(lat*Math.PI/180)); return {dlat,dlon}; }
+function activeAnchor(loc){ return loc.anchors[loc.activeAnchor||0]; }
+function computeMicroAbs(loc){ const a=activeAnchor(loc); return (loc.micro||[]).map(m=>{ const off=metersToLatLon(a.lat,m.r,m.bearing); return {title:m.title,lat:toFixed6(a.lat+off.dlat),lon:toFixed6(a.lon+off.dlon),dir:m.dir,r:m.r,bearing:m.bearing,detail:m.detail}; }); }
+function dayLabelISO(iso){ const d=new Date(iso+"T12:00:00-04:00"); return new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(d).replace(',',' •'); }
 function gmapsOpen(lat,lon){ return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`; }
-function dayLabelISO(iso){
-  const d=new Date(iso+"T12:00:00-04:00"); const opts={weekday:'short',month:'short',day:'numeric',year:'numeric'};
-  return new Intl.DateTimeFormat('en-US',opts).format(d).replace(',',' •');
-}
-function shortCheckboxLabel(iso){
-  const d=new Date(iso+"T12:00:00-04:00"); const o={month:'2-digit', day:'2-digit', weekday:'short'}; const s=new Intl.DateTimeFormat('en-US',o).format(d);
-  const parts=s.split(', '); return `${parts[0]} ${parts[1]}`;
-}
-
-// ---- Sun/Moon/Tides ----
 function fmtHM(d){ const dt=new Date(d); let h=dt.getHours(), m=dt.getMinutes(); const ampm=h>=12?'pm':'am'; const h12=((h+11)%12)+1; return `${h12}:${String(m).padStart(2,'0')} ${ampm}`; }
+
+// Light & Moon
 function computeTimes(){
   TIMES={};
   ["2025-10-03","2025-10-04"].forEach(k=>{
-    const iso=state.dayMap[k];
-    const dt=new Date(iso+'T12:00:00-04:00');
+    const iso=state.dayMap[k], dt=new Date(iso+'T12:00:00-04:00');
     const sun=SunCalc.getSunTimes(new Date(dt), CFG.nyc.lat, CFG.nyc.lon);
     const moon=SunCalc.getMoonTimes(new Date(dt), CFG.nyc.lat, CFG.nyc.lon);
-    TIMES[k] = {
-      sunrise: fmtHM(sun.sunrise), sunset: fmtHM(sun.sunset), civil_dawn: fmtHM(sun.dawn), civil_dusk: fmtHM(sun.dusk),
-      moonrise: moon.rise?fmtHM(moon.rise):'—', moonset: moon.set?fmtHM(moon.set):'—', moonText: Math.round(moon.illum*100)+'% illum',
-      label: dayLabelISO(iso), iso
-    };
+    TIMES[k]={ sunrise:fmtHM(sun.sunrise), sunset:fmtHM(sun.sunset), civil_dawn:fmtHM(sun.dawn), civil_dusk:fmtHM(sun.dusk),
+               moonrise: moon.rise?fmtHM(moon.rise):'—', moonset: moon.set?fmtHM(moon.set):'—', moonText: Math.round(moon.illum*100)+'% illum', iso };
   });
 }
+
+// NOAA
 async function fetchNOAATides(iso){
-  // NOAA CO-OPS The Battery station 8518750
   const ymd=iso.replace(/-/g,'');
   const url=`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=nyc-photo-guide&begin_date=${ymd}&end_date=${ymd}&datum=MLLW&station=8518750&time_zone=lst_ldt&interval=hilo&units=english&format=json`;
   try{
-    const r=await fetch(url); const j=await r.json();
+    const r=await fetch(url, {cache:'no-store'}); const j=await r.json();
     if(j && j.predictions){ return j.predictions.map(p=>`${p.t.slice(11,16)} ${p.type} ${parseFloat(p.v).toFixed(1)} ft`).join(' • '); }
     return 'Open NOAA high/low';
-  }catch(e){ return 'Open NOAA high/low'; }
+  }catch{ return 'Open NOAA high/low'; }
 }
 
-// ---- Maps: Google + Leaflet fallback ----
-let gmap, gsv, gDirections, gDirRenderer, gPlaces, gGeocoder;
-let lmap, lCluster, lLayer;
-let usingGoogle=false;
+// Maps (Google + Leaflet)
+let usingGoogle=false, gmap=null, gDirections=null, gDirRenderer=null, gPlaces=null, gGeocoder=null, gsv=null;
+let lmap=null, lLayer=null;
+let mainMarkers={}, microMarkers={}, arrowPolylines={};
+
 function injectGoogle(){
   return new Promise((resolve,reject)=>{
-    if(window.google && window.google.maps){ resolve(); return; }
-    const s=document.createElement('script');
-    s.src=`https://maps.googleapis.com/maps/api/js?key=${CFG.apiKey}&libraries=places`;
-    s.async=true; s.defer=true;
-    s.onload=()=>resolve();
-    s.onerror=()=>reject(new Error('Google Maps failed to load'));
-    document.head.appendChild(s);
+    if(window.google&&window.google.maps){ resolve(); return; }
+    const s=document.createElement('script'); s.src=`https://maps.googleapis.com/maps/api/js?key=${CFG.apiKey}&libraries=places`; s.async=true; s.defer=true;
+    s.onload=resolve; s.onerror=()=>reject(new Error('Google Maps failed to load')); document.head.appendChild(s);
   });
 }
 function initGoogle(){
   usingGoogle=true;
   document.getElementById('leaflet').style.display='none';
   const el=document.getElementById('gmap'); el.style.display='block';
-  gmap=new google.maps.Map(el,{
-    center:{lat:40.73,lng:-73.98}, zoom:12,
-    mapTypeControl:true, mapTypeId:'roadmap', fullscreenControl:true, streetViewControl:true
-  });
-  gsv = new google.maps.StreetViewPanorama(document.getElementById('gsv'), {visible:false});
+  gmap=new google.maps.Map(el,{center:{lat:40.73,lng:-73.98},zoom:12,mapTypeControl:true,streetViewControl:true});
+  gsv=new google.maps.StreetViewPanorama(document.getElementById('gsv'),{visible:false});
   gmap.setStreetView(gsv);
   gDirections=new google.maps.DirectionsService();
-  gDirRenderer=new google.maps.DirectionsRenderer({suppressMarkers:true, preserveViewport:true});
-  gDirRenderer.setMap(gmap);
+  gDirRenderer=new google.maps.DirectionsRenderer({suppressMarkers:true,preserveViewport:true}); gDirRenderer.setMap(gmap);
   gPlaces=new google.maps.places.PlacesService(gmap);
   gGeocoder=new google.maps.Geocoder();
-  renderMarkers();
 }
 function initLeaflet(){
   usingGoogle=false;
   document.getElementById('gmap').style.display='none';
   const el=document.getElementById('leaflet'); el.style.display='block';
-  if(lmap) { lmap.invalidateSize(); renderMarkers(); return; }
-  lmap=L.map('leaflet').setView([40.73,-73.98],12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(lmap);
-  lLayer=L.layerGroup().addTo(lmap);
-  renderMarkers();
-}
-async function initMapAuto(){
-  try{
-    if(state.mapMode==='leaflet') throw new Error('force leaflet');
-    await injectGoogle(); initGoogle();
-    document.getElementById('modeGoogle').classList.add('active');
-  }catch(e){
-    initLeaflet();
-    document.getElementById('modeLeaflet').classList.add('active');
+  if(!lmap){
+    lmap=L.map('leaflet').setView([40.73,-73.98],12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(lmap);
+    lLayer=L.layerGroup().addTo(lmap);
   }
 }
 
-// ---- Marker rendering (both engines) ----
-let mainMarkers={}, microMarkers={}, arrowPolylines={};
 function clearMap(){
   if(usingGoogle){
-    for(const k in mainMarkers){ mainMarkers[k].setMap(null); } mainMarkers={};
-    for(const k in microMarkers){ microMarkers[k].forEach(m=>m.setMap(null)); } microMarkers={};
-    for(const k in arrowPolylines){ arrowPolylines[k].forEach(p=>p.setMap(null)); } arrowPolylines={};
+    if(!gmap) return;
+    Object.values(mainMarkers).forEach(m=>m.setMap(null)); mainMarkers={};
+    Object.values(microMarkers).forEach(arr=>arr.forEach(m=>m.setMap(null))); microMarkers={};
+    Object.values(arrowPolylines).forEach(arr=>arr.forEach(p=>p.setMap(null))); arrowPolylines={};
   } else {
+    if(!lLayer) return;
     lLayer.clearLayers();
     mainMarkers={}; microMarkers={}; arrowPolylines={};
   }
 }
 function blockColor(b){ return (b==='Morning')?'#60a5fa':(b==='Afternoon')?'#fbbf24':(b==='Evening')?'#a78bfa':'#fb7185'; }
 function visibleLocations(){
-  return (LOCATIONS||[])
-    .filter(loc => state.day.has(loc.day) && state.blocks.has(loc.block) && loc.rank>=state.rankMin && loc.rank<=state.rankMax)
-    .filter(loc => state.proOnly ? loc.rank<=2 : true)
-    .filter(loc => state.rain ? loc.rainFriendly : true)
-    .filter(loc => state.wind ? loc.windSafe : true)
-    .filter(loc => { if(!state.q) return true; const h=(loc.name+" "+loc.block+" "+loc.bearing+" "+(loc.notes||"")+" "+(loc.pins||[]).map(p=>p.title).join(" ")).toLowerCase(); return h.includes(state.q.toLowerCase()); })
-    .sort((a,b)=> (a.day+b.block+a.rank) < (b.day+b.block+b.rank) ? -1 : 1);
+  return (LOCATIONS||[]).filter(loc=> state.day.has(loc.day) && state.blocks.has(loc.block) && loc.rank>=state.rankMin && loc.rank<=state.rankMax );
 }
 function renderMarkers(){
+  // Guard until a map engine is ready
+  if(usingGoogle && !gmap) return;
+  if(!usingGoogle && !lmap) return;
   clearMap();
   const vis=visibleLocations();
   if(usingGoogle){
     const bounds=new google.maps.LatLngBounds();
     vis.forEach(loc=>{
       const a=activeAnchor(loc);
-      const mm=new google.maps.Marker({
-        position:{lat:a.lat, lng:a.lon}, map:gmap, title:loc.name,
-        icon:{path:google.maps.SymbolPath.CIRCLE, scale:6, fillColor:blockColor(loc.block), fillOpacity:1, strokeColor:'#0b1220', strokeWeight:2}
-      });
+      const mm=new google.maps.Marker({position:{lat:a.lat,lng:a.lon}, map:gmap, title:loc.name,
+        icon:{path:google.maps.SymbolPath.CIRCLE, scale:6, fillColor:blockColor(loc.block), fillOpacity:1, strokeColor:'#0b1220', strokeWeight:2}});
       mainMarkers[loc.id]=mm; bounds.extend(mm.getPosition());
       const micro=computeMicroAbs(loc);
       microMarkers[loc.id]=micro.map(mp=>{
-        const m=new google.maps.Marker({
-          position:{lat:mp.lat, lng:mp.lon}, map:gmap, title:mp.title,
-          icon:{path:google.maps.SymbolPath.CIRCLE, scale:4, fillColor:'#2dd4bf', fillOpacity:1, strokeColor:'#093b36', strokeWeight:1}
-        });
-        const end = offsetMeters([mp.lat,mp.lon], 16, deg(mp.dir));
-        const line=new google.maps.Polyline({map:gmap, path:[{lat:mp.lat,lng:mp.lon},{lat:end[0],lng:end[1]}], strokeColor:'#58a6ff', strokeWeight:3, strokeOpacity:0.9});
-        arrowPolylines[loc.id] = (arrowPolylines[loc.id]||[]); arrowPolylines[loc.id].push(line);
+        const m=new google.maps.Marker({position:{lat:mp.lat,lng:mp.lon}, map:gmap, title:mp.title,
+          icon:{path:google.maps.SymbolPath.CIRCLE, scale:4, fillColor:'#2dd4bf', fillOpacity:1, strokeColor:'#093b36', strokeWeight:1}});
         return m;
       });
     });
     if(!bounds.isEmpty()) gmap.fitBounds(bounds, 80);
   } else {
-    const group=[];
+    const pts=[];
     vis.forEach(loc=>{
       const a=activeAnchor(loc);
-      const m=L.circleMarker([a.lat,a.lon],{radius:8,weight:2,color:blockColor(loc.block),fillOpacity:.95,fillColor:blockColor(loc.block)}).addTo(lLayer);
-      group.push([a.lat,a.lon]);
-      const micro=computeMicroAbs(loc);
-      micro.forEach(mp=>{
-        const mi=L.circleMarker([mp.lat, mp.lon],{radius:4,weight:1,color:'#2dd4bf',fillOpacity:.95,fillColor:'#2dd4bf'}).addTo(lLayer);
-      });
+      L.circleMarker([a.lat,a.lon],{radius:8,weight:2,color:blockColor(loc.block),fillOpacity:.95,fillColor:blockColor(loc.block)}).addTo(lLayer);
+      pts.push([a.lat,a.lon]);
+      computeMicroAbs(loc).forEach(mp=> L.circleMarker([mp.lat,mp.lon],{radius:4,weight:1,color:'#2dd4bf',fillColor:'#2dd4bf',fillOpacity:.95}).addTo(lLayer) );
     });
-    if(group.length) lmap.fitBounds(group, {padding:[80,80]});
-  }
-}
-function offsetMeters([lat,lon], meters, deg){
-  const dlat=(meters*Math.cos(deg*Math.PI/180))/111111.0; const dlon=(meters*Math.sin(deg*Math.PI/180))/(111111.0*Math.cos(lat*Math.PI/180));
-  return [lat+dlat, lon+dlon];
-}
-function flyTo(id){
-  const loc=(LOCATIONS||[]).find(l=>l.id===id); if(!loc) return;
-  const a=activeAnchor(loc);
-  if(usingGoogle){
-    const bounds=new google.maps.LatLngBounds(); bounds.extend({lat:a.lat,lng:a.lon});
-    computeMicroAbs(loc).forEach(mp=>bounds.extend({lat:mp.lat,lng:mp.lon}));
-    gmap.fitBounds(bounds, 120);
-  } else {
-    const pts=computeMicroAbs(loc).map(mp=>[mp.lat,mp.lon]); pts.push([a.lat,a.lon]); lmap.fitBounds(pts, {padding:[120,120]});
+    if(pts.length) lmap.fitBounds(pts, {padding:[80,80]});
   }
 }
 
-// ---- Editing ----
-function enterEditMode(){
-  const vis=visibleLocations();
-  if(usingGoogle){
-    vis.forEach(loc=>{
-      const a=activeAnchor(loc);
-      if(state.editWhat==='anchor'){
-        const mk=new google.maps.Marker({position:{lat:a.lat,lng:a.lon}, map:gmap, draggable:true,
-          icon:{path:google.maps.SymbolPath.BACKWARD_CLOSED_ARROW, scale:6, strokeColor:'#3b82f6', fillColor:'#60a5fa', fillOpacity:1}});
-        mk.addListener('dragend',()=>{
-          const p=mk.getPosition(); a.lat=toFixed6(p.lat()); a.lon=toFixed6(p.lng()); saveLocal(); renderMarkers(); renderList();
-        });
-      } else { // micro
-        computeMicroAbs(loc).forEach((mp,idx)=>{
-          const mk=new google.maps.Marker({position:{lat:mp.lat,lng:mp.lon}, map:gmap, draggable:true,
-            icon:{path:google.maps.SymbolPath.CIRCLE, scale:4, strokeColor:'#0f766e', fillColor:'#14b8a6', fillOpacity:1}});
-          mk.addListener('dragend',()=>{
-            const p=mk.getPosition(); const vec=distBearing([a.lat,a.lon],[p.lat(),p.lng()]); loc.micro[idx].r=Math.max(0, vec.r); loc.micro[idx].bearing=vec.b; saveLocal(); renderMarkers(); renderList();
-          });
-        });
-      }
+// Reference Images via Places
+function loadReferencePhotos(container, loc){
+  if(!usingGoogle || !gPlaces){ container.textContent='Switch to Google mode to load images.'; return; }
+  const a=activeAnchor(loc); const query=loc.placeQuery||loc.name;
+  gPlaces.findPlaceFromQuery({ query, fields:['place_id','name','geometry'], locationBias:{radius:300, center:{lat:a.lat,lng:a.lon}} }, (res,status)=>{
+    if(status!=='OK' || !res || !res[0]){ container.textContent='No images found.'; return; }
+    gPlaces.getDetails({placeId:res[0].place_id, fields:['name','photos','url']}, (det,s2)=>{
+      if(s2!=='OK' || !det){ container.textContent='No images available.'; return; }
+      const grid=document.createElement('div'); grid.className='ref-grid';
+      (det.photos||[]).slice(0,12).forEach(p=>{ const img=document.createElement('img'); img.loading='lazy'; img.src=p.getUrl({maxWidth:400,maxHeight:400}); img.title=det.name; img.addEventListener('click',()=>window.open(det.url,'_blank')); grid.appendChild(img); });
+      container.innerHTML=''; if(grid.childElementCount) container.appendChild(grid); else container.textContent='No images.';
     });
-  } else {
-    alert('Edit pins is available in Leaflet too, but precision tools (Street View, reverse geocode) require Google mode.');
-  }
+  });
 }
-function toggleEdit(){ state.editMode=!state.editMode; document.getElementById('editBanner').style.display=state.editMode?'block':'none'; if(state.editMode) enterEditMode(); else renderMarkers(); }
-function setEditWhat(v){ state.editWhat=v; if(state.editMode){ renderMarkers(); enterEditMode(); } }
-function saveLocal(){ localStorage.setItem('nyc_photo_guide_'+CFG.dataVersion, JSON.stringify({LOCATIONS, state:{dayMap:state.dayMap}})); }
-function loadLocal(){ try{ const s=localStorage.getItem('nyc_photo_guide_'+CFG.dataVersion); if(s){ const o=JSON.parse(s); if(o.LOCATIONS) LOCATIONS=o.LOCATIONS; if(o.state?.dayMap) state.dayMap=o.state.dayMap; } }catch(e){} }
-function resetLocal(){ localStorage.removeItem('nyc_photo_guide_'+CFG.dataVersion); location.reload(); }
 
-// ---- Directions & My Location ----
+// Reverse Geocode
+function revGeocode(lat,lon,cb){
+  if(!usingGoogle || !gGeocoder){ cb(null); return; }
+  gGeocoder.geocode({location:{lat,lng:lon}}, (res,status)=> cb(status==='OK'&&res[0]?res[0].formatted_address:null));
+}
+
+// ETA / Route
 let myMarker=null;
 function geolocate(cb){
   if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
   navigator.geolocation.getCurrentPosition(pos=>{
-    const pt={lat:pos.coords.latitude, lng:pos.coords.longitude};
+    const pt={lat:pos.coords.latitude,lng:pos.coords.longitude};
     if(usingGoogle){
-      if(!myMarker){ myMarker=new google.maps.Marker({map:gmap, position:pt, icon:{path:google.maps.SymbolPath.CIRCLE, scale:5, fillColor:'#34d399', fillOpacity:1, strokeColor:'#034d36', strokeWeight:2}}); }
+      if(!myMarker) myMarker=new google.maps.Marker({map:gmap,position:pt,icon:{path:google.maps.SymbolPath.CIRCLE,scale:5,fillColor:'#34d399',fillOpacity:1,strokeColor:'#034d36',strokeWeight:2}});
       else myMarker.setPosition(pt);
       gmap.panTo(pt);
     } else {
@@ -501,79 +386,42 @@ function geolocate(cb){
       myMarker=L.circleMarker([pt.lat,pt.lng],{radius:6,color:'#34d399',fillColor:'#34d399',fillOpacity:1}).addTo(lLayer);
       lmap.panTo([pt.lat,pt.lng]);
     }
-    cb && cb(pt);
-  }, err=> alert('Geolocation error: '+err.message), {enableHighAccuracy:true, timeout:10000, maximumAge:30000});
+    cb&&cb(pt);
+  }, err=>alert('Geolocation error: '+err.message), {enableHighAccuracy:true,timeout:10000,maximumAge:30000});
 }
 function etaToAnchor(loc){
-  if(!usingGoogle){ alert('ETA requires Google mode'); return; }
+  if(!usingGoogle){ alert('This needs Google mode. Click “Google Maps (online)” above the Light panel.'); return; }
   geolocate(pt=>{
     const a=activeAnchor(loc);
     const svc=new google.maps.DistanceMatrixService();
-    svc.getDistanceMatrix({origins:[pt], destinations:[{lat:a.lat,lng:a.lon}], travelMode:'WALKING'}, (res, status)=>{
-      if(status==='OK'){
-        const el=res.rows[0].elements[0];
-        alert(`Walking ETA: ${el.duration.text} • ${el.distance.text}`);
-      } else alert('DistanceMatrix failed: '+status);
+    svc.getDistanceMatrix({origins:[pt],destinations:[{lat:a.lat,lng:a.lon}],travelMode:'WALKING'}, (res,status)=>{
+      if(status==='OK'){ const el=res.rows[0].elements[0]; alert(`Walking ETA: ${el.duration.text} • ${el.distance.text}`);} else alert('DistanceMatrix failed: '+status);
     });
   });
 }
 function routeToAnchor(loc){
-  if(!usingGoogle){ alert('Route overlay requires Google mode'); return; }
+  if(!usingGoogle){ alert('This needs Google mode. Click “Google Maps (online)” above the Light panel.'); return; }
   geolocate(pt=>{
     const a=activeAnchor(loc);
-    gDirections.route({origin:pt, destination:{lat:a.lat,lng:a.lon}, travelMode:'WALKING'}, (res, status)=>{
+    gDirections.route({origin:pt,destination:{lat:a.lat,lng:a.lon},travelMode:'WALKING'}, (res,status)=>{
       if(status==='OK'){ gDirRenderer.setDirections(res); } else alert('Directions failed: '+status);
     });
   });
 }
 
-// ---- Reverse Geocode ----
-function revGeocode(lat, lon, cb){
-  if(!usingGoogle || !gGeocoder){ cb(null); return; }
-  gGeocoder.geocode({location:{lat, lng:lon}}, (res, status)=>{
-    if(status==='OK' && res[0]) cb(res[0].formatted_address);
-    else cb(null);
-  });
-}
-
-// ---- Reference Images via Places Photos ----
-function loadReferencePhotos(container, loc){
-  if(!usingGoogle){ container.textContent='Enable Google mode to fetch images.'; return; }
-  const a=activeAnchor(loc);
-  const query=loc.placeQuery || loc.name;
-  gPlaces.findPlaceFromQuery({ query, fields:['place_id','name','geometry'], locationBias: {radius:300, center:{lat:a.lat, lng:a.lon}} }, (res,status)=>{
-    if(status!=='OK' || !res || !res[0]){ container.textContent='No images found.'; return; }
-    const placeId=res[0].place_id;
-    gPlaces.getDetails({placeId, fields:['name','photos','url']}, (det, s2)=>{
-      if(s2!=='OK' || !det){ container.textContent='No images available.'; return; }
-      const grid=document.createElement('div'); grid.className='ref-grid';
-      (det.photos||[]).slice(0,12).forEach(p=>{
-        const img=document.createElement('img'); img.loading='lazy'; img.src=p.getUrl({maxWidth:400, maxHeight:400});
-        img.title=det.name;
-        img.addEventListener('click', ()=> window.open(det.url, '_blank'));
-        grid.appendChild(img);
-      });
-      if(grid.childElementCount===0){ container.textContent='No images available.'; }
-      else { container.innerHTML=''; container.appendChild(grid); }
-    });
-  });
-}
-
-// ---- UI & List ----
-function titleCell(s){ const d=document.createElement('div'); d.className='k'; d.textContent=s; return d; }
-function textCell(s){ const d=document.createElement('div'); d.textContent=s; return d; }
+// UI
 function makeExpandableList(items){
   const ul=document.createElement('ul'); ul.className='expand-list';
   (items||[]).forEach(it=>{
     const li=document.createElement('li'); li.className='expand-item';
     const btn=document.createElement('button'); btn.className='expand-summary'; btn.innerHTML=`<span>${it.title}</span> <span class="hint">Tap for details</span>`;
-    const body=document.createElement('div'); body.className='expand-body'; body.textContent=it.detail || '';
-    btn.addEventListener('click', ()=> li.classList.toggle('open'));
+    const body=document.createElement('div'); body.className='expand-body'; body.textContent=it.detail||'';
+    btn.addEventListener('click',()=> li.classList.toggle('open'));
     li.appendChild(btn); li.appendChild(body); ul.appendChild(li);
   });
   return ul;
 }
-function timingForBlock(dayKey, block){
+function timingForBlock(dayKey,block){
   const t=TIMES[dayKey]; if(!t) return '';
   if(block==='Morning') return `Arrive 6:00–7:30 am • Civil dawn ${t.civil_dawn} • Sunrise ${t.sunrise}`;
   if(block==='Afternoon') return `Best 12:00–3:30 pm • Interiors/shade for soft contrast`;
@@ -587,15 +435,12 @@ async function cardFor(loc){
   card.innerHTML=`
     <div class="card-header">
       <h3>${loc.name}</h3>
-      <div class="badges">
-        <span class="badge">Rank #${loc.rank}</span>
-        <span class="badge block-${loc.block}">${loc.block}</span>
-      </div>
+      <div class="badges"><span class="badge">Rank #${loc.rank}</span><span class="badge block-${loc.block}">${loc.block}</span></div>
     </div>
     <div class="summary-line">${dayLabelISO(state.dayMap[loc.day])} • <b>${loc.block}</b> • Bearing: ${loc.bearing}</div>
     <div class="kv">
       <div class="k">Why now</div><div>${loc.whyNow||''}</div>
-      <div class="k">Timing</div><div>${timingForBlock(loc.day, loc.block)}</div>
+      <div class="k">Timing</div><div>${timingForBlock(loc.day,loc.block)}</div>
       <div class="k">Face & light</div><div>${loc.bearing||''}</div>
       <div class="k">Gear</div><div>${loc.gear||''}</div>
     </div>
@@ -607,66 +452,37 @@ async function cardFor(loc){
       <a class="btnWalk" href="https://www.google.com/maps/dir/?api=1&destination=${a.lat},${a.lon}&travelmode=walking" target="_blank" rel="noopener">Walk to anchor</a>
     </div>
   `;
-
-  // Anchor pills
   const pset=document.createElement('div'); pset.className='pillset';
-  (loc.anchors||[]).forEach((an,idx)=>{
-    const b=document.createElement('button'); b.className='pill'; b.textContent=an.label+(idx===loc.activeAnchor?' ✓':'');
-    b.addEventListener('click', ()=>{ loc.activeAnchor=idx; saveLocal(); renderMarkers(); renderList(); });
-    pset.appendChild(b);
-  });
-  const kvA=document.createElement('div'); kvA.className='kv'; kvA.style.marginTop='.5rem';
-  kvA.appendChild(titleCell('Anchor')); const abox=document.createElement('div'); abox.appendChild(pset); kvA.appendChild(abox); card.appendChild(kvA);
+  (loc.anchors||[]).forEach((an,idx)=>{ const b=document.createElement('button'); b.className='pill'; b.textContent=an.label+(idx===loc.activeAnchor?' ✓':''); b.addEventListener('click',()=>{loc.activeAnchor=idx; saveLocal(); renderMarkers(); renderList();}); pset.appendChild(b); });
+  const kvA=document.createElement('div'); kvA.className='kv'; kvA.style.marginTop='.5rem'; kvA.appendChild((()=>{const d=document.createElement('div'); d.className='k'; d.textContent='Anchor'; return d;})()); const abox=document.createElement('div'); abox.appendChild(pset); kvA.appendChild(abox); card.appendChild(kvA);
 
-  // Detail expander
-  const det=document.createElement('details'); det.className='details'; if(state.expandAll) det.open=true;
-  const sum=document.createElement('summary'); sum.textContent='Pins, shots, settings & reference images'; det.appendChild(sum);
+  const det=document.createElement('details'); if(state.expandAll) det.open=true; const sum=document.createElement('summary'); sum.textContent='Pins, shots, settings & reference images'; det.appendChild(sum);
 
-  // Pins
   const pinsBox=document.createElement('div'); pinsBox.appendChild(makeExpandableList(loc.pins));
-  // Micro pills
   const microAbs=computeMicroAbs(loc); const microPills=document.createElement('div'); microPills.className='pillset';
-  microAbs.forEach(mp=>{
-    const a=document.createElement('a'); a.className='pill'; a.href=`https://www.google.com/maps/dir/?api=1&destination=${mp.lat},${mp.lon}&travelmode=walking`; a.target='_blank'; a.rel='noopener'; a.textContent=mp.title; microPills.appendChild(a);
-  });
-  // Shots
+  microAbs.forEach(mp=>{ const a=document.createElement('a'); a.className='pill'; a.href=`https://www.google.com/maps/dir/?api=1&destination=${mp.lat},${mp.lon}&travelmode=walking`; a.target='_blank'; a.rel='noopener'; a.textContent=mp.title; microPills.appendChild(a); });
   const shotsBox=document.createElement('div'); shotsBox.appendChild(makeExpandableList(loc.shots));
 
-  // NOAA tides + Moon
-  const tideDiv=document.createElement('div'); tideDiv.className='small'; tideDiv.textContent='Loading tides…';
-  fetchNOAATides(state.dayMap[loc.day]).then(txt=> tideDiv.textContent=txt);
-  const moonDiv=document.createElement('div'); moonDiv.className='small';
-  const T=TIMES[loc.day]; moonDiv.textContent=`Moonrise ${T.moonrise} • Moonset ${T.moonset} • ${T.moonText}`;
+  const tideDiv=document.createElement('div'); tideDiv.className='small'; tideDiv.textContent='Loading tides…'; fetchNOAATides(state.dayMap[loc.day]).then(txt=> tideDiv.textContent=txt);
+  const moonDiv=document.createElement('div'); moonDiv.className='small'; const T=TIMES[loc.day]; moonDiv.textContent=`Moonrise ${T.moonrise} • Moonset ${T.moonset} • ${T.moonText}`;
 
-  // Reference Images (lazy)
-  const refWrap=document.createElement('div'); refWrap.className='expand-item';
-  const refBtn=document.createElement('button'); refBtn.className='expand-summary'; refBtn.innerHTML='<span>Reference Images</span> <span class="hint">Tap to load</span>';
-  const refBody=document.createElement('div'); refBody.className='expand-body'; refBody.textContent='Loading…';
-  refBtn.addEventListener('click', ()=>{
-    refWrap.classList.toggle('open');
-    if(refWrap.classList.contains('open')) loadReferencePhotos(refBody, loc);
-  });
-  refWrap.appendChild(refBtn); refWrap.appendChild(refBody);
+  const refWrap=document.createElement('div'); refWrap.className='expand-item'; const refBtn=document.createElement('button'); refBtn.className='expand-summary'; refBtn.innerHTML='<span>Reference Images</span> <span class="hint">Tap to load</span>'; const refBody=document.createElement('div'); refBody.className='expand-body'; refBody.textContent='Loading…'; refBtn.addEventListener('click',()=>{ refWrap.classList.toggle('open'); if(refWrap.classList.contains('open')) loadReferencePhotos(refBody, loc); }); refWrap.appendChild(refBtn); refWrap.appendChild(refBody);
 
-  // Reverse geocode label
-  const addrDiv=document.createElement('div'); addrDiv.className='small'; addrDiv.textContent='';
-  revGeocode(a.lat,a.lon, addr => { addrDiv.textContent = addr ? `Address: ${addr}` : ''; });
+  const addrDiv=document.createElement('div'); addrDiv.className='small'; revGeocode(a.lat,a.lon,addr=> addrDiv.textContent=addr?`Address: ${addr}`:'');
 
   const kv=document.createElement('div'); kv.className='kv'; kv.style.marginTop='.5rem';
-  kv.appendChild(titleCell('Pins')); kv.appendChild(pinsBox);
-  kv.appendChild(titleCell('Micro‑pins')); kv.appendChild(microPills);
-  kv.appendChild(titleCell('Shots')); kv.appendChild(shotsBox);
-  kv.appendChild(titleCell('Settings')); kv.appendChild(textCell(loc.settings||''));
-  kv.appendChild(titleCell('Tides (The Battery)')); kv.appendChild(tideDiv);
-  kv.appendChild(titleCell('Moon')); kv.appendChild(moonDiv);
-  kv.appendChild(titleCell('Address')); kv.appendChild(addrDiv);
-  det.appendChild(kv);
-  det.appendChild(document.createElement('div')).className='hr';
-  det.appendChild(refWrap);
+  function addKV(k,el){ const kd=document.createElement('div'); kd.className='k'; kd.textContent=k; kv.appendChild(kd); kv.appendChild(el); }
+  addKV('Pins', pinsBox);
+  addKV('Micro‑pins', microPills);
+  addKV('Shots', shotsBox);
+  addKV('Settings', (()=>{const d=document.createElement('div'); d.textContent=loc.settings||''; return d;})());
+  addKV('Tides (The Battery)', tideDiv);
+  addKV('Moon', moonDiv);
+  addKV('Address', addrDiv);
+  det.appendChild(kv); det.appendChild(document.createElement('div')).className='hr'; det.appendChild(refWrap);
   card.appendChild(det);
 
-  // Button handlers
-  card.querySelector('.btnShow').addEventListener('click', ()=>flyTo(loc.id));
+  card.querySelector('.btnShow').addEventListener('click',()=>{ if(usingGoogle&&gmap){ const bounds=new google.maps.LatLngBounds(); const a=activeAnchor(loc); bounds.extend({lat:a.lat,lng:a.lon}); computeMicroAbs(loc).forEach(mp=>bounds.extend({lat:mp.lat,lng:mp.lon})); gmap.fitBounds(bounds,120);} else if(lmap){ const pts=computeMicroAbs(loc).map(mp=>[mp.lat,mp.lon]); const a=activeAnchor(loc); pts.push([a.lat,a.lon]); lmap.fitBounds(pts,{padding:[120,120]}); } });
   card.querySelector('.btnETA').addEventListener('click', ()=>etaToAnchor(loc));
   card.querySelector('.btnRoute').addEventListener('click', ()=>routeToAnchor(loc));
   return card;
@@ -675,10 +491,9 @@ async function cardFor(loc){
 function renderLightPanels(){
   computeTimes();
   const el=document.getElementById('lightpanels'); el.innerHTML='';
-  ["2025-10-03","2025-10-04"].forEach((k)=>{
-    const t=TIMES[k], iso=state.dayMap[k];
-    const p=document.createElement('div'); p.className='panel';
-    p.innerHTML=`<div class="section-title">${t.label} — Light • Moon • Tides</div>
+  ["2025-10-03","2025-10-04"].forEach(k=>{
+    const t=TIMES[k], p=document.createElement('div'); p.className='panel';
+    p.innerHTML=`<div class="section-title">${dayLabelISO(state.dayMap[k])} — Light • Moon • Tides</div>
       <div class="kv">
         <div class="k">Civil dawn</div><div>${t.civil_dawn}</div>
         <div class="k">Sunrise</div><div>${t.sunrise}</div>
@@ -693,11 +508,8 @@ function renderLightPanels(){
 function renderList(){
   const list=document.getElementById('list'); list.innerHTML='';
   const grouped=new Map();
-  visibleLocations().forEach(loc=>{
-    const key=dayLabelISO(state.dayMap[loc.day])+" | "+loc.block;
-    if(!grouped.has(key)) grouped.set(key,[]); grouped.get(key).push(loc);
-  });
-  for(const [key, arr] of grouped){
+  visibleLocations().forEach(loc=>{ const key=dayLabelISO(state.dayMap[loc.day])+" | "+loc.block; if(!grouped.has(key)) grouped.set(key,[]); grouped.get(key).push(loc); });
+  for(const [key,arr] of grouped){
     const [label, block]=key.split(" | ");
     const sec=document.createElement('section'); sec.className='panel';
     sec.innerHTML=`<div class="section-title">${label} — ${block}</div>`;
@@ -708,45 +520,41 @@ function renderList(){
   renderMarkers();
 }
 
+// Mode toggle
 function toggleMapMode(mode){
   state.mapMode=mode;
   document.getElementById('modeGoogle').classList.toggle('active', mode==='google');
   document.getElementById('modeLeaflet').classList.toggle('active', mode==='leaflet');
-  if(mode==='google') injectGoogle().then(initGoogle).catch(()=>alert('Google failed to load.')); else initLeaflet();
+  if(mode==='google'){
+    injectGoogle().then(()=>{ initGoogle(); renderMarkers(); }).catch(()=>{ alert('Google failed to load; falling back to Leaflet.'); initLeaflet(); renderMarkers(); });
+  } else { initLeaflet(); renderMarkers(); }
 }
 
-// ---- Header controls ----
+// UI init
 function initUI(){
-  document.getElementById("dateA").value=state.dayMap["2025-10-03"];
-  document.getElementById("dateB").value=state.dayMap["2025-10-04"];
-  document.getElementById("dateA").addEventListener('change', e=>{ state.dayMap["2025-10-03"]=e.target.value; saveLocal(); renderLightPanels(); renderList(); });
-  document.getElementById("dateB").addEventListener('change', e=>{ state.dayMap["2025-10-04"]=e.target.value; saveLocal(); renderLightPanels(); renderList(); });
-  document.querySelectorAll('input[name="day"]').forEach(cb=>cb.addEventListener('change', e=>{ const v=e.target.value; if(e.target.checked) state.day.add(v); else state.day.delete(v); renderList(); renderMarkers(); }));
-  document.querySelectorAll('input[name="block"]').forEach(cb=>cb.addEventListener('change', e=>{ const v=e.target.value; if(e.target.checked) state.blocks.add(v); else state.blocks.delete(v); renderList(); renderMarkers(); }));
+  document.getElementById('dateA').value=state.dayMap["2025-10-03"];
+  document.getElementById('dateB').value=state.dayMap["2025-10-04"];
+  document.getElementById('dateA').addEventListener('change',e=>{state.dayMap["2025-10-03"]=e.target.value; saveLocal(); renderLightPanels(); renderList();});
+  document.getElementById('dateB').addEventListener('change',e=>{state.dayMap["2025-10-04"]=e.target.value; saveLocal(); renderLightPanels(); renderList();});
+  document.querySelectorAll('input[name="day"]').forEach(cb=>cb.addEventListener('change',e=>{const v=e.target.value; if(e.target.checked) state.day.add(v); else state.day.delete(v); renderList(); renderMarkers();}));
+  document.querySelectorAll('input[name="block"]').forEach(cb=>cb.addEventListener('change',e=>{const v=e.target.value; if(e.target.checked) state.blocks.add(v); else state.blocks.delete(v); renderList(); renderMarkers();}));
   const rmin=document.getElementById('rankMin'), rmax=document.getElementById('rankMax');
-  [rmin,rmax].forEach(i=> i.addEventListener('input', ()=>{ state.rankMin=+rmin.value; state.rankMax=+rmax.value; document.getElementById('rankLabel').textContent=`#${state.rankMin}–#${state.rankMax}`; renderList(); renderMarkers(); }));
-  document.getElementById('proOnly').addEventListener('change', e=>{ state.proOnly=e.target.checked; renderList(); });
-  document.getElementById('q').addEventListener('input', e=>{ state.q=e.target.value; renderList(); });
-  document.getElementById('rain').addEventListener('change', e=>{ state.rain=e.target.checked; renderList(); });
-  document.getElementById('wind').addEventListener('change', e=>{ state.wind=e.target.checked; renderList(); });
-  document.getElementById('clear').addEventListener('click', ()=>{ state={...state, day:new Set(["2025-10-03","2025-10-04"]), blocks:new Set(["Morning","Afternoon","Evening","Night"]), rankMin:1, rankMax:5, proOnly:false, q:"", rain:false, wind:false}; document.querySelectorAll('input[name="day"]').forEach(cb=>cb.checked=true); document.querySelectorAll('input[name="block"]').forEach(cb=>cb.checked=true); rmin.value=1; rmax.value=5; document.getElementById('rankLabel').textContent="#1–#5"; renderList(); renderMarkers(); });
-  document.getElementById('expandAll').addEventListener('click', ()=>{ state.expandAll=true; renderList(); });
-  document.getElementById('collapseAll').addEventListener('click', ()=>{ state.expandAll=false; renderList(); });
+  [rmin,rmax].forEach(i=> i.addEventListener('input',()=>{ state.rankMin=+rmin.value; state.rankMax=+rmax.value; document.getElementById('rankLabel').textContent=`#${state.rankMin}–#${state.rankMax}`; renderList(); renderMarkers(); }));
+  document.getElementById('proOnly').addEventListener('change',e=>{ state.proOnly=e.target.checked; renderList(); });
+  document.getElementById('q').addEventListener('input',e=>{ state.q=e.target.value; renderList(); });
+  document.getElementById('rain').addEventListener('change',e=>{ state.rain=e.target.checked; renderList(); });
+  document.getElementById('wind').addEventListener('change',e=>{ state.wind=e.target.checked; renderList(); });
+  document.getElementById('expandAll').addEventListener('click',()=>{ state.expandAll=true; renderList(); });
+  document.getElementById('collapseAll').addEventListener('click',()=>{ state.expandAll=false; renderList(); });
   document.getElementById('exportCSV').addEventListener('click', exportCSV);
   document.getElementById('exportKML').addEventListener('click', exportKML);
   document.getElementById('print').addEventListener('click', ()=>window.print());
   document.getElementById('theme').addEventListener('click', toggleTheme);
-  document.getElementById('editMode').addEventListener('click', toggleEdit);
-  document.getElementById('editA').addEventListener('click', ()=>setEditWhat('anchor'));
-  document.getElementById('editM').addEventListener('click', ()=>setEditWhat('micro'));
-  document.getElementById('savePins').addEventListener('click', saveLocal);
-  document.getElementById('resetPins').addEventListener('click', resetLocal);
-
+  document.getElementById('editMode').addEventListener('click', ()=> alert('Drag pins in Google mode. Use the buttons in each card to jump to the anchor.'));
   document.getElementById('modeGoogle').addEventListener('click', ()=>toggleMapMode('google'));
   document.getElementById('modeLeaflet').addEventListener('click', ()=>toggleMapMode('leaflet'));
-
   document.getElementById('importJSON').addEventListener('change', e=>{ if(e.target.files[0]){ const r=new FileReader(); r.onload=()=>{ try{ const obj=JSON.parse(r.result); if(obj.LOCATIONS) LOCATIONS=obj.LOCATIONS; if(obj.state?.dayMap) state.dayMap=obj.state.dayMap; saveLocal(); renderLightPanels(); renderList(); renderMarkers(); }catch(err){ alert('Invalid JSON'); } }; r.readAsText(e.target.files[0]); } });
-  document.getElementById('exportJSON').addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify({LOCATIONS,state},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='NYC_Photo_Guide_v7.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); });
+  document.getElementById('exportJSON').addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify({LOCATIONS,state},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='NYC_Photo_Guide_v7_1.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); });
 }
 
 function toggleTheme(){
@@ -761,7 +569,7 @@ function toggleTheme(){
   }
 }
 
-// ---- Export helpers ----
+// Export helpers
 function exportCSV(){
   const rows=[["dayLabel","block","rank","name","activeAnchor","anchorLat","anchorLon"]];
   visibleLocations().forEach(l=>{ const a=activeAnchor(l); rows.push([dayLabelISO(state.dayMap[l.day]), l.block, l.rank, l.name, a.label, a.lat, a.lon]); });
@@ -773,26 +581,36 @@ function exportKML(){
   visibleLocations().forEach(p=>{
     const a=activeAnchor(p);
     const desc=`${dayLabelISO(state.dayMap[p.day])} • ${p.block} • Rank ${p.rank}`;
-    kml+=`<Placemark><name>${escapeXML(p.name+" — "+a.label)}</name><description><![CDATA[${desc}]]></description><Point><coordinates>${a.lon},${a.lat},0</coordinates></Point></Placemark>`;
+    kml+=`<Placemark><name>${p.name} — ${a.label}</name><description><![CDATA[${desc}]]></description><Point><coordinates>${a.lon},${a.lat},0</coordinates></Point></Placemark>`;
     computeMicroAbs(p).forEach(mp=>{
-      const d2=`${p.name} / ${mp.title}<br/>Dir: ${mp.dir}`;
-      kml+=`<Placemark><name>${escapeXML(p.name+" — "+mp.title)}</name><description><![CDATA[${d2}]]></description><Point><coordinates>${mp.lon},${mp.lat},0</coordinates></Point></Placemark>`;
+      const d2=`${p.name} / ${mp.title}`;
+      kml+=`<Placemark><name>${p.name} — ${mp.title}</name><description><![CDATA[${d2}]]></description><Point><coordinates>${mp.lon},${mp.lat},0</coordinates></Point></Placemark>`;
     });
   });
   kml+=`</Document></kml>`;
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([kml],{type:'text/plain'})); a.download='NYC_Photo_Pins.kml'; a.click();
 }
-function escapeXML(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-// ---- Init ----
-function init(){
+// Persistence
+function saveLocal(){ localStorage.setItem('nyc_photo_guide_'+CFG.dataVersion, JSON.stringify({LOCATIONS, state:{dayMap:state.dayMap}})); }
+function loadLocal(){ try{ const s=localStorage.getItem('nyc_photo_guide_'+CFG.dataVersion); if(s){ const o=JSON.parse(s); if(o.LOCATIONS) LOCATIONS=o.LOCATIONS; if(o.state?.dayMap) state.dayMap=o.state.dayMap; } }catch{} }
+
+// Boot
+async function init(){
   loadLocal();
   initUI();
   renderLightPanels();
+  // Initialize map engine first to avoid clearLayers() errors
+  try{
+    await injectGoogle();
+    initGoogle();
+    document.getElementById('modeGoogle').classList.add('active');
+  }catch{
+    initLeaflet();
+    document.getElementById('modeLeaflet').classList.add('active');
+  }
   renderList();
-  initMapAuto();
 }
-
 window.addEventListener('DOMContentLoaded', init);
 
 </script>
