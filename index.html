@@ -3,48 +3,50 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>NYC Photo Guide — v7.2 Hybrid</title>
+<title>NYC Photo Guide — v7.1 (Hybrid, fixed)</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-:root{--bg:#0b1220;--panel:#0f172a;--card:#0e1426;--text:#e6edf6;--muted:#9bb0c9;--border:#1f2a44;--blue:#60a5fa;--amber:#fbbf24;--violet:#a78bfa;--rose:#fb7185;--teal:#2dd4bf;}
+:root{--bg:#0b1220;--panel:#0f172a;--card:#0e1426;--text:#e6edf6;--muted:#9bb0c9;--border:#1f2a44;--blue:#60a5fa;--amber:#fbbf24;--violet:#a78bfa;--rose:#fb7185;--teal:#2dd4bf;--green:#34d399}
 *{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:var(--bg);color:var(--text)}
-header{position:sticky;top:0;z-index:50;background:linear-gradient(90deg,#0b1220,#10203c);border-bottom:1px solid var(--border)}
+header{position:sticky;top:0;z-index:40;background:linear-gradient(90deg,#0b1220,#10203c);border-bottom:1px solid var(--border)}
 .header{max-width:1280px;margin:0 auto;padding:.7rem .9rem;display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
 h1{margin:0 1rem 0 0;font-size:1.06rem;font-weight:800}
-.controls>*{background:#0a1326;border:1px solid var(--border);color:var(--text);border-radius:.55rem;padding:.45rem .6rem}
-.controls{display:flex;gap:.45rem;flex-wrap:wrap}
+.controls{display:flex;gap:.45rem;flex-wrap:wrap;align-items:center}
+.controls .chip, .controls button, .controls input, .controls label{background:#0a1326;border:1px solid var(--border);color:var(--text);border-radius:.55rem;padding:.45rem .6rem}
+.controls input[type="date"], .controls input[type="search"]{padding:.4rem .55rem}
 main{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(360px,560px) 1fr;gap:1rem;padding:1rem}
-@media(max-width:980px){main{grid-template-columns:1fr} .mapWrap{position:static;height:360px}}
+@media(max-width:1000px){main{grid-template-columns:1fr} .mapWrap{position:static;height:360px}}
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:1rem;padding:1rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:.9rem;margin:.7rem 0}
+.grid{display:grid;gap:.9rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:.9rem;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.card h3{margin:.1rem 0 .4rem 0;font-size:1.03rem}
+.badge{display:inline-block;margin-left:.4rem;border:1px solid var(--border);padding:.15rem .4rem;border-radius:.4rem}
+.badge.Morning{background:#0b203a;color:#a5e3ff} .badge.Afternoon{background:#2a1a00;color:#ffd08a} .badge.Evening{background:#1a1025;color:#e5d5ff} .badge.Night{background:#1e0c12;color:#ffc1c9}
 .kv{display:grid;grid-template-columns:140px 1fr;gap:.35rem .6rem}
 .k{color:var(--muted);font-weight:600}
-.badge{display:inline-block;border:1px solid var(--border);padding:.15rem .4rem;border-radius:.4rem;margin-left:.4rem}
-.badge.Morning{background:#0b203a;color:#a5e3ff} .badge.Afternoon{background:#2a1a00;color:#ffd08a} .badge.Evening{background:#1a1025;color:#e5d5ff} .badge.Night{background:#1e0c12;color:#ffc1c9}
-.pillset{display:flex;gap:.4rem;flex-wrap:wrap;margin:.3rem 0}
+.pillset{display:flex;gap:.4rem;flex-wrap:wrap}
 .pill{border:1px solid var(--border);padding:.25rem .5rem;border-radius:999px;background:#0b1326;color:#cfe1ff}
-.grid{display:grid;gap:.8rem}
+.mapWrap{position:sticky;top:130px;height:calc(100vh - 160px)}
+#gmap,#leaflet{height:100%;border:1px solid var(--border);border-radius:1rem}
 .modeTabs{display:flex;gap:.4rem;margin-bottom:.6rem}
 .modeTabs button{background:#0b1326;border:1px solid var(--border);color:#cfe1ff;border-radius:.5rem;padding:.35rem .55rem}
-.modeTabs button.active{outline:2px solid #60a5fa}
+.modeTabs button.active{outline:2px solid var(--blue)}
 .ref-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem}
-.ref-grid img{width:100%;height:100px;object-fit:cover;border-radius:.35rem;border:1px solid #24324d}
-.mapWrap{position:sticky;top:128px;height:calc(100vh - 150px)}
-#gmap,#leaflet{height:100%;border:1px solid var(--border);border-radius:1rem}
+.ref-grid img{width:100%;height:100px;object-fit:cover;border-radius:.35rem;border:1px solid #253551}
 small.muted{color:var(--muted)}
 </style>
 </head>
 <body>
 <header>
   <div class="header">
-    <h1>NYC Photo Guide — v7.2 (Hybrid)</h1>
+    <h1>NYC Photo Guide — v7.1 (Hybrid, fixed)</h1>
     <div class="controls">
-      <span>Visit days (NYC):</span>
+      <span class="chip">Visit days (NYC):</span>
       <input id="dateA" type="date" value="2025-10-03"/>
       <input id="dateB" type="date" value="2025-10-04"/>
       <button id="modeGoogle">Google Maps (online)</button>
       <button id="modeLeaflet">Leaflet (offline)</button>
-      <label>Import <input id="import" type="file" accept="application/json"/></label>
+      <label class="chip">Import <input id="import" type="file" accept="application/json"/></label>
       <button id="exportJSON">Export JSON</button>
       <button id="exportKML">Export KML</button>
     </div>
@@ -52,26 +54,31 @@ small.muted{color:var(--muted)}
 </header>
 
 <main>
-  <div class="panel">
+  <section class="panel">
     <div id="light"></div>
-  </div>
+  </section>
+
   <section class="panel">
     <b>Rules & Reminders</b>
     <ul>
       <li>Observation decks often restrict <b>tripods</b>. Shoot handheld or with a mini support.</li>
-      <li>Oculus / NYPL / Grand Central interiors: casual photos ok; professional rigs/tripods may <b>require permits</b>.</li>
-      <li>Subways: permitted without lights/reflectors/tripods; stay behind safety lines.</li>
+      <li>Grand Central / NYPL / Oculus interior: casual photos ok; professional rigs/tripods may <b>require permits</b>.</li>
+      <li>Subways: photography permitted without lights/reflectors/tripods; stay behind safety lines.</li>
       <li>Waterfront long exposures: check <b>NOAA “The Battery” tides</b> and wind.</li>
     </ul>
   </section>
+
   <div id="list" class="grid"></div>
+
   <div class="mapWrap">
     <div id="gmap" class="panel" style="display:none"></div>
     <div id="leaflet" class="panel" style="display:none"></div>
   </div>
 </main>
 
-<footer class="panel" style="max-width:1280px;margin:1rem auto">v7.2 hybrid • Google Maps + Places + NOAA tides • Leaflet fallback • Import/Export/Route/ETA/Reference Images.</footer>
+<footer class="panel" style="max-width:1280px;margin:1rem auto">
+  v7.1 features restored: Google/Leaflet toggle, Reference Images (Places), reverse‑geocode Address, NOAA tides, Moon, ETA/Route, micro‑pin “walk to here” links + tiny arrows (Google), Import/Export JSON, KML.
+</footer>
 
 <script>
 (function(){
@@ -83,112 +90,272 @@ small.muted{color:var(--muted)}
   function RA(l,b){return Math.atan2(Math.sin(l)*Math.cos(e)-Math.tan(b)*Math.sin(e),Math.cos(l));}
   function DEC(l,b){return Math.asin(Math.sin(b)*Math.cos(e)+Math.cos(b)*Math.sin(e)*Math.sin(l));}
   function sidereal(d,lw){return rad*(280.16+360.9856235*d)-lw;}
-  function sMeanAnom(d){return rad*(357.5291+0.98560028*d);}
+  function sMean(d){return rad*(357.5291+0.98560028*d);}
   function eLong(M){const C=rad*(1.9148*Math.sin(M)+0.02*Math.sin(2*M)+0.0003*Math.sin(3*M));const P=rad*102.9372;return M+C+P+PI;}
-  function sunC(d){const M=sMeanAnom(d),L=eLong(M);return {dec:DEC(L,0),ra:RA(L,0)};}
+  function sunC(d){const M=sMean(d),L=eLong(M);return {dec:DEC(L,0),ra:RA(L,0)};}
   function jCycle(d,lw){return Math.round(d-0.0009-lw/(2*PI));}
   function aTransit(Ht,lw,n){return 0.0009+(Ht+lw)/(2*PI)+n;}
   function sTransit(ds,M,L){return 2451545+ds+0.0053*Math.sin(M)-0.0069*Math.sin(2*L);}
   function hAngle(h,phi,d){return Math.acos((Math.sin(h)-Math.sin(phi)*Math.sin(d))/(Math.cos(phi)*Math.cos(d)));}
-  function getSetJ(h,lw,phi,dec,n,M,L){const w=hAngle(h,phi,dec),a=aTransit(w,lw,n);return sTransit(a,M,L);}
-  window.LiteSun={
-    sunTimes(date,lat,lng){
-      const lw=rad*-lng,phi=rad*lat,d=toDays(date),n=jCycle(d,lw),ds=aTransit(0,lw,n),M=sMeanAnom(d),L=eLong(M),dec=DEC(L,0);
-      const Jnoon=sTransit(ds,M,L),h0=(-0.833)*rad,Jset=getSetJ(h0,lw,phi,dec,n,M,L),Jrise=Jnoon-(Jset-Jnoon),hc=(-6)*rad,Jcset=getSetJ(hc,lw,phi,dec,n,M,L),Jcrise=Jnoon-(Jcset-Jnoon);
-      return {sunrise:fromJulian(Jrise),sunset:fromJulian(Jset),dawn:fromJulian(Jcrise),dusk:fromJulian(Jcset)};
+  function setJ(h,lw,phi,dec,n,M,L){const w=hAngle(h,phi,dec),a=aTransit(w,lw,n);return sTransit(a,M,L);}
+  window.Astro={
+    sun(date,lat,lng){
+      const lw=rad*-lng,phi=rad*lat,d=toDays(date),n=jCycle(d,lw),ds=aTransit(0,lw,n),M=sMean(d),L=eLong(M),dec=DEC(L,0);
+      const Jnoon=sTransit(ds,M,L),h0=(-0.833)*rad,Jset=setJ(h0,lw,phi,dec,n,M,L),Jrise=Jnoon-(Jset-Jnoon),
+            hc=(-6)*rad,Jcset=setJ(hc,lw,phi,dec,n,M,L),Jcrise=Jnoon-(Jcset-Jnoon);
+      return {rise:fromJulian(Jrise),set:fromJulian(Jset),dawn:fromJulian(Jcrise),dusk:fromJulian(Jcset)};
     },
-    moonTimes(date,lat,lng){
+    moon(date,lat,lng){
       function mC(d){const L=rad*(218.316+13.176396*d),M=rad*(134.963+13.064993*d),F=rad*(93.272+13.229350*d);let l=L+rad*6.289*Math.sin(M),b=rad*5.128*Math.sin(F);return {ra:RA(l,b),dec:DEC(l,b)};}
       const lw=-lng*rad,phi=lat*rad,d=toDays(new Date(date.setHours(0,0,0,0)))-0.5-lng/360;
       function alt(t){const m=mC(t),H=sidereal(t,lw)-m.ra;return Math.asin(Math.sin(phi)*Math.sin(m.dec)+Math.cos(phi)*Math.cos(m.dec)*Math.cos(H))-0.017;}
-      const h1=alt(d-1),h2=alt(d),h3=alt(d+1),a=(h1+h3)/2-h2,b=(h3-h1)/2,hc=0.133*rad; let rise=null,set=null; const disc=b*b-4*a*(h2-hc);
+      const h1=alt(d-1),h2=alt(d),h3=alt(d+1),a=(h1+h3)/2-h2,b=(h3-h1)/2,hc=0.133*rad;let rise=null,set=null;const disc=b*b-4*a*(h2-hc);
       if(disc>=0){const dx=Math.sqrt(disc);const x1=(-b-dx)/(2*a),x2=(-b+dx)/(2*a);if(x1>-1&&x1<1) rise=fromJulian(2451545+d+x1);if(x2>-1&&x2<1) set=fromJulian(2451545+d+x2);}
-      return {rise,set,illum:0.5};
+      return {rise,set,illum:.5};
     }
   };
 })();
 </script>
 <script>
 
-const CFG={apiKey:'AIzaSyDsq2ztFeFfmgqiRIZZtK5R7aCVGF66-80',nyc:{lat:40.7128,lon:-74.0060},ver:'v7.2-lite'};
-let LOC=[{"id": "bk_dumbo_keyhole", "name": "DUMBO \u2014 Washington & Water (Manhattan Bridge Keyhole)", "day": "2025-10-03", "block": "Morning", "rank": 1, "bearing": "NNE toward Manhattan", "whyNow": "Side\u2011lit steel and cobbles; fewer crowds early.", "gear": "16\u201324\u202fmm for wide frame; 35\u202fmm or 50\u202fmm for tighter moments.", "settings": "Handheld 1/250s+ @ f/5.6\u20138 ISO100\u2013400.", "activeAnchor": 0, "anchors": [{"label": "Main view", "lat": 40.703307, "lon": -73.990039}, {"label": "Alternate mid\u2011block", "lat": 40.703519, "lon": -73.989764}], "micro": [{"title": "Centerline", "r": 0, "bearing": 0, "dir": "NNE", "detail": "Feet on the crown of Washington St."}, {"title": "Step\u2011back", "r": 10, "bearing": 200, "dir": "NNE", "detail": "Back off to clear parked vans."}, {"title": "Corner curb", "r": 22, "bearing": 225, "dir": "NNE", "detail": "Low angle with cobble lead\u2011in."}], "pins": [{"title": "Parking gap watch", "detail": "Scan for a temporary car gap; shoot fast."}, {"title": "Reflections after wash", "detail": "Street wash leaves sheen on cobbles; use CPL if needed."}, {"title": "Taxi streaks", "detail": "If traffic starts, drag shutter 1/8\u20131/2s for streaks."}], "shots": [{"title": "Keyhole classic (16\u201324\u202fmm)", "detail": "ESB framed in the opening; keep verticals straight."}, {"title": "Mid\u2011block symmetry (24\u201335\u202fmm)", "detail": "Center seam aligned with roadway stripe."}, {"title": "Low cobbles (16\u201320\u202fmm)", "detail": "Camera just above ground for texture; watch for feet."}, {"title": "Backlit silhouettes", "detail": "Silhouette walkers; expose for sky."}, {"title": "Tight ESB crop (35\u201350\u202fmm)", "detail": "Graphic ESB framed by steel; wait for clean sidewalk."}]}];
-let state={dayMap:{'2025-10-03':'2025-10-03','2025-10-04':'2025-10-04'},day:new Set(['2025-10-03','2025-10-04']),blocks:new Set(['Morning','Afternoon','Evening','Night'])};
+const CFG={apiKey:'AIzaSyDsq2ztFeFfmgqiRIZZtK5R7aCVGF66-80',nyc:{lat:40.7128,lon:-74.0060},store:'nyc_photo_guide_v7_1_fixed'};
+let LOC=[{"id": "bk_dumbo_keyhole", "name": "DUMBO \u2014 Washington & Water (Manhattan Bridge Keyhole)", "day": "2025-10-03", "block": "Morning", "rank": 1, "pro": true, "bearing": "NNE toward Manhattan", "whyNow": "Side\u2011lit steel and cobbles; fewer crowds early.", "gear": "16\u201324\u202fmm for wide frame; 35\u202fmm or 50\u202fmm for tighter moments.", "settings": "Handheld 1/250s+ @ f/5.6\u20138 ISO 100\u2013400.", "activeAnchor": 0, "anchors": [{"label": "Main view", "lat": 40.703307, "lon": -73.990039}, {"label": "Alternate mid\u2011block", "lat": 40.703519, "lon": -73.989764}], "pins": [{"title": "Parking gap watch", "detail": "Scan for a temporary car gap; shoot fast."}, {"title": "Reflections after wash", "detail": "Street wash leaves sheen on cobbles\u2014CPL helps."}, {"title": "Taxi streaks", "detail": "If traffic starts, drag shutter 1/8\u20131/2s for streaks."}], "shots": [{"title": "Keyhole classic (16\u201324\u202fmm)", "detail": "ESB in the opening; keep verticals straight."}, {"title": "Mid\u2011block symmetry (24\u201335\u202fmm)", "detail": "Center seam aligned with roadway stripe."}, {"title": "Low cobbles (16\u201320\u202fmm)", "detail": "Camera just above ground for texture; mind feet."}, {"title": "Backlit silhouettes", "detail": "Silhouette walkers; expose for sky."}, {"title": "Tight ESB crop (35\u201350\u202fmm)", "detail": "Graphic ESB framed by steel; wait for clean sidewalk."}], "micro": [{"title": "Centerline", "r": 0, "bearing": 0, "dir": "NNE", "detail": "Feet on crown of Washington St."}, {"title": "Step\u2011back", "r": 10, "bearing": 200, "dir": "NNE", "detail": "Back off to clear parked vans."}, {"title": "Corner curb", "r": 22, "bearing": 225, "dir": "NNE", "detail": "Low angle, cobble lead\u2011in."}]}];
+let state={dayMap:{'2025-10-03':'2025-10-03','2025-10-04':'2025-10-04'},day:new Set(['2025-10-03','2025-10-04']),blocks:new Set(['Morning','Afternoon','Evening','Night']),rankMin:1,rankMax:5,proOnly:false,q:'',rain:false,wind:false,mapMode:'auto'};
 let TIMES={};
 
-const $=s=>document.querySelector(s);
-function fmtHM(d){const t=new Date(d),m=String(t.getMinutes()).padStart(2,'0');let h=t.getHours();const a=h>=12?'pm':'am';h=((h+11)%12)+1;return `${h}:${m} ${a}`;}
+// ===== Utilities =====
+const $=sel=>document.querySelector(sel);
+const $$=sel=>Array.from(document.querySelectorAll(sel));
+const on=(sel,ev,fn)=>{const el=$(sel); if(el) el.addEventListener(ev,fn);};
+function fmtHM(d){const t=new Date(d);const m=String(t.getMinutes()).padStart(2,'0');let h=t.getHours();const a=h>=12?'pm':'am';h=((h+11)%12)+1;return `${h}:${m} ${a}`;}
 function dayLabel(iso){const d=new Date(iso+'T12:00:00-04:00');return new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(d).replace(',',' •');}
 function activeAnchor(l){return l.anchors[l.activeAnchor||0];}
 function metersToLatLon(lat,m,deg){const dlat=(m*Math.cos(deg*Math.PI/180))/111111.0;const dlon=(m*Math.sin(deg*Math.PI/180))/(111111.0*Math.cos(lat*Math.PI/180));return {dlat,dlon};}
-function microAbs(l){const a=activeAnchor(l);return (l.micro||[]).map(m=>{const o=metersToLatLon(a.lat,m.r,m.bearing);return {title:m.title,lat:+(a.lat+o.dlat).toFixed(6),lon:+(a.lon+o.dlon).toFixed(6)};});}
-function computeTimes(){TIMES={};['2025-10-03','2025-10-04'].forEach(k=>{const iso=state.dayMap[k],d=new Date(iso+'T12:00:00-04:00');const s=LiteSun.sunTimes(new Date(d),CFG.nyc.lat,CFG.nyc.lon);const m=LiteSun.moonTimes(new Date(d),CFG.nyc.lat,CFG.nyc.lon);TIMES[k]={dawn:fmtHM(s.dawn),sunrise:fmtHM(s.sunrise),sunset:fmtHM(s.sunset),dusk:fmtHM(s.dusk),moonrise:m.rise?fmtHM(m.rise):'—',moonset:m.set?fmtHM(m.set):'—',illum:'~'+Math.round(m.illum*100)+'%'};});}
-async function tideText(iso){const ymd=iso.replace(/-/g,'');const u=`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=nyc-photo-guide&begin_date=${ymd}&end_date=${ymd}&datum=MLLW&station=8518750&time_zone=lst_ldt&interval=hilo&units=english&format=json`;try{const r=await fetch(u,{cache:'no-store'}),j=await r.json();if(j&&j.predictions){return j.predictions.map(p=>`${p.t.slice(11,16)} ${p.type} ${(+p.v).toFixed(1)} ft`).join(' • ');}}catch(e){}return 'Open NOAA high/low';}
+function microAbs(l){const a=activeAnchor(l);return (l.micro||[]).map(m=>{const o=metersToLatLon(a.lat,m.r,m.bearing);return {title:m.title,lat:+(a.lat+o.dlat).toFixed(6),lon:+(a.lon+o.dlon).toFixed(6),dir:m.dir,detail:m.detail};});}
+function visible(){return (LOC||[]).filter(l=>state.day.has(l.day)&&state.blocks.has(l.block)&&l.rank>=state.rankMin&&l.rank<=state.rankMax);}
+function gmaps(dir){return (lat,lon)=> dir?`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=walking`:`https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;}
 
-let usingGoogle=false,gmap=null,gPlaces=null,gGeo=null,gDS=null,gDR=null,lmap=null,lLayer=null;
-function injectGoogle(){return new Promise((res,rej)=>{if(window.google&&google.maps){res();return;}const s=document.createElement('script');s.src=`https://maps.googleapis.com/maps/api/js?key=${CFG.apiKey}&libraries=places`;s.async=true;s.onload=res;s.onerror=()=>rej(new Error('gmaps fail'));document.head.appendChild(s);});}
-function initGoogle(){usingGoogle=true;$('#leaflet').style.display='none';$('#gmap').style.display='block';gmap=new google.maps.Map($('#gmap'),{center:{lat:40.73,lng:-73.98},zoom:12,mapTypeControl:true,streetViewControl:true});gPlaces=new google.maps.places.PlacesService(gmap);gGeo=new google.maps.Geocoder();gDS=new google.maps.DistanceMatrixService();gDR=new google.maps.DirectionsRenderer({suppressMarkers:true,preserveViewport:true});gDR.setMap(gmap);}
-function initLeaflet(){usingGoogle=false;$('#gmap').style.display='none';$('#leaflet').style.display='block';if(!lmap){lmap=L.map('leaflet').setView([40.73,-73.98],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(lmap);lLayer=L.layerGroup().addTo(lmap);}}
+// ===== Sun/Moon & Tides =====
+function computeTimes(){
+  TIMES={};
+  ['2025-10-03','2025-10-04'].forEach(k=>{
+    const iso=state.dayMap[k], d=new Date(iso+'T12:00:00-04:00');
+    const s=Astro.sun(new Date(d), CFG.nyc.lat, CFG.nyc.lon);
+    const m=Astro.moon(new Date(d), CFG.nyc.lat, CFG.nyc.lon);
+    TIMES[k]={dawn:fmtHM(s.dawn),sunrise:fmtHM(s.rise),sunset:fmtHM(s.set),dusk:fmtHM(s.dusk),moonrise:m.rise?fmtHM(m.rise):'—',moonset:m.set?fmtHM(m.set):'—',illum:'~'+Math.round(m.illum*100)+'%'};
+  });
+}
+async function tideText(iso){
+  const ymd=iso.replace(/-/g,'');
+  const url=`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=nyc-photo-guide&begin_date=${ymd}&end_date=${ymd}&datum=MLLW&station=8518750&time_zone=lst_ldt&interval=hilo&units=english&format=json`;
+  try{const r=await fetch(url,{cache:'no-store'}); const j=await r.json(); if(j&&j.predictions){return j.predictions.map(p=>`${p.t.slice(11,16)} ${p.type} ${(+p.v).toFixed(1)} ft`).join(' • ');} }catch(e){}
+  return 'Open NOAA high/low';
+}
+
+// ===== Maps (Google + Leaflet fallback) =====
+let usingGoogle=false,gmap=null,gPlaces=null,gGeo=null,gDS=null,gDR=null,gArrows=[];
+let lmap=null,lLayer=null;
+function injectGoogle(){return new Promise((res,rej)=>{if(window.google&&google.maps){res();return;}const s=document.createElement('script');s.src=`https://maps.googleapis.com/maps/api/js?key=${CFG.apiKey}&libraries=places`;s.async=true;s.onload=res;s.onerror=()=>rej(new Error('gmaps load error'));document.head.appendChild(s);});}
+function initGoogle(){
+  usingGoogle=true; $('#leaflet').style.display='none'; $('#gmap').style.display='block';
+  gmap=new google.maps.Map($('#gmap'),{center:{lat:40.73,lng:-73.98},zoom:12,mapTypeControl:true,streetViewControl:true});
+  gPlaces=new google.maps.places.PlacesService(gmap); gGeo=new google.maps.Geocoder();
+  gDS=new google.maps.DistanceMatrixService(); gDR=new google.maps.DirectionsRenderer({suppressMarkers:true,preserveViewport:true}); gDR.setMap(gmap);
+}
+function initLeaflet(){
+  usingGoogle=false; $('#gmap').style.display='none'; $('#leaflet').style.display='block';
+  if(!lmap){ lmap=L.map('leaflet').setView([40.73,-73.98],12); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(lmap); lLayer=L.layerGroup().addTo(lmap); }
+}
 function blockColor(b){return b==='Morning'?'#60a5fa':b==='Afternoon'?'#fbbf24':b==='Evening'?'#a78bfa':'#fb7185';}
-function renderMarkers(){if(usingGoogle&&!gmap)return;if(!usingGoogle&&!lmap)return;if(!LOC.length)return;if(usingGoogle){const B=new google.maps.LatLngBounds();LOC.forEach(l=>{const a=activeAnchor(l);new google.maps.Marker({map:gmap,position:{lat:a.lat,lng:a.lon},title:l.name,icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:blockColor(l.block),fillOpacity:1,strokeColor:'#0b1220',strokeWeight:2}});B.extend({lat:a.lat,lng:a.lon});microAbs(l).forEach(mp=>{new google.maps.Marker({map:gmap,position:{lat:mp.lat,lng:mp.lon},title:mp.title,icon:{path:google.maps.SymbolPath.CIRCLE,scale:4,fillColor:'#2dd4bf',fillOpacity:1,strokeColor:'#093b36',strokeWeight:1}});B.extend({lat:mp.lat,lng:mp.lon});});});if(!B.isEmpty()) gmap.fitBounds(B,80);}else{lLayer.clearLayers();const pts=[];LOC.forEach(l=>{const a=activeAnchor(l);L.circleMarker([a.lat,a.lon],{radius:8,weight:2,color:blockColor(l.block),fillColor:blockColor(l.block),fillOpacity:.95}).addTo(lLayer);pts.push([a.lat,a.lon]);microAbs(l).forEach(mp=>{L.circleMarker([mp.lat,mp.lon],{radius:4,weight:1,color:'#2dd4bf',fillColor:'#2dd4bf',fillOpacity:.95}).addTo(lLayer);pts.push([mp.lat,mp.lon]);});});if(pts.length)lmap.fitBounds(pts,{padding:[80,80]});}}
-function placePhotos(container,l){if(!usingGoogle||!gPlaces){container.textContent='Switch to Google mode to load images.';return;}const a=activeAnchor(l),q=l.placeQuery||l.name;gPlaces.findPlaceFromQuery({query:q,fields:['place_id','name'],locationBias:{radius:300,center:{lat:a.lat,lng:a.lon}}},(res,st)=>{if(st!=='OK'||!res||!res[0]){container.textContent='No images found.';return;}gPlaces.getDetails({placeId:res[0].place_id,fields:['name','photos','url']},(det,st2)=>{if(st2!=='OK'||!det){container.textContent='No images available.';return;}const grid=document.createElement('div');grid.className='ref-grid';(det.photos||[]).slice(0,12).forEach(p=>{const img=document.createElement('img');img.loading='lazy';img.src=p.getUrl({maxWidth:400,maxHeight:400});img.title=det.name;img.addEventListener('click',()=>window.open(det.url,'_blank'));grid.appendChild(img);});container.innerHTML='';container.appendChild(grid);});});}
-function reverseAddress(a,cb){if(!usingGoogle||!gGeo){cb('');return;}gGeo.geocode({location:{lat:a.lat,lng:a.lon}},(res,st)=>cb(st==='OK'&&res[0]?res[0].formatted_address:''));}
+function clearMap(){
+  if(usingGoogle){ gArrows.forEach(p=>p.setMap(null)); gArrows=[]; }
+  else if(lLayer){ lLayer.clearLayers(); }
+}
+function renderMarkers(){
+  if(usingGoogle&&!gmap) return;
+  if(!usingGoogle&&!lmap) return;
+  clearMap();
+  const list=visible();
+  if(usingGoogle){
+    const bounds=new google.maps.LatLngBounds();
+    list.forEach(l=>{
+      const a=activeAnchor(l);
+      new google.maps.Marker({map:gmap,position:{lat:a.lat,lng:a.lon},title:l.name,
+        icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:blockColor(l.block),fillOpacity:1,strokeColor:'#0b1220',strokeWeight:2}});
+      bounds.extend({lat:a.lat,lng:a.lon});
+      microAbs(l).forEach(mp=>{
+        new google.maps.Marker({map:gmap,position:{lat:mp.lat,lng:mp.lon},title:mp.title,
+          icon:{path:google.maps.SymbolPath.CIRCLE,scale:4,fillColor:'#2dd4bf',fillOpacity:1,strokeColor:'#073d36',strokeWeight:1}});
+        // tiny direction arrow (short polyline)
+        const vec=[{lat:mp.lat,lng:mp.lon},{lat:mp.lat+(0.0003),lng:mp.lon}];
+        const pl=new google.maps.Polyline({path:vec,strokeColor:'#2dd4bf',strokeOpacity:.9,strokeWeight:2,
+          icons:[{icon:{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:2,strokeColor:'#2dd4bf',strokeOpacity:.9},offset:'100%'}]});
+        pl.setMap(gmap); gArrows.push(pl);
+      });
+    });
+    if(!bounds.isEmpty()) gmap.fitBounds(bounds,90);
+  } else {
+    const pts=[];
+    list.forEach(l=>{
+      const a=activeAnchor(l);
+      L.circleMarker([a.lat,a.lon],{radius:8,weight:2,color:blockColor(l.block),fillColor:blockColor(l.block),fillOpacity:.95}).addTo(lLayer);
+      pts.push([a.lat,a.lon]);
+      microAbs(l).forEach(mp=>{
+        L.circleMarker([mp.lat,mp.lon],{radius:4,weight:1,color:'#2dd4bf',fillColor:'#2dd4bf',fillOpacity:.95}).addTo(lLayer);
+      });
+    });
+    if(pts.length) lmap.fitBounds(pts,{padding:[90,90]});
+  }
+}
 
-function timing(line){const t=TIMES[line.day];if(!t)return'';if(line.block==='Morning')return `Arrive 6:00–7:30 am • Civil dawn ${t.dawn} • Sunrise ${t.sunrise}`;if(line.block==='Afternoon')return `Best 12:00–3:30 pm`;if(line.block==='Evening')return `Arrive 5:30–7:00 pm • Sunset ${t.sunset} • Civil dusk ${t.dusk}`;if(line.block==='Night')return `Start 6:50–9:00 pm • Civil dusk ${t.dusk} • Moonrise ${t.moonrise}`;return'';}
+// ===== Places / Reverse Geocode / Travel =====
+function loadPhotos(container, l){
+  if(!usingGoogle||!gPlaces){ container.textContent='Switch to Google mode to load images.'; return; }
+  const a=activeAnchor(l), query=l.placeQuery||l.name;
+  gPlaces.findPlaceFromQuery({query,fields:['place_id','name'],locationBias:{radius:300,center:{lat:a.lat,lng:a.lon}}}, (res,st)=>{
+    if(st!=='OK'||!res||!res[0]){ container.textContent='No images found.'; return; }
+    gPlaces.getDetails({placeId:res[0].place_id,fields:['name','photos','url']}, (det,st2)=>{
+      if(st2!=='OK'||!det){ container.textContent='No images available.'; return; }
+      const grid=document.createElement('div'); grid.className='ref-grid';
+      (det.photos||[]).slice(0,12).forEach(p=>{ const img=document.createElement('img'); img.loading='lazy'; img.src=p.getUrl({maxWidth:400,maxHeight:400}); img.title=det.name; img.addEventListener('click',()=>window.open(det.url,'_blank')); grid.appendChild(img); });
+      container.innerHTML=''; if(grid.childElementCount) container.appendChild(grid); else container.textContent='No images.';
+    });
+  });
+}
+function reverseAddress(a,cb){ if(!usingGoogle||!gGeo){ cb(''); return; } gGeo.geocode({location:{lat:a.lat,lng:a.lon}},(res,st)=> cb(st==='OK'&&res[0]?res[0].formatted_address:'')); }
+function ETAto(l){
+  if(!usingGoogle){ alert('Switch to Google mode (button above Light panel).'); return; }
+  if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const O={lat:pos.coords.latitude,lng:pos.coords.longitude}, A=activeAnchor(l);
+    gDS.getDistanceMatrix({origins:[O],destinations:[{lat:A.lat,lng:A.lon}],travelMode:'WALKING'}, (re,st)=>{
+      if(st==='OK'){ const e=re.rows[0].elements[0]; alert(`Walking ETA: ${e.duration.text} • ${e.distance.text}`); } else alert('DistanceMatrix failed: '+st);
+    });
+  });
+}
+function routeTo(l){
+  if(!usingGoogle){ alert('Switch to Google mode (button above Light panel).'); return; }
+  if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const O={lat:pos.coords.latitude,lng:pos.coords.longitude}, A=activeAnchor(l);
+    const svc=new google.maps.DirectionsService(), ren=new google.maps.DirectionsRenderer({suppressMarkers:true,preserveViewport:true}); ren.setMap(gmap);
+    svc.route({origin:O,destination:{lat:A.lat,lng:A.lon},travelMode:'WALKING'}, (re,st)=> st==='OK'?ren.setDirections(re):alert('Directions failed: '+st));
+  });
+}
 
-function card(l){const a=activeAnchor(l);const c=document.createElement('div');c.className='card';c.innerHTML=`<h3>${l.name}<span class="badge ${l.block}">${l.block}</span><span class="badge">Rank #${l.rank||1}</span></h3>
-<div class="kv"><div class="k">Why now</div><div>${l.whyNow||''}</div><div class="k">Timing</div><div>${timing(l)}</div><div class="k">Face & light</div><div>${l.bearing||''}</div><div class="k">Gear</div><div>${l.gear||''}</div></div>
-<div class="pillset" id="anc"></div>
-<div class="pillset" id="micros"></div>
-<div class="kv" id="kvMore"></div>
-<div class="pillset"><a class="pill" href="https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lon}" target="_blank">Open (anchor)</a><a class="pill" href="https://www.google.com/maps/dir/?api=1&destination=${a.lat},${a.lon}&travelmode=walking" target="_blank">Walk to anchor</a><button class="pill" id="btnShow">Show on map</button><button class="pill" id="btnETA">ETA</button><button class="pill" id="btnRoute">Route</button></div>
-<details><summary>Pins, shots, settings & reference images</summary><div id="pins"></div><div id="shots"></div><small class="muted" id="addr"></small><div style="margin:.5rem 0"><button class="pill" id="refBtn">Reference Images</button></div><div id="refImgs"></div></details>`;
+// ===== UI =====
+function timing(l){const t=TIMES[l.day]; if(!t) return ''; if(l.block==='Morning') return `Arrive 6:00–7:30 am • Civil dawn ${t.dawn} • Sunrise ${t.sunrise}`; if(l.block==='Afternoon') return `Best 12:00–3:30 pm`; if(l.block==='Evening') return `Arrive 5:30–7:00 pm • Sunset ${t.sunset} • Civil dusk ${t.dusk}`; if(l.block==='Night') return `Start 6:50–9:00 pm • Civil dusk ${t.dusk} • Moonrise ${t.moonrise}`; return '';}
+function expList(arr){ const ul=document.createElement('ul'); ul.style.listStyle='none'; ul.style.paddingLeft='0'; (arr||[]).forEach(x=>{ const li=document.createElement('li'); li.style.margin='.35rem 0'; const btn=document.createElement('button'); btn.className='pill'; btn.textContent=x.title; const body=document.createElement('div'); body.style.display='none'; body.style.marginTop='.35rem'; body.textContent=x.detail||''; btn.addEventListener('click',()=> body.style.display=body.style.display==='none'?'block':'none'); li.appendChild(btn); li.appendChild(body); ul.appendChild(li); }); return ul; }
+
+function card(l){
+  const a=activeAnchor(l);
+  const c=document.createElement('div'); c.className='card';
+  c.innerHTML=`<h3>${l.name}<span class="badge ${l.block}">${l.block}</span><span class="badge">Rank #${l.rank}</span></h3>
+  <div class="kv">
+    <div class="k">Why now</div><div>${l.whyNow||''}</div>
+    <div class="k">Timing</div><div>${timing(l)}</div>
+    <div class="k">Face & light</div><div>${l.bearing||''}</div>
+    <div class="k">Gear</div><div>${l.gear||''}</div>
+  </div>
+  <div class="pillset" id="anc"></div>
+  <div class="pillset"><a class="pill" href="${gmaps(false)(a.lat,a.lon)}" target="_blank">Open (anchor)</a><a class="pill" href="${gmaps(true)(a.lat,a.lon)}" target="_blank">Walk to anchor</a><button class="pill" id="show">Show on map</button><button class="pill" id="eta">ETA</button><button class="pill" id="route">Route</button></div>
+  <div class="pillset" id="micros"></div>
+  <div class="kv" id="kvMore"></div>
+  <details><summary>Pins, shots, settings & reference images</summary><div id="pins"></div><div id="shots"></div><div style="margin:.5rem 0"><button class="pill" id="refBtn">Reference Images</button></div><div id="refs"></div></details>`;
+
   // anchor pills
-  const anc=c.querySelector('#anc'); l.anchors.forEach((an,i)=>{const b=document.createElement('button');b.className='pill';b.textContent=an.label+(i===l.activeAnchor?' ✓':'');b.onclick=()=>{l.activeAnchor=i;renderMarkers();renderList();};anc.appendChild(b);});
-  // micro pin links
-  const micro=c.querySelector('#micros'); microAbs(l).forEach(mp=>{const a=document.createElement('a');a.className='pill';a.textContent=mp.title;a.href=`https://www.google.com/maps/dir/?api=1&destination=${mp.lat},${mp.lon}&travelmode=walking`;a.target='_blank';micro.appendChild(a);});
-  // pins & shots expanders
-  function expList(arr){const ul=document.createElement('ul');ul.style.listStyle='none';ul.style.paddingLeft='0';(arr||[]).forEach(x=>{const li=document.createElement('li');li.style.margin='.3rem 0';const btn=document.createElement('button');btn.className='pill';btn.textContent=x.title;const body=document.createElement('div');body.style.display='none';body.style.marginTop='.3rem';body.innerText=x.detail||'';btn.onclick=()=>{body.style.display=body.style.display==='none'?'block':'none'};li.appendChild(btn);li.appendChild(body);ul.appendChild(li);});return ul;}
+  const ap=c.querySelector('#anc');
+  (l.anchors||[]).forEach((an,i)=>{ const b=document.createElement('button'); b.className='pill'; b.textContent=an.label+(i===l.activeAnchor?' ✓':''); b.addEventListener('click',()=>{ l.activeAnchor=i; renderMarkers(); renderList(); }); ap.appendChild(b); });
+
+  // micro pills
+  const mp=c.querySelector('#micros');
+  microAbs(l).forEach(p=>{ const a=document.createElement('a'); a.className='pill'; a.textContent=p.title; a.href=gmaps(true)(p.lat,p.lon); a.target='_blank'; mp.appendChild(a); });
+
+  // pins & shots
   c.querySelector('#pins').appendChild(expList(l.pins)); c.querySelector('#shots').appendChild(expList(l.shots));
-  // tides & moon & address
-  const more=c.querySelector('#kvMore'); more.innerHTML=`<div class="k">Tides (Battery)</div><div id="tide">Loading…</div><div class="k">Moon</div><div>${TIMES[l.day].moonrise} • ${TIMES[l.day].moonset} • ${TIMES[l.day].illum}</div><div class="k">Address</div><div id="addrTxt"></div>`;
-  tideText(state.dayMap[l.day]).then(t=>c.querySelector('#tide').innerText=t); reverseAddress(a,addr=>c.querySelector('#addrTxt').innerText=addr||'');
+
+  const more=c.querySelector('#kvMore');
+  const t=TIMES[l.day];
+  more.innerHTML=`<div class="k">Tides (Battery)</div><div id="tide">Loading…</div>
+                  <div class="k">Moon</div><div>Rise ${t.moonrise} • Set ${t.moonset} • ${t.illum}</div>
+                  <div class="k">Address</div><div id="addr"></div>`;
+  tideText(state.dayMap[l.day]).then(s=> c.querySelector('#tide').textContent=s);
+  reverseAddress(a,addr=> c.querySelector('#addr').textContent=addr);
+
   // actions
-  c.querySelector('#btnShow').onclick=()=>{ if(usingGoogle){const b=new google.maps.LatLngBounds();const a=activeAnchor(l);b.extend({lat:a.lat,lng:a.lon});microAbs(l).forEach(mp=>b.extend({lat:mp.lat,lng:mp.lon}));gmap.fitBounds(b,120);} else {const pts=microAbs(l).map(mp=>[mp.lat,mp.lon]);const a=activeAnchor(l);pts.push([a.lat,a.lon]);lmap.fitBounds(pts,{padding:[120,120]});} };
-  c.querySelector('#btnETA').onclick=()=>{ if(!usingGoogle){alert('Switch to Google mode');return;} if(!navigator.geolocation){alert('Geolocation not supported');return;} navigator.geolocation.getCurrentPosition(pos=>{const O={lat:pos.coords.latitude,lng:pos.coords.longitude};const A=activeAnchor(l);gDS.getDistanceMatrix({origins:[O],destinations:[{lat:A.lat,lng:A.lon}],travelMode:'WALKING'},(re,st)=>{if(st==='OK'){const e=re.rows[0].elements[0];alert(`Walking ETA: ${e.duration.text} • ${e.distance.text}`);}else alert('DistanceMatrix failed: '+st);});});};
-  c.querySelector('#btnRoute').onclick=()=>{ if(!usingGoogle){alert('Switch to Google mode');return;} if(!navigator.geolocation){alert('Geolocation not supported');return;} navigator.geolocation.getCurrentPosition(pos=>{const O={lat:pos.coords.latitude,lng:pos.coords.longitude};const A=activeAnchor(l);const svc=new google.maps.DirectionsService();const ren=new google.maps.DirectionsRenderer({suppressMarkers:true,preserveViewport:true});ren.setMap(gmap);svc.route({origin:O,destination:{lat:A.lat,lng:A.lon},travelMode:'WALKING'},(re,st)=>{if(st==='OK')ren.setDirections(re);else alert('Directions failed: '+st);});});};
-  c.querySelector('#refBtn').onclick=()=>placePhotos(c.querySelector('#refImgs'),l);
+  c.querySelector('#show').addEventListener('click',()=>{
+    if(usingGoogle){ const B=new google.maps.LatLngBounds(); const A=activeAnchor(l); B.extend({lat:A.lat,lng:A.lon}); microAbs(l).forEach(p=>B.extend({lat:p.lat,lng:p.lon})); gmap.fitBounds(B,120); }
+    else { const pts=microAbs(l).map(p=>[p.lat,p.lon]); const A=activeAnchor(l); pts.push([A.lat,A.lon]); lmap.fitBounds(pts,{padding:[120,120]}); }
+  });
+  c.querySelector('#eta').addEventListener('click',()=>ETAto(l));
+  c.querySelector('#route').addEventListener('click',()=>routeTo(l));
+  c.querySelector('#refBtn').addEventListener('click',()=>loadPhotos(c.querySelector('#refs'),l));
+
   return c;
 }
 
-function renderLight(){computeTimes();const root=$('#light');root.innerHTML='';['2025-10-03','2025-10-04'].forEach(k=>{const t=TIMES[k];const p=document.createElement('div');p.className='panel';p.innerHTML=`<div><b>${dayLabel(state.dayMap[k])} — Light • Moon • Tides</b></div>
-<div class="kv"><div class="k">Civil dawn</div><div>${t.dawn}</div><div class="k">Sunrise</div><div>${t.sunrise}</div><div class="k">Sunset</div><div>${t.sunset}</div><div class="k">Civil dusk</div><div>${t.dusk}</div><div class="k">Moon</div><div>Rise ${t.moonrise} • Set ${t.moonset} • ${t.illum}</div></div>`;root.appendChild(p);});}
-
-function renderList(){const list=$('#list');list.innerHTML='';const groups=new Map();(LOC||[]).forEach(l=>{if(!state.day.has(l.day))return;const key=dayLabel(state.dayMap[l.day])+' | '+l.block;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(l);});for(const [key,arr] of groups){const [label,block]=key.split(' | ');const sec=document.createElement('section');sec.className='panel';sec.innerHTML=`<div><b>${label} — ${block}</b></div>`;const grid=document.createElement('div');grid.className='grid';arr.sort((a,b)=>a.rank-b.rank).forEach(l=>grid.appendChild(card(l)));sec.appendChild(grid);list.appendChild(sec);}renderMarkers();}
-
-function exportJSON(){const blob=new Blob([JSON.stringify({LOC,state},{spaces:0})],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='NYC_Photo_Guide_v7_2.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
-function importJSON(file){const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(r.result); if(obj.LOC) LOC=obj.LOC; if(obj.state&&obj.state.dayMap) state.dayMap=obj.state.dayMap; saveLocal(); renderLight(); renderList(); }catch(e){alert('Invalid JSON');}};r.readAsText(file);}
-function exportKML(){let kml=`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>NYC Photo Pins</name>`;(LOC||[]).forEach(l=>{const a=activeAnchor(l);kml+=`<Placemark><name>${l.name} — ${a.label}</name><Point><coordinates>${a.lon},${a.lat},0</coordinates></Point></Placemark>`;microAbs(l).forEach(mp=>{kml+=`<Placemark><name>${l.name} — ${mp.title}</name><Point><coordinates>${mp.lon},${mp.lat},0</coordinates></Point></Placemark>`;});});kml+='</Document></kml>';const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([kml],{type:'text/xml'}));a.download='NYC_Photo_Pins.kml';a.click();}
-
-function saveLocal(){localStorage.setItem('nyc_pg_'+CFG.ver,JSON.stringify({LOC,state}));}
-function loadLocal(){try{const s=localStorage.getItem('nyc_pg_'+CFG.ver);if(s){const o=JSON.parse(s);if(o.LOC)LOC=o.LOC;if(o.state&&o.state.dayMap)state.dayMap=o.state.dayMap;}}catch(e){}}
-
-async function boot(){
-  loadLocal();
-  // UI
-  document.querySelector('#modeGoogle').onclick=async()=>{try{await injectGoogle();initGoogle();document.querySelector('#modeGoogle').classList.add('active');document.querySelector('#modeLeaflet').classList.remove('active');renderMarkers();}catch(e){alert('Google Maps failed to load');}};
-  document.querySelector('#modeLeaflet').onclick=()=>{initLeaflet();document.querySelector('#modeLeaflet').classList.add('active');document.querySelector('#modeGoogle').classList.remove('active');renderMarkers();};
-  document.querySelector('#dateA').value=state.dayMap['2025-10-03']; document.querySelector('#dateB').value=state.dayMap['2025-10-04'];
-  document.querySelector('#dateA').onchange=e=>{state.dayMap['2025-10-03']=e.target.value;saveLocal();renderLight();renderList();};
-  document.querySelector('#dateB').onchange=e=>{state.dayMap['2025-10-04']=e.target.value;saveLocal();renderLight();renderList();};
-  document.querySelector('#exportJSON').onclick=exportJSON;
-  document.querySelector('#exportKML').onclick=exportKML;
-  document.querySelector('#import').onchange=e=>{if(e.target.files[0]) importJSON(e.target.files[0]);};
-
-  renderLight();
-  try{await injectGoogle();initGoogle();document.querySelector('#modeGoogle').classList.add('active');}catch(e){initLeaflet();document.querySelector('#modeLeaflet').classList.add('active');}
-  renderList();
+function renderLight(){
+  computeTimes();
+  const root=$('#light'); if(!root) return; root.innerHTML='';
+  ['2025-10-03','2025-10-04'].forEach(k=>{
+    const t=TIMES[k];
+    const p=document.createElement('div'); p.className='panel';
+    p.innerHTML=`<div><b>${dayLabel(state.dayMap[k])} — Light • Moon • Tides</b></div>
+      <div class="kv">
+        <div class="k">Civil dawn</div><div>${t.dawn}</div>
+        <div class="k">Sunrise</div><div>${t.sunrise}</div>
+        <div class="k">Sunset</div><div>${t.sunset}</div>
+        <div class="k">Civil dusk</div><div>${t.dusk}</div>
+        <div class="k">Moon</div><div>Rise ${t.moonrise} • Set ${t.moonset} • ${t.illum}</div>
+      </div>`;
+    root.appendChild(p);
+  });
+}
+function renderList(){
+  const list=$('#list'); list.innerHTML='';
+  const groups=new Map();
+  visible().forEach(l=>{ const key=dayLabel(state.dayMap[l.day])+' | '+l.block; if(!groups.has(key)) groups.set(key,[]); groups.get(key).push(l); });
+  for(const [key,arr] of groups){
+    const [label,block]=key.split(' | ');
+    const sec=document.createElement('section'); sec.className='panel'; sec.innerHTML=`<div><b>${label} — ${block}</b></div>`;
+    const grid=document.createElement('div'); grid.className='grid';
+    arr.sort((a,b)=>a.rank-b.rank).forEach(l=> grid.appendChild(card(l)));
+    sec.appendChild(grid); list.appendChild(sec);
+  }
+  renderMarkers();
 }
 
+// ===== Persistence / Import / Export =====
+function saveLocal(){ localStorage.setItem(CFG.store, JSON.stringify({LOC,state})); }
+function loadLocal(){ try{ const s=localStorage.getItem(CFG.store) || localStorage.getItem('nyc_photo_guide_v7_1') || localStorage.getItem('nyc_photo_guide_v7'); if(s){ const o=JSON.parse(s); if(o.LOC) LOC=o.LOC; if(o.state&&o.state.dayMap) state.dayMap=o.state.dayMap; } }catch(e){} }
+function exportJSON(){ const blob=new Blob([JSON.stringify({LOC,state},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='NYC_Photo_Guide_v7_1_fixed.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
+function importJSON(file){ const r=new FileReader(); r.onload=()=>{ try{ const o=JSON.parse(r.result); if(o.LOC) LOC=o.LOC; if(o.state&&o.state.dayMap) state.dayMap=o.state.dayMap; saveLocal(); renderLight(); renderList(); }catch(e){ alert('Invalid JSON'); } }; r.readAsText(file); }
+function exportKML(){ let kml=`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>NYC Photo Pins</name>`; visible().forEach(l=>{ const a=activeAnchor(l); kml+=`<Placemark><name>${l.name} — ${a.label}</name><Point><coordinates>${a.lon},${a.lat},0</coordinates></Point></Placemark>`; microAbs(l).forEach(mp=>{ kml+=`<Placemark><name>${l.name} — ${mp.title}</name><Point><coordinates>${mp.lon},${mp.lat},0</coordinates></Point></Placemark>`; }); }); kml+='</Document></kml>'; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([kml],{type:'application/vnd.google-earth.kml+xml'})); a.download='NYC_Photo_Pins.kml'; a.click(); }
+
+// ===== Boot =====
+async function boot(){
+  loadLocal();
+  // Controls (null-safe)
+  const dA=$('#dateA'), dB=$('#dateB');
+  if(dA) dA.value=state.dayMap['2025-10-03'];
+  if(dB) dB.value=state.dayMap['2025-10-04'];
+  if(dA) dA.addEventListener('change',e=>{ state.dayMap['2025-10-03']=e.target.value; saveLocal(); renderLight(); renderList(); });
+  if(dB) dB.addEventListener('change',e=>{ state.dayMap['2025-10-04']=e.target.value; saveLocal(); renderLight(); renderList(); });
+  on('#exportJSON','click',exportJSON);
+  on('#exportKML','click',exportKML);
+  const imp=$('#import'); if(imp) imp.addEventListener('change',e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); });
+
+  // Light + Map engine (Google first, fallback to Leaflet)
+  renderLight();
+  try{ await injectGoogle(); initGoogle(); $('#modeGoogle')?.classList.add('active'); }
+  catch(e){ initLeaflet(); $('#modeLeaflet')?.classList.add('active'); }
+
+  // Mode buttons
+  on('#modeGoogle','click',()=> injectGoogle().then(()=>{ initGoogle(); $('#modeGoogle').classList.add('active'); $('#modeLeaflet').classList.remove('active'); renderMarkers(); }));
+  on('#modeLeaflet','click',()=>{ initLeaflet(); $('#modeLeaflet').classList.add('active'); $('#modeGoogle').classList.remove('active'); renderMarkers(); });
+
+  renderList();
+}
 window.addEventListener('DOMContentLoaded', boot);
 
 </script>
