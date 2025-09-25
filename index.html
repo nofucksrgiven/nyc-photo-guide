@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>NYC Photo Guide — v8 (Hybrid)</title>
+<title>NYC Photo Guide — v8.2 (Hybrid)</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 :root{
@@ -48,6 +48,19 @@ small.muted{color:var(--muted)}
   <b>Diagnostics</b> — <span id="diagStatus">booting…</span>
   <div id="diagErr" style="margin-top:.25rem;white-space:pre-wrap"></div>
 </div>
+
+<script>
+window.__setValueSafe = function(el, val){
+  try {
+    if (!el) return false;
+    if ('value' in el) { el.value = val; return true; }
+    return false;
+  } catch(e){
+    console.error('setValueSafe error', e);
+    return false;
+  }
+};
+</script>
 <script>
 (function(){
   const s=document.getElementById('diagStatus'), box=document.getElementById('diagErr');
@@ -60,7 +73,7 @@ small.muted{color:var(--muted)}
 
 <header>
   <div class="header">
-    <h1>NYC Photo Guide — v8 (Hybrid)</h1>
+    <h1>NYC Photo Guide — v8.2 (Hybrid)</h1>
     <div class="controls">
       <span class="chip">Visit days (NYC):</span>
       <label class="chip" for="dateA">Day A</label><input id="dateA" type="date" value="2025-10-03"/>
