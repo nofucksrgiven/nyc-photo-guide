@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>NYC Photo Guide — v8.3 (Hybrid)</title>
+<title>NYC Photo Guide — v8.4 (Hybrid)</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 :root{
@@ -44,10 +44,49 @@ small.muted{color:var(--muted)}
 </style>
 </head>
 <body>
+
+<script>
+window.safeAppend = function(parent, child){
+  try{
+    if(parent && typeof parent.appendChild === 'function' && child){
+      return safeAppend(parent,child);
+    }
+  }catch(e){ console.error('safeAppend error', e); }
+  return null;
+};
+</script>
+
+
+<script>
+// Safe query helper: never throws when element is missing
+const $ = (id) => {
+  const el = document.getElementById(id);
+  if (el) return el;
+  const noop = {};
+  Object.defineProperty(noop, 'value', { get(){}, set(_){} });
+  noop.addEventListener = () => {};
+  noop.appendChild = () => null;
+  return noop;
+};
+</script>
+
 <div id="diag" style="position:sticky;top:0;z-index:9999;background:#111827;color:#f9fafb;border-bottom:1px solid #334155;padding:.35rem .6rem;font:12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial;">
   <b>Diagnostics</b> — <span id="diagStatus">booting…</span>
   <div id="diagErr" style="margin-top:.25rem;white-space:pre-wrap"></div>
 </div>
+
+<script>
+window.__setValueSafe = function(el, val){
+  try {
+    if (!el) return false;
+    if ('value' in el) { el.value = val; return true; }
+    return false;
+  } catch(e){
+    console.error('setValueSafe error', e);
+    return false;
+  }
+};
+</script>
 <script>
 (function(){
   const s=document.getElementById('diagStatus'), box=document.getElementById('diagErr');
@@ -60,7 +99,7 @@ small.muted{color:var(--muted)}
 
 <header>
   <div class="header">
-    <h1>NYC Photo Guide — v8.3 (Hybrid)</h1>
+    <h1>NYC Photo Guide — v8.4 (Hybrid)</h1>
     <div class="controls">
       <span class="chip">Visit days (NYC):</span>
       <label class="chip" for="dateA">Day A</label><input id="dateA" type="date" value="2025-10-03"/>
@@ -162,17 +201,7 @@ let LOCATIONS=[{"id": "dumbo_washington_water_manhattan_bridge_keyhole", "name":
 let state={dayMap:{'2025-10-03':'2025-10-03','2025-10-04':'2025-10-04'},day:new Set(['2025-10-03','2025-10-04']),blocks:new Set(['Morning','Afternoon','Evening','Night']),rankMin:1,rankMax:5,proOnly:false,q:'',rain:false,wind:false,expandAll:false,editMode:false};
 let TIMES={};
 
-const $=id=>{
-  const el=document.getElementById(id);
-  if (el) return el;
-  // return a safe no-op proxy so .value and event assignments won't throw
-  const noop={};
-  try{
-    Object.defineProperty(noop,'value',{get(){return undefined;}, set(v){} });
-  }catch(e){}
-  noop.addEventListener=()=>{};
-  return noop;
-};
+const $=id=>document.getElementById(id);
 function fmtHM(d){const t=new Date(d),m=String(t.getMinutes()).padStart(2,'0');let h=t.getHours(),a=h>=12?'pm':'am';h=((h+11)%12)+1;return `${h}:${m} ${a}`;}
 function dayLabel(iso){const d=new Date(iso+'T12:00:00-04:00');return new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(d).replace(',',' •');}
 function activeAnchor(l){return l.anchors[l.activeAnchor||0];}
@@ -204,7 +233,7 @@ let lmap=null,lLayer=null; let mainMarkers={},microMarkers={},arrowPolylines={};
 function injectGoogle(){
   return new Promise((res,rej)=>{
     if(window.google&&google.maps){res();return;}
-    const s=document.createElement('script'); s.src=`https://maps.googleapis.com/maps/api/js?key=${CFG.apiKey}&libraries=places`; s.async=true; s.onload=res; s.onerror=()=>rej(new Error('Google Maps failed')); document.head.appendChild(s);
+    const s=document.createElement('script'); s.src=`https://maps.googleapis.com/maps/api/js?key=${CFG.apiKey}&libraries=places`; s.async=true; s.onload=res; s.onerror=()=>rej(new Error('Google Maps failed')); safeAppend(document.head,s);
   });
 }
 function initGoogle(){
@@ -260,8 +289,8 @@ function loadRef(container, loc){
     gPlaces.getDetails({placeId:res[0].place_id,fields:['name','photos','url']}, (det,st2)=>{
       if(st2!=='OK'||!det){ container.textContent='No images available.'; return; }
       const grid=document.createElement('div'); grid.className='ref-grid';
-      (det.photos||[]).slice(0,12).forEach(p=>{ const img=document.createElement('img'); img.loading='lazy'; img.src=p.getUrl({maxWidth:400,maxHeight:400}); img.title=det.name; img.addEventListener('click',()=>window.open(det.url,'_blank')); grid.appendChild(img); });
-      container.innerHTML=''; grid.childElementCount?container.appendChild(grid):container.textContent='No images.';
+      (det.photos||[]).slice(0,12).forEach(p=>{ const img=document.createElement('img'); img.loading='lazy'; img.src=p.getUrl({maxWidth:400,maxHeight:400}); img.title=det.name; img.addEventListener('click',()=>window.open(det.url,'_blank')); safeAppend(grid,img); });
+      container.innerHTML=''; grid.childElementCount?safeAppend(container,grid):container.textContent='No images.';
     });
   });
 }
@@ -305,7 +334,7 @@ function routeTo(loc){
 
 // UI
 function timing(l){const t=TIMES[l.day]; if(!t) return ''; if(l.block==='Morning') return `Arrive 6:00–7:30 am • Civil dawn ${t.dawn} • Sunrise ${t.sunrise}`; if(l.block==='Afternoon') return `Best 12:00–3:30 pm`; if(l.block==='Evening') return `Arrive 5:30–7:00 pm • Sunset ${t.sunset} • Civil dusk ${t.dusk}`; if(l.block==='Night') return `Start 6:50–9:00 pm • Civil dusk ${t.dusk} • Moonrise ${t.moonrise}`; return '';}
-function expList(arr){const ul=document.createElement('ul'); ul.style.listStyle='none'; ul.style.paddingLeft='0'; (arr||[]).forEach(x=>{ const li=document.createElement('li'); li.style.margin='.35rem 0'; const btn=document.createElement('button'); btn.className='pill'; btn.textContent=x.title; const body=document.createElement('div'); body.style.display='none'; body.style.marginTop='.35rem'; body.textContent=x.detail||''; btn.onclick=()=> body.style.display=body.style.display==='none'?'block':'none'; li.appendChild(btn); li.appendChild(body); ul.appendChild(li); }); return ul; }
+function expList(arr){const ul=document.createElement('ul'); ul.style.listStyle='none'; ul.style.paddingLeft='0'; (arr||[]).forEach(x=>{ const li=document.createElement('li'); li.style.margin='.35rem 0'; const btn=document.createElement('button'); btn.className='pill'; btn.textContent=x.title; const body=document.createElement('div'); body.style.display='none'; body.style.marginTop='.35rem'; body.textContent=x.detail||''; btn.onclick=()=> body.style.display=body.style.display==='none'?'block':'none'; safeAppend(li,btn); safeAppend(li,body); safeAppend(ul,li); }); return ul; }
 
 function card(l){
   const a=activeAnchor(l); const c=document.createElement('div'); c.className='card';
@@ -318,8 +347,8 @@ function card(l){
   <details><summary>Pins, shots, settings & reference images</summary><div id="pins"></div><div id="shots"></div><div style="margin:.5rem 0"><button class="pill" id="refBtn">Reference Images</button></div><div id="refImgs"></div></details>`;
 
   const anc=c.querySelector('#anc');
-  (l.anchors||[]).forEach((an,i)=>{ const b=document.createElement('button'); b.className='pill'; b.textContent=an.label+(i===l.activeAnchor?' ✓':''); b.onclick=()=>{ l.activeAnchor=i; saveLocal(); renderMarkers(); renderList(); }; anc.appendChild(b); });
-  const micro=c.querySelector('#micros'); computeMicroAbs(l).forEach(mp=>{ const a=document.createElement('a'); a.className='pill'; a.textContent=mp.title; a.href=`https://www.google.com/maps/dir/?api=1&destination=${mp.lat},${mp.lon}&travelmode=walking`; a.target='_blank'; micro.appendChild(a); });
+  (l.anchors||[]).forEach((an,i)=>{ const b=document.createElement('button'); b.className='pill'; b.textContent=an.label+(i===l.activeAnchor?' ✓':''); b.onclick=()=>{ l.activeAnchor=i; saveLocal(); renderMarkers(); renderList(); }; safeAppend(anc,b); });
+  const micro=c.querySelector('#micros'); computeMicroAbs(l).forEach(mp=>{ const a=document.createElement('a'); a.className='pill'; a.textContent=mp.title; a.href=`https://www.google.com/maps/dir/?api=1&destination=${mp.lat},${mp.lon}&travelmode=walking`; a.target='_blank'; safeAppend(micro,a); });
   c.querySelector('#pins').appendChild(expList(l.pins)); c.querySelector('#shots').appendChild(expList(l.shots));
 
   const more=c.querySelector('#kvMore'); const t=TIMES[l.day];
@@ -335,8 +364,8 @@ function card(l){
   return c;
 }
 
-function renderLight(){ computeTimes(); const root=$('#lightpanels'); root.innerHTML=''; ['2025-10-03','2025-10-04'].forEach(k=>{const t=TIMES[k]; const p=document.createElement('div'); p.className='panel'; p.innerHTML=`<div class="section-title">${dayLabel(state.dayMap[k])} — Light • Moon • Tides</div><div class="kv"><div class="k">Civil dawn</div><div>${t.dawn}</div><div class="k">Sunrise</div><div>${t.sunrise}</div><div class="k">Sunset</div><div>${t.sunset}</div><div class="k">Civil dusk</div><div>${t.dusk}</div><div class="k">Moon</div><div>Rise ${t.moonrise} • Set ${t.moonset} • ${t.illum}</div></div>`; root.appendChild(p); }); }
-function renderList(){ const list=$('#list'); list.innerHTML=''; const groups=new Map(); visible().forEach(l=>{const key=dayLabel(state.dayMap[l.day])+' | '+l.block; if(!groups.has(key)) groups.set(key,[]); groups.get(key).push(l);}); for(const [key,arr] of groups){ const [label,block]=key.split(' | '); const sec=document.createElement('section'); sec.className='panel'; sec.innerHTML=`<div class="section-title">${label} — ${block}</div>`; const grid=document.createElement('div'); grid.className='grid'; arr.sort((a,b)=>a.rank-b.rank).forEach(l=> grid.appendChild(card(l))); sec.appendChild(grid); list.appendChild(sec);} renderMarkers(); }
+function renderLight(){ computeTimes(); const root=$('#lightpanels'); root.innerHTML=''; ['2025-10-03','2025-10-04'].forEach(k=>{const t=TIMES[k]; const p=document.createElement('div'); p.className='panel'; p.innerHTML=`<div class="section-title">${dayLabel(state.dayMap[k])} — Light • Moon • Tides</div><div class="kv"><div class="k">Civil dawn</div><div>${t.dawn}</div><div class="k">Sunrise</div><div>${t.sunrise}</div><div class="k">Sunset</div><div>${t.sunset}</div><div class="k">Civil dusk</div><div>${t.dusk}</div><div class="k">Moon</div><div>Rise ${t.moonrise} • Set ${t.moonset} • ${t.illum}</div></div>`; safeAppend(root,p); }); }
+function renderList(){ const list=$('#list'); list.innerHTML=''; const groups=new Map(); visible().forEach(l=>{const key=dayLabel(state.dayMap[l.day])+' | '+l.block; if(!groups.has(key)) groups.set(key,[]); groups.get(key).push(l);}); for(const [key,arr] of groups){ const [label,block]=key.split(' | '); const sec=document.createElement('section'); sec.className='panel'; sec.innerHTML=`<div class="section-title">${label} — ${block}</div>`; const grid=document.createElement('div'); grid.className='grid'; arr.sort((a,b)=>a.rank-b.rank).forEach(l=> safeAppend(grid,card(l))); safeAppend(sec,grid); safeAppend(list,sec);} renderMarkers(); }
 
 function saveLocal(){ localStorage.setItem(CFG.store, JSON.stringify({LOCATIONS, state:{dayMap:state.dayMap}})); }
 function loadLocal(){ try{ const s=localStorage.getItem(CFG.store); if(s){ const o=JSON.parse(s); if(o.LOCATIONS) LOCATIONS=o.LOCATIONS; if(o.state&&o.state.dayMap) state.dayMap=o.state.dayMap; } }catch(e){} }
