@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>NYC Photo Guide — v8.2 (Hybrid)</title>
+<title>NYC Photo Guide — v8.3 (Hybrid)</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 :root{
@@ -48,19 +48,6 @@ small.muted{color:var(--muted)}
   <b>Diagnostics</b> — <span id="diagStatus">booting…</span>
   <div id="diagErr" style="margin-top:.25rem;white-space:pre-wrap"></div>
 </div>
-
-<script>
-window.__setValueSafe = function(el, val){
-  try {
-    if (!el) return false;
-    if ('value' in el) { el.value = val; return true; }
-    return false;
-  } catch(e){
-    console.error('setValueSafe error', e);
-    return false;
-  }
-};
-</script>
 <script>
 (function(){
   const s=document.getElementById('diagStatus'), box=document.getElementById('diagErr');
@@ -73,7 +60,7 @@ window.__setValueSafe = function(el, val){
 
 <header>
   <div class="header">
-    <h1>NYC Photo Guide — v8.2 (Hybrid)</h1>
+    <h1>NYC Photo Guide — v8.3 (Hybrid)</h1>
     <div class="controls">
       <span class="chip">Visit days (NYC):</span>
       <label class="chip" for="dateA">Day A</label><input id="dateA" type="date" value="2025-10-03"/>
@@ -175,7 +162,17 @@ let LOCATIONS=[{"id": "dumbo_washington_water_manhattan_bridge_keyhole", "name":
 let state={dayMap:{'2025-10-03':'2025-10-03','2025-10-04':'2025-10-04'},day:new Set(['2025-10-03','2025-10-04']),blocks:new Set(['Morning','Afternoon','Evening','Night']),rankMin:1,rankMax:5,proOnly:false,q:'',rain:false,wind:false,expandAll:false,editMode:false};
 let TIMES={};
 
-const $=id=>document.getElementById(id);
+const $=id=>{
+  const el=document.getElementById(id);
+  if (el) return el;
+  // return a safe no-op proxy so .value and event assignments won't throw
+  const noop={};
+  try{
+    Object.defineProperty(noop,'value',{get(){return undefined;}, set(v){} });
+  }catch(e){}
+  noop.addEventListener=()=>{};
+  return noop;
+};
 function fmtHM(d){const t=new Date(d),m=String(t.getMinutes()).padStart(2,'0');let h=t.getHours(),a=h>=12?'pm':'am';h=((h+11)%12)+1;return `${h}:${m} ${a}`;}
 function dayLabel(iso){const d=new Date(iso+'T12:00:00-04:00');return new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(d).replace(',',' •');}
 function activeAnchor(l){return l.anchors[l.activeAnchor||0];}
