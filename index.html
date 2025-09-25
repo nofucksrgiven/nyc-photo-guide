@@ -44,6 +44,20 @@ small.muted{color:var(--muted)}
 </style>
 </head>
 <body>
+<div id="diag" style="position:sticky;top:0;z-index:9999;background:#111827;color:#f9fafb;border-bottom:1px solid #334155;padding:.35rem .6rem;font:12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial;">
+  <b>Diagnostics</b> — <span id="diagStatus">booting…</span>
+  <div id="diagErr" style="margin-top:.25rem;white-space:pre-wrap"></div>
+</div>
+<script>
+(function(){
+  const s=document.getElementById('diagStatus'), box=document.getElementById('diagErr');
+  function log(label, msg){ box.textContent += (box.textContent? '\n':'') + '['+label+'] ' + msg; }
+  window.addEventListener('error', e=>{ log('error', (e.message||'')+' @ '+(e.filename||'')+':'+(e.lineno||'')); s.textContent='error'; });
+  window.addEventListener('unhandledrejection', e=>{ log('promise', (e.reason&&e.reason.message) || String(e.reason)); s.textContent='error'; });
+  window.__diagOK = ()=>{ s.textContent='ok'; };
+})();
+</script>
+
 <header>
   <div class="header">
     <h1>NYC Photo Guide — v8 (Hybrid)</h1>
@@ -343,6 +357,7 @@ async function boot(){
   // Try Google first, fallback to Leaflet
   try{ await injectGoogle(); initGoogle(); document.getElementById('modeGoogle').classList.add('active'); } catch(e){ initLeaflet(); document.getElementById('modeLeaflet').classList.add('active'); }
   renderList();
+ if(window.__diagOK) window.__diagOK();
 }
 
 function toggleTheme(){
