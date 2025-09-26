@@ -1,619 +1,3719 @@
-<!DOCTYPE html>
-<html lang="en">
+
+<!doctype html>
+<html lang="en" data-theme="light">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>NYC Photo Guide — v7.1 Hybrid</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<style>
-:root{
-  --bg:#0b1220; --panel:#0f172a; --card:#0e1426; --text:#e6edf6; --muted:#9bb0c9;
-  --border:#1f2a44; --shadow: rgba(0,0,0,.35);
-  --blue:#60a5fa; --amber:#fbbf24; --violet:#a78bfa; --rose:#fb7185; --teal:#2dd4bf; --green:#34d399;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:var(--bg);color:var(--text)}
-header{position:sticky;top:0;z-index:40;background:linear-gradient(90deg,#0b1220,#10203c);
-  border-bottom:1px solid var(--border);box-shadow:0 6px 20px var(--shadow)}
-.header-inner{max-width:1280px;margin:0 auto;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;padding:.7rem .9rem}
-h1{font-size:1.06rem;margin:0 1rem 0 0;font-weight:800;letter-spacing:.02em}
-.controls{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
-.controls input[type="date"], .controls input[type="search"], .controls select{
-  background:#0b1326;color:var(--text);border:1px solid var(--border);padding:.45rem .6rem;border-radius:.5rem}
-.controls button,.chip,label.chip{background:#0a1326;color:var(--text);border:1px solid var(--border);
-  padding:.45rem .6rem;border-radius:.55rem;cursor:pointer;box-shadow:0 1px 3px var(--shadow)}
-.controls button:hover{border-color:#314165}
-main{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(360px,560px) 1fr;gap:1rem;padding:1rem}
-@media(max-width:980px){main{grid-template-columns:1fr} .mapWrap{position:static} #leaflet,#gmap{height:360px}}
-.sidebar{display:grid;gap:1rem}
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:1rem;padding:1rem;box-shadow:0 10px 30px var(--shadow)}
-.section-title{margin:.2rem 0 .6rem 0;font-size:.92rem;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.08em}
-.grid{display:grid;gap:.8rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:.9rem;display:grid;gap:.5rem;box-shadow:0 8px 20px var(--shadow);position:relative;overflow:hidden}
-.card:before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--blue),var(--violet));opacity:.9}
-.card-header{display:flex;justify-content:space-between;gap:.75rem;align-items:baseline}
-.card h3{margin:.1rem 0;font-size:1.02rem}
-.badges{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
-.badge{font-size:.75rem;padding:.2rem .45rem;border-radius:.4rem;border:1px solid var(--border);background:#0b1326;color:#9fb3c8}
-.badge.block-Morning{background:#0b203a;color:#a5e3ff;border-color:#133b67}
-.badge.block-Afternoon{background:#2a1a00;color:#ffd08a;border-color:#704d12}
-.badge.block-Evening{background:#1a1025;color:#e5d5ff;border-color:#4b3b63}
-.badge.block-Night{background:#1e0c12;color:#ffc1c9;border-color:#5c1c2c}
-.summary-line{color:var(--muted);font-size:.9rem}
-.kv{display:grid;grid-template-columns:140px 1fr;gap:.35rem .6rem}
-.kv .k{color:var(--muted);font-weight:600}
-.actions{display:flex;gap:.4rem;flex-wrap:wrap}
-.actions a,.actions button{background:#0b1326;color:var(--text);border:1px solid var(--border);padding:.38rem .6rem;border-radius:.5rem;text-decoration:none;font-size:.86rem}
-.expand-list{list-style:none;padding-left:0;margin:.2rem 0}
-.expand-item{margin:.3rem 0;border:1px dashed #273853;border-radius:.6rem;background:#0a1428}
-.expand-summary{display:flex;justify-content:space-between;align-items:center;width:100%;padding:.5rem .6rem;background:transparent;border:none;color:#cfe1ff;font-weight:700;cursor:pointer;text-align:left}
-.expand-summary .hint{color:#94a7c7;font-weight:500}
-.expand-body{display:none;padding:.5rem .8rem .7rem .8rem;color:#cdd9e8;border-top:1px dashed #273853}
-.expand-item.open .expand-body{display:block}
-.pillset{display:flex;gap:.4rem;flex-wrap:wrap}
-.pill{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .5rem;border-radius:999px;border:1px solid var(--border);background:#0b1326;color:#cfe1ff;font-size:.78rem}
-.edit-banner{position:sticky;top:98px;z-index:19;background:#10203c;border:1px dashed #3b4f77;color:#e6edf6;padding:.5rem .75rem;border-radius:.6rem}
-.mapWrap{position:sticky;top:130px;height:calc(100vh - 160px)}
-#leaflet,#gmap{height:100%;border:1px solid var(--border);border-radius:1rem}
-.modeTabs{display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap}
-.modeTabs button{background:#0b1326;border:1px solid var(--border);color:#cfe1ff;border-radius:.5rem;padding:.35rem .55rem}
-.modeTabs button.active{border-color:#60a5fa;box-shadow:0 0 0 2px rgba(96,165,250,.25) inset}
-.ref-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem}
-.ref-grid img{width:100%;height:100px;object-fit:cover;border-radius:.4rem;border:1px solid #24324d}
-.small{font-size:.84rem;color:#9fb3c8}
-.hr{height:1px;background:linear-gradient(90deg,transparent,#2a3957,transparent);margin:.6rem 0}
-</style>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NYC Photo Guide</title>
+  <style>
+    :root { --bg:#0b0b0c; --fg:#f4f7fb; --muted:#9aa3ac; --card:#14161a; --accent:#2E86AB; --accent2:#00A896; --border:#2a2f36; }
+    [data-theme="light"] { --bg:#f7f9fb; --fg:#121417; --muted:#556170; --card:#fff; --accent:#2E86AB; --accent2:#00A896; --border:#dfe5ea; }
+    html,body{ margin:0; padding:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    a{ color:var(--accent); text-decoration:none; }
+    .container{ display:grid; grid-template-columns:360px 1fr; gap:16px; max-width:1400px; margin:0 auto; padding:16px; }
+    header.sticky{ position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--border); padding:8px 16px; }
+    header .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    header h1{ font-size:18px; margin:0 12px 0 0; }
+    .left{ position:sticky; top:58px; align-self:start; }
+    .panels{ display:flex; flex-direction:column; gap:12px; }
+    .panel{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px; }
+    .panel-title{ font-weight:700; margin-bottom:6px; }
+    .kv{ display:flex; justify-content:space-between; gap:10px; padding:4px 0; }
+    .kv span{ color:var(--muted); }
+    .container-main{ display:grid; grid-template-columns:1fr 420px; gap:16px; }
+    #cards{ display:flex; flex-direction:column; gap:16px; }
+    .card-section h3{ margin:18px 0 8px; font-size:16px; color:var(--muted); }
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; }
+    .card-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .card .title{ font-weight:700; font-size:16px; cursor:default; }
+    .badges .badge{ background:var(--border); color:var(--muted); padding:2px 6px; border-radius:6px; margin-left:6px; font-size:12px; }
+    .summary{ color:var(--muted); margin:6px 0 8px; }
+    .kvs{ display:grid; grid-template-columns:1fr; gap:6px; }
+    .actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    .btn{ background:transparent; border:1px solid var(--border); color:var(--fg); padding:6px 10px; border-radius:8px; cursor:pointer; }
+    .btn.active{ background:var(--accent); color:white; border-color:var(--accent); }
+    .pillset{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0; }
+    .pillset-title{ color:var(--muted); margin-right:4px; }
+    .pill{ border:1px solid var(--border); padding:4px 8px; border-radius:999px; background:transparent; color:var(--fg); font-size:12px; cursor:pointer; }
+    .pill.active{ background:var(--accent); color:white; border-color:var(--accent); }
+    .expand{ margin-top:10px; }
+    .dtl{ margin-top:6px; } .dtl summary{ cursor:pointer; color:var(--accent); } .dtl .li{ padding:4px 0; border-bottom:1px dashed var(--border); }
+    .places .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px; margin-top:8px; }
+    .places img{ width:100%; height:90px; object-fit:cover; border-radius:8px; border:1px solid var(--border); }
+    .map-col{ position:sticky; top:58px; height:calc(100vh - 72px); }
+    #map-google,#map-leaflet{ position:relative; height:100%; } #gmap,#lmap{ position:absolute; inset:0; }
+    #map-google{ display:block; } #map-leaflet{ display:none; }
+    .header-controls{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .divider{ width:1px; height:20px; background:var(--border); margin:0 6px; }
+    .rank{ display:flex; align-items:center; gap:6px; } .rank input[type=range]{ width:90px; }
+    .anchor-editor{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; } .anchor-editor input{ width:130px; }
+    #mapTabs{ display:flex; gap:8px; margin-left:auto; }
+    @media (max-width:1100px){ .container{ grid-template-columns:1fr; } .container-main{ grid-template-columns:1fr; } .map-col{ position:static; height:60vh; } .left{ position:static; } }
+  </style>
 </head>
 <body>
-<header>
-  <div class="header-inner">
-    <h1>NYC Photo Guide — v7.1 (Hybrid)</h1>
-    <div class="controls">
-      <span class="chip">Visit days (NYC time):</span>
-      <input id="dateA" type="date" value="2025-10-03"/>
-      <input id="dateB" type="date" value="2025-10-04"/>
-      <span class="chip">Show days:</span>
-      <label class="chip"><input type="checkbox" name="day" value="2025-10-03" checked/> Fri 10/03</label>
-      <label class="chip"><input type="checkbox" name="day" value="2025-10-04" checked/> Sat 10/04</label>
-      <span class="chip">Blocks:</span>
-      <label class="chip"><input type="checkbox" name="block" value="Morning" checked/> Morning</label>
-      <label class="chip"><input type="checkbox" name="block" value="Afternoon" checked/> Afternoon</label>
-      <label class="chip"><input type="checkbox" name="block" value="Evening" checked/> Evening</label>
-      <label class="chip"><input type="checkbox" name="block" value="Night" checked/> Night</label>
-      <span class="chip">Rank <span id="rankLabel">#1–#5</span></span>
-      <input id="rankMin" type="range" min="1" max="5" value="1"/>
-      <input id="rankMax" type="range" min="1" max="5" value="5"/>
-      <label class="chip"><input type="checkbox" id="proOnly"/> Pro only (#1–#2)</label>
-      <label class="chip"><input type="checkbox" id="rain"/> Rain plan</label>
-      <label class="chip"><input type="checkbox" id="wind"/> Wind‑safe</label>
-      <input id="q" type="search" placeholder="Search…"/>
-      <button id="expandAll">Expand all</button>
-      <button id="collapseAll">Collapse all</button>
-      <button id="exportCSV">Export CSV</button>
-      <button id="exportKML">Export KML</button>
-      <button id="print">Print</button>
-      <button id="theme">Theme</button>
-      <button id="exportJSON">Export JSON</button>
-      <label class="chip">Import <input type="file" id="importJSON" accept="application/json"/></label>
-    </div>
-  </div>
-</header>
-
-<main>
-  <div class="sidebar">
-    <div class="panel">
-      <div class="modeTabs">
-        <button id="modeGoogle" title="Use Google Maps with Places, Street View, ETA, directions">Google Maps (online)</button>
-        <button id="modeLeaflet" title="Use Leaflet/OSM offline fallback">Leaflet (offline)</button>
+  <header class="sticky" role="banner">
+    <div class="row">
+      <h1 id="appTitle">NYC Photo Guide</h1>
+      <div class="header-controls" role="group" aria-label="Filters">
+        <label>Day A <input id="dateA" type="date" /></label>
+        <label>Day B <input id="dateB" type="date" /></label>
+        <label><input id="toggleDayA" type="checkbox" checked /> Show A</label>
+        <label><input id="toggleDayB" type="checkbox" checked /> Show B</label>
+        <span class="divider"></span>
+        <label><input id="toggleMorning" type="checkbox" checked /> Morning</label>
+        <label><input id="toggleAfternoon" type="checkbox" checked /> Afternoon</label>
+        <label><input id="toggleEvening" type="checkbox" checked /> Evening</label>
+        <label><input id="toggleNight" type="checkbox" checked /> Night</label>
+        <span class="divider"></span>
+        <div class="rank"><span id="rankLabel">#1–#5</span><input id="rankMin" type="range" min="1" max="5" step="1" value="1" aria-label="Rank min" /><input id="rankMax" type="range" min="1" max="5" step="1" value="5" aria-label="Rank max" /></div>
+        <span class="divider"></span>
+        <input id="search" type="search" placeholder="Search…" aria-label="Search locations" />
+        <span class="divider"></span>
+        <button id="expandAll" class="btn">Expand all</button>
+        <button id="collapseAll" class="btn">Collapse all</button>
+        <button id="exportCSV" class="btn">Export CSV</button>
+        <button id="exportKML" class="btn">Export KML</button>
+        <button id="exportJSON" class="btn">Export JSON</button>
+        <label class="btn" style="position:relative; overflow:hidden;">Import JSON<input id="importJSON" type="file" accept="application/json" style="position:absolute; inset:0; opacity:0; cursor:pointer;" /></label>
+        <button id="print" class="btn">Print</button>
+        <button id="theme" class="btn">Theme</button>
       </div>
-      <div id="lightpanels" class="grid"></div>
+      <div id="mapTabs" class="row" role="tablist" aria-label="Map engine">
+        <button role="tab" aria-selected="true" class="btn active" data-engine="google">Google</button>
+        <button role="tab" aria-selected="false" class="btn" data-engine="leaflet">Leaflet</button>
+      </div>
     </div>
-
-    <section class="panel">
-      <div class="section-title">Rules & Reminders</div>
-      <ul>
-        <li>Observation decks often restrict <b>tripods</b>. Shoot handheld or with a mini support.</li>
-        <li>Grand Central / NYPL / Oculus interior: casual photos are fine; professional rigs/tripods usually <b>require permits</b>.</li>
-        <li>Subways: photography permitted without lights/reflectors/tripods. Stay behind safety lines.</li>
-        <li>Waterfront long exposures: check <b>NOAA “The Battery” tides</b> (inline below) and wind.</li>
-      </ul>
-    </section>
-    <div id="list" class="grid"></div>
-  </div>
-
-  <div class="mapWrap">
-    <div id="gmap" class="panel" style="display:none;position:relative">
-      <div id="gsv" style="position:absolute;right:8px;bottom:8px;width:30%;height:30%;border:1px solid var(--border);border-radius:.5rem;display:none"></div>
+    <div class="row" style="margin-top:6px;">
+      <label>API key <input id="keyInput" type="password" placeholder="Paste Google Maps key (optional)" style="width:260px;"></label>
+      <button id="saveKey" class="btn">Save key</button>
     </div>
-    <div id="leaflet" class="panel" style="display:none"></div>
+  </header>
+  <div class="container">
+    <div class="left"><div class="panels"><div class="panel" id="panelA" aria-live="polite"></div><div class="panel" id="panelB" aria-live="polite"></div></div></div>
+    <div class="container-main">
+      <main id="cards" aria-live="polite"></main>
+      <aside class="map-col"><div id="map-google"><div id="gmap" aria-label="Google Map" role="region"></div></div><div id="map-leaflet"><div id="lmap" aria-label="Leaflet Map" role="region"></div></div></aside>
+    </div>
   </div>
-</main>
+  <script type="module">
+// --- lib/googleLoader.js ---
 
-<footer class="panel" style="max-width:1280px;margin:1rem auto">
-  v7.1 Hybrid — Google Maps + Places (photos, reverse geocode, directions, Street View) with Leaflet fallback and live NOAA tides.
-</footer>
 
-<script>
-
-(function(){
-  const PI = Math.PI, rad = PI/180;
-  const sin = Math.sin, cos = Math.cos, asin = Math.asin, acos = Math.acos, atan2 = Math.atan2;
-  function toJulian(date){ return date/86400000 - 0.5 + 2440588; }
-  function fromJulian(j){ return new Date((j + 0.5 - 2440588)*86400000); }
-  function toDays(date){ return toJulian(date) - 2451545; }
-  const e = rad*23.4397;
-  function rightAscension(l,b){ return atan2(Math.sin(l)*Math.cos(e) - Math.tan(b)*Math.sin(e), Math.cos(l)); }
-  function declination(l,b){ return asin(Math.sin(b)*Math.cos(e) + Math.cos(b)*Math.sin(e)*Math.sin(l)); }
-  function siderealTime(d, lw){ return rad*(280.16 + 360.9856235*d) - lw; }
-  function solarMeanAnomaly(d){ return rad*(357.5291 + 0.98560028*d); }
-  function eclipticLongitude(M){ const C = rad*(1.9148*Math.sin(M) + 0.02*Math.sin(2*M) + 0.0003*Math.sin(3*M)); const P = rad*102.9372; return M + C + P + PI; }
-  function sunCoords(d){ const M = solarMeanAnomaly(d), L = eclipticLongitude(M); return { dec: declination(L,0), ra: rightAscension(L,0) }; }
-  function julianCycle(d, lw){ return Math.round(d - 0.0009 - lw/(2*PI)); }
-  function approxTransit(Ht, lw, n){ return 0.0009 + (Ht + lw)/(2*PI) + n; }
-  function solarTransitJ(ds, M, L){ return 2451545 + ds + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L); }
-  function hourAngle(h, phi, d){ return acos((Math.sin(h) - Math.sin(phi)*Math.sin(d)) / (Math.cos(phi)*Math.cos(d))); }
-  function getSetJ(h, lw, phi, dec, n, M, L){ const w = hourAngle(h, phi, dec), a = approxTransit(w, lw, n); return solarTransitJ(a, M, L); }
-
-  window.SunCalc = {
-    getSunTimes: function(date, lat, lng){
-      const lw = rad*-lng, phi = rad*lat, d = toDays(date);
-      const n = julianCycle(d, lw);
-      const ds = approxTransit(0, lw, n);
-      const M = solarMeanAnomaly(d);
-      const L = eclipticLongitude(M);
-      const dec = declination(L, 0);
-      const Jnoon = solarTransitJ(ds, M, L);
-
-      const h0 = (-0.833)*rad;
-      const Jset = getSetJ(h0, lw, phi, dec, n, M, L);
-      const Jrise = Jnoon - (Jset - Jnoon);
-      const hCivil = (-6)*rad;
-      const Jcset = getSetJ(hCivil, lw, phi, dec, n, M, L);
-      const Jcrise= Jnoon - (Jcset - Jnoon);
-
-      return {
-        sunrise: fromJulian(Jrise),
-        sunset: fromJulian(Jset),
-        dawn: fromJulian(Jcrise),
-        dusk: fromJulian(Jcset)
-      };
-    },
-    getMoonTimes: function(date, lat, lng){
-      function moonCoords(d){
-        const rad = Math.PI/180;
-        const L = rad*(218.316 + 13.176396*d),
-              M = rad*(134.963 + 13.064993*d),
-              F = rad*(93.272 + 13.229350*d);
-        let l = L + rad*6.289*Math.sin(M);
-        let b = rad*5.128*Math.sin(F);
-        let dt= 385001 - 20905*Math.cos(M);
-        const e = (23.4397*rad);
-        function RA(l,b){ return Math.atan2(Math.sin(l)*Math.cos(e) - Math.tan(b)*Math.sin(e), Math.cos(l)); }
-        function DEC(l,b){ return Math.asin(Math.sin(b)*Math.cos(e) + Math.cos(b)*Math.sin(e)*Math.sin(l)); }
-        return { ra: RA(l,b), dec: DEC(l,b), dist: dt };
-      }
-      function toJulian(date){ return date/86400000 - 0.5 + 2440588; }
-      function fromJulian(j){ return new Date((j + 0.5 - 2440588)*86400000); }
-      function toDays(date){ return toJulian(date) - 2451545; }
-      const lw = -lng*Math.PI/180, phi = lat*Math.PI/180;
-      const d = toDays(new Date(date.setHours(0,0,0,0))) - 0.5 - lng/360;
-      function altitude(d){
-        const m = moonCoords(d), H = siderealTime(d, lw) - m.ra;
-        return Math.asin(Math.sin(phi)*Math.sin(m.dec) + Math.cos(phi)*Math.cos(m.dec)*Math.cos(H)) - 0.017;
-      }
-      const h1 = altitude(d-1), h2 = altitude(d), h3 = altitude(d+1);
-      const a = (h1 + h3)/2 - h2, b = (h3 - h1)/2, hc = 0.133*Math.PI/180;
-      const dxe = Math.sqrt(Math.max(0, b*b - 4*a*(h2-hc)));
-      let rise=null,set=null;
-      if(dxe!==0){
-        const x1 = (-b - dxe)/(2*a), x2 = (-b + dxe)/(2*a);
-        if (x1>-1 && x1<1) rise = fromJulian(2451545 + d + x1);
-        if (x2>-1 && x2<1) set  = fromJulian(2451545 + d + x2);
-      }
-      const sun = (function(d){ const M = (357.5291 + 0.98560028*d)*Math.PI/180; const C = (1.9148*Math.sin(M)+0.02*Math.sin(2*M)+0.0003*Math.sin(3*M))*Math.PI/180; const P=102.9372*Math.PI/180; const L=M+C+P+Math.PI; const dec=Math.asin(Math.sin(0)*Math.cos(23.4397*Math.PI/180)+Math.cos(0)*Math.sin(23.4397*Math.PI/180)*Math.sin(L)); const ra=Math.atan2(Math.sin(L)*Math.cos(23.4397*Math.PI/180)-Math.tan(0)*Math.sin(23.4397*Math.PI/180), Math.cos(L)); return {dec,ra}; })(d);
-      const m = moonCoords(d); const sdist=149598000; const phiA = Math.acos(Math.sin(sun.dec)*Math.sin(m.dec) + Math.cos(sun.dec)*Math.cos(m.dec)*Math.cos(sun.ra-m.ra)); const inc=Math.atan2(sdist*Math.sin(phiA), m.dist - sdist*Math.cos(phiA)); const illumination=(1+Math.cos(inc))/2;
-      return {rise,set,illum:illumination};
+let _gmapsPromise = null;
+function loadGoogleMaps(apiKey, libs = ['places']) {
+  if (typeof window === 'undefined') return Promise.reject(new Error('Browser only'));
+  if (window.google && window.google.maps) return Promise.resolve(window.google);
+  if (_gmapsPromise) return _gmapsPromise;
+  _gmapsPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-google-loader="true"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.google));
+      existing.addEventListener('error', () => reject(new Error('Google failed to load')));
+      return;
     }
-  };
-})();
-
-</script>
-<script>
-
-const CFG = { apiKey: "AIzaSyDsq2ztFeFfmgqiRIZZtK5R7aCVGF66-80", nyc:{lat:40.7128,lon:-74.0060}, dataVersion:"v7.1" };
-let LOCATIONS = [{"id": "bk_dumbo_keyhole", "name": "DUMBO \u2014 Washington & Water (Manhattan Bridge Keyhole)", "day": "2025-10-03", "block": "Morning", "rank": 1, "bearing": "NNE toward Manhattan", "whyNow": "Side-lit steel and cobbles; fewer crowds early.", "gear": "16\u201324\u202fmm for wide frame; 35\u202fmm for tighter car\u2011free moments.", "notes": "Arrive before delivery trucks; street cleaning can create wet reflections.", "rainFriendly": true, "windSafe": true, "settings": "Handheld: 1/250s+ @ f/5.6\u20138 ISO 100\u2013400; long exposure only before traffic starts.", "activeAnchor": 0, "anchors": [{"label": "Main view", "lat": 40.703307, "lon": -73.990039}, {"label": "Alternate mid\u2011block", "lat": 40.703519, "lon": -73.989764}], "micro": [{"title": "Centerline", "r": 0.0, "bearing": 0.0, "dir": "NNE", "detail": "Feet on the cobbles at the crown of Washington St; watch parked cars."}, {"title": "Crosswalk step\u2011back", "r": 10.0, "bearing": 200.0, "dir": "NNE", "detail": "Step back to clear parked vans; compress the arch a touch."}, {"title": "Corner curb", "r": 22.0, "bearing": 225.0, "dir": "NNE", "detail": "Use the curb for a low angle with cobble lead\u2011in."}], "pins": [{"title": "Parking gap watch", "detail": "Scan for a temporary car gap on the west side; shoot fast."}, {"title": "Reflections after wash", "detail": "City wash leaves sheen on cobbles\u2014polarizer helps manage glare."}, {"title": "Taxi streaks", "detail": "If traffic starts, drag the shutter 1/8\u20131/2s for motion streaks."}], "shots": [{"title": "Keyhole classic (16\u201324\u202fmm)", "detail": "Frame the ESB in the bridge opening; keep verticals straight."}, {"title": "Mid\u2011block symmetry (24\u201335\u202fmm)", "detail": "Full arch dominance; align the center seam with the roadway stripe."}, {"title": "Low\u2011angle cobbles (16\u201320\u202fmm)", "detail": "Camera just above ground for texture; mind passerby feet."}, {"title": "Backlit silhouettes (sunrise)", "detail": "Silhouette walkers crossing the street; expose for sky."}, {"title": "Tight ESB crop (35\u201350\u202fmm)", "detail": "Pull a graphic ESB framed by steel; wait for clean sidewalk."}]}];
-
-// State
-let state = {
-  dayMap: {"2025-10-03":"2025-10-03","2025-10-04":"2025-10-04"},
-  day: new Set(["2025-10-03","2025-10-04"]),
-  blocks: new Set(["Morning","Afternoon","Evening","Night"]),
-  rankMin:1, rankMax:5, proOnly:false, q:"", rain:false, wind:false, expandAll:false,
-  mapMode:"auto", editMode:false, editWhat:"anchor"
-};
-let TIMES = {};
-
-// Utils
-function toFixed6(n){ return +n.toFixed(6); }
-function metersToLatLon(lat, meters, heading){ const dlat=(meters*Math.cos(heading*Math.PI/180))/111111.0; const dlon=(meters*Math.sin(heading*Math.PI/180))/(111111.0*Math.cos(lat*Math.PI/180)); return {dlat,dlon}; }
-function activeAnchor(loc){ return loc.anchors[loc.activeAnchor||0]; }
-function computeMicroAbs(loc){ const a=activeAnchor(loc); return (loc.micro||[]).map(m=>{ const off=metersToLatLon(a.lat,m.r,m.bearing); return {title:m.title,lat:toFixed6(a.lat+off.dlat),lon:toFixed6(a.lon+off.dlon),dir:m.dir,r:m.r,bearing:m.bearing,detail:m.detail}; }); }
-function dayLabelISO(iso){ const d=new Date(iso+"T12:00:00-04:00"); return new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(d).replace(',',' •'); }
-function gmapsOpen(lat,lon){ return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`; }
-function fmtHM(d){ const dt=new Date(d); let h=dt.getHours(), m=dt.getMinutes(); const ampm=h>=12?'pm':'am'; const h12=((h+11)%12)+1; return `${h12}:${String(m).padStart(2,'0')} ${ampm}`; }
-
-// Light & Moon
-function computeTimes(){
-  TIMES={};
-  ["2025-10-03","2025-10-04"].forEach(k=>{
-    const iso=state.dayMap[k], dt=new Date(iso+'T12:00:00-04:00');
-    const sun=SunCalc.getSunTimes(new Date(dt), CFG.nyc.lat, CFG.nyc.lon);
-    const moon=SunCalc.getMoonTimes(new Date(dt), CFG.nyc.lat, CFG.nyc.lon);
-    TIMES[k]={ sunrise:fmtHM(sun.sunrise), sunset:fmtHM(sun.sunset), civil_dawn:fmtHM(sun.dawn), civil_dusk:fmtHM(sun.dusk),
-               moonrise: moon.rise?fmtHM(moon.rise):'—', moonset: moon.set?fmtHM(moon.set):'—', moonText: Math.round(moon.illum*100)+'% illum', iso };
+    const s = document.createElement('script');
+    const params = new URLSearchParams({ key: apiKey, libraries: libs.join(','), v: 'weekly' });
+    s.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
+    s.async = true; s.defer = true; s.dataset.googleLoader = "true";
+    s.addEventListener('load', () => window.google?.maps ? resolve(window.google) : reject(new Error('No maps namespace')));
+    s.addEventListener('error', () => reject(new Error('Google failed to load')));
+    document.head.appendChild(s);
   });
+  return _gmapsPromise;
 }
 
-// NOAA
-async function fetchNOAATides(iso){
-  const ymd=iso.replace(/-/g,'');
-  const url=`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=nyc-photo-guide&begin_date=${ymd}&end_date=${ymd}&datum=MLLW&station=8518750&time_zone=lst_ldt&interval=hilo&units=english&format=json`;
-  try{
-    const r=await fetch(url, {cache:'no-store'}); const j=await r.json();
-    if(j && j.predictions){ return j.predictions.map(p=>`${p.t.slice(11,16)} ${p.type} ${parseFloat(p.v).toFixed(1)} ft`).join(' • '); }
-    return 'Open NOAA high/low';
-  }catch{ return 'Open NOAA high/low'; }
+
+// --- lib/sunmoon.js ---
+
+
+// Minimal sun & moon utilities (no deps). Times are approximate and good enough for planning.
+// All times returned in the local timezone of the browser.
+
+const RAD = Math.PI / 180;
+const dayMs = 24 * 60 * 60 * 1000;
+
+// Helpers
+function toJulian(date) {
+  return date / 86400000 - 0.5 + 2440587.5;
+}
+function fromJulian(j) {
+  return new Date((j + 0.5 - 2440587.5) * 86400000);
+}
+function sin(x){ return Math.sin(x); }
+function cos(x){ return Math.cos(x); }
+function tan(x){ return Math.tan(x); }
+function asin(x){ return Math.asin(x); }
+function acos(x){ return Math.acos(x); }
+function atan2(y,x){ return Math.atan2(y,x); }
+
+// Solar calculations (based on NOAA Solar Calculator)
+function solarMeanAnomaly(d) { return RAD * (357.5291 + 0.98560028 * d); }
+function eclipticLongitude(M) {
+  const C = RAD * (1.9148 * Math.sin(M) + 0.0200 * Math.sin(2*M) + 0.0003 * Math.sin(3*M));
+  const P = RAD * 102.9372; // perihelion of the Earth
+  return M + C + P + Math.PI;
+}
+function declination(L, b = 0) {
+  const e = RAD * 23.4397;
+  return Math.asin(Math.sin(b) * Math.cos(e) + Math.cos(b) * Math.sin(e) * Math.sin(L));
+}
+function rightAscension(L, b = 0) {
+  const e = RAD * 23.4397;
+  return Math.atan2(Math.sin(L) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(L));
+}
+function siderealTime(d, lw) { return RAD * (280.16 + 360.9856235 * d) - lw; }
+function azimuth(H, phi, dec) { return Math.atan2(Math.sin(H), Math.cos(H)*Math.sin(phi) - Math.tan(dec)*Math.cos(phi)); }
+function altitude(H, phi, dec) { return Math.asin(Math.sin(phi)*Math.sin(dec) + Math.cos(phi)*Math.cos(dec)*Math.cos(H)); }
+
+function julianCycle(d, lw) { return Math.round(d - lw / (2*Math.PI)); }
+function approxTransit(Ht, lw, n) { return 0.0009 + (Ht + lw) / (2*Math.PI) + n; }
+function solarTransitJ(ds, M, L) { return 2451545.5 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2*L); }
+
+// returns set time for the given altitude (e.g. -0.833° for sunrise/sunset)
+// and observer latitude/longitude
+function getSetJ(h, lw, phi, dec, n, M, L) {
+  const w = Math.acos((Math.sin(h) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec)));
+  const a = approxTransit(w, lw, n);
+  return solarTransitJ(a, M, L);
 }
 
-// Maps (Google + Leaflet)
-let usingGoogle=false, gmap=null, gDirections=null, gDirRenderer=null, gPlaces=null, gGeocoder=null, gsv=null;
-let lmap=null, lLayer=null;
-let mainMarkers={}, microMarkers={}, arrowPolylines={};
+// Public: compute sun times for a date at lat/lon
+function computeSunTimes(date, lat = 40.7128, lon = -74.0060) {
+  try {
+    const d = toJulian(new Date(date)) - 2451545.0;
+    const lw = RAD * -lon;
+    const phi = RAD * lat;
+    const n = julianCycle(d, lw);
+    const ds = approxTransit(0, lw, n);
 
-function injectGoogle(){
-  return new Promise((resolve,reject)=>{
-    if(window.google&&window.google.maps){ resolve(); return; }
-    const s=document.createElement('script'); s.src=`https://maps.googleapis.com/maps/api/js?key=${CFG.apiKey}&libraries=places`; s.async=true; s.defer=true;
-    s.onload=resolve; s.onerror=()=>reject(new Error('Google Maps failed to load')); document.head.appendChild(s);
-  });
-}
-function initGoogle(){
-  usingGoogle=true;
-  document.getElementById('leaflet').style.display='none';
-  const el=document.getElementById('gmap'); el.style.display='block';
-  gmap=new google.maps.Map(el,{center:{lat:40.73,lng:-73.98},zoom:12,mapTypeControl:true,streetViewControl:true});
-  gsv=new google.maps.StreetViewPanorama(document.getElementById('gsv'),{visible:false});
-  gmap.setStreetView(gsv);
-  gDirections=new google.maps.DirectionsService();
-  gDirRenderer=new google.maps.DirectionsRenderer({suppressMarkers:true,preserveViewport:true}); gDirRenderer.setMap(gmap);
-  gPlaces=new google.maps.places.PlacesService(gmap);
-  gGeocoder=new google.maps.Geocoder();
-}
-function initLeaflet(){
-  usingGoogle=false;
-  document.getElementById('gmap').style.display='none';
-  const el=document.getElementById('leaflet'); el.style.display='block';
-  if(!lmap){
-    lmap=L.map('leaflet').setView([40.73,-73.98],12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(lmap);
-    lLayer=L.layerGroup().addTo(lmap);
+    const M = solarMeanAnomaly(d);
+    const L = eclipticLongitude(M);
+    const dec = declination(L, 0);
+
+    // Standard altitudes: sunrise/sunset (-0.833°), civil dawn/dusk (-6°)
+    const h0 = RAD * -0.833;
+    const hc = RAD * -6;
+
+    const Jnoon = solarTransitJ(ds, M, L);
+
+    const w0 = Math.acos((Math.sin(h0) - Math.sin(phi)*Math.sin(dec))/(Math.cos(phi)*Math.cos(dec)));
+    const a0 = approxTransit(-w0, lw, n);
+    const Jset = solarTransitJ(approxTransit(w0, lw, n), M, L);
+    const Jrise2 = solarTransitJ(a0, M, L);
+
+    const wc = Math.acos((Math.sin(hc) - Math.sin(phi)*Math.sin(dec))/(Math.cos(phi)*Math.cos(dec)));
+    const Jcset = solarTransitJ(approxTransit(wc, lw, n), M, L);
+    const Jcrise = solarTransitJ(approxTransit(-wc, lw, n), M, L);
+
+    return {
+      solarNoon: fromJulian(Jnoon),
+      sunrise: fromJulian(Jrise2),
+      sunset: fromJulian(Jset),
+      dawn: fromJulian(Jcrise),
+      dusk: fromJulian(Jcset)
+    };
+  } catch (e) {
+    console.warn('computeSunTimes failed', e);
+    return { sunrise: null, sunset: null, dawn: null, dusk: null, solarNoon: null };
   }
 }
 
-function clearMap(){
-  if(usingGoogle){
-    if(!gmap) return;
-    Object.values(mainMarkers).forEach(m=>m.setMap(null)); mainMarkers={};
-    Object.values(microMarkers).forEach(arr=>arr.forEach(m=>m.setMap(null))); microMarkers={};
-    Object.values(arrowPolylines).forEach(arr=>arr.forEach(p=>p.setMap(null))); arrowPolylines={};
-  } else {
-    if(!lLayer) return;
-    lLayer.clearLayers();
-    mainMarkers={}; microMarkers={}; arrowPolylines={};
+// Moon illumination (approximate) and phase text
+function computeMoonIllumination(date) {
+  const synodic = 29.53058867; // days
+  const jd = toJulian(new Date(date));
+  const age = (jd - 2451550.1) % synodic;
+  const a = age < 0 ? age + synodic : age;
+  const fraction = 0.5 * (1 - Math.cos(2 * Math.PI * a / synodic));
+  const phaseNames = [
+    'New Moon','Waxing Crescent','First Quarter','Waxing Gibbous',
+    'Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'
+  ];
+  const idx = Math.floor(((a / synodic) * 8) + 0.5) % 8;
+  return { fraction, phase: phaseNames[idx] };
+}
+
+// Moonrise/set placeholder
+function computeMoonTimes(/*date, lat, lon*/) { return { rise: null, set: null }; }
+
+function fmtTime(d) {
+  if (!d || isNaN(+d)) return '—';
+  const dt = new Date(d);
+  const hh = dt.getHours().toString().padStart(2,'0');
+  const mm = dt.getMinutes().toString().padStart(2,'0');
+  return `${hh}:${mm}`;
+}
+
+
+// --- map-google.js ---
+
+
+import { loadGoogleMaps } from 'lib/googleLoader';
+
+const BLOCK_COLORS = { Morning:'#2E86AB', Afternoon:'#6C757D', Evening:'#E07A5F', Night:'#6C5B7B' };
+class GoogleMapEngine {
+  constructor(containerId){ this.containerId=containerId; this.map=null; this.layers={markers:[], polylines:[], route:null}; this._google=null; this._markerIndex=new Map(); }
+  async init(apiKey, center={lat:40.7128,lng:-74.0060}, zoom=12){
+    this._google = await loadGoogleMaps(apiKey, ['places']);
+    const el = document.getElementById(this.containerId);
+    this.map = new this._google.maps.Map(el, { center, zoom, mapTypeControl:false, streetViewControl:true, gestureHandling:'greedy' });
+    return this;
   }
-}
-function blockColor(b){ return (b==='Morning')?'#60a5fa':(b==='Afternoon')?'#fbbf24':(b==='Evening')?'#a78bfa':'#fb7185'; }
-function visibleLocations(){
-  return (LOCATIONS||[]).filter(loc=> state.day.has(loc.day) && state.blocks.has(loc.block) && loc.rank>=state.rankMin && loc.rank<=state.rankMax );
-}
-function renderMarkers(){
-  // Guard until a map engine is ready
-  if(usingGoogle && !gmap) return;
-  if(!usingGoogle && !lmap) return;
-  clearMap();
-  const vis=visibleLocations();
-  if(usingGoogle){
-    const bounds=new google.maps.LatLngBounds();
-    vis.forEach(loc=>{
-      const a=activeAnchor(loc);
-      const mm=new google.maps.Marker({position:{lat:a.lat,lng:a.lon}, map:gmap, title:loc.name,
-        icon:{path:google.maps.SymbolPath.CIRCLE, scale:6, fillColor:blockColor(loc.block), fillOpacity:1, strokeColor:'#0b1220', strokeWeight:2}});
-      mainMarkers[loc.id]=mm; bounds.extend(mm.getPosition());
-      const micro=computeMicroAbs(loc);
-      microMarkers[loc.id]=micro.map(mp=>{
-        const m=new google.maps.Marker({position:{lat:mp.lat,lng:mp.lon}, map:gmap, title:mp.title,
-          icon:{path:google.maps.SymbolPath.CIRCLE, scale:4, fillColor:'#2dd4bf', fillOpacity:1, strokeColor:'#093b36', strokeWeight:1}});
-        return m;
+  clear(){ for(const m of this.layers.markers) m.setMap(null); for(const p of this.layers.polylines) p.setMap(null); this.layers.markers=[]; this.layers.polylines=[]; if(this.layers.route){ this.layers.route.setMap(null); this.layers.route=null; } this._markerIndex.clear(); }
+  destroy(){ this.clear(); this.map=null; this._google=null; }
+  _colorFor(block){ return BLOCK_COLORS[block]||'#1976D2'; }
+  renderLocations(locations){
+    if(!this.map) return; this.clear();
+    const g=this._google; const bounds=new g.maps.LatLngBounds();
+    locations.forEach(loc=>{
+      const anchor = loc.anchors[loc.activeAnchor]||loc.anchors[0];
+      const aPos = {lat:anchor.lat, lng:anchor.lon};
+      const marker = new g.maps.Marker({ position:aPos, map:this.map, title:loc.name, icon:{ path:g.maps.SymbolPath.CIRCLE, scale:6, fillColor:this._colorFor(loc.block), fillOpacity:1, strokeWeight:1, strokeColor:'#111' } });
+      this.layers.markers.push(marker); bounds.extend(aPos);
+      const micro=[]; const arrows=[];
+      (loc._microAbs||[]).forEach(mp=>{
+        const m = new g.maps.Marker({ position:{lat:mp.lat,lng:mp.lon}, map:this.map, title:mp.title, icon:{ path:g.maps.SymbolPath.BACKWARD_CLOSED_ARROW, scale:4, fillColor:'#00A896', fillOpacity:1, strokeWeight:1, strokeColor:'#0B3D3E'} });
+        micro.push(m); this.layers.markers.push(m); bounds.extend({lat:mp.lat,lng:mp.lon});
+        if (typeof mp.bearing === 'number'){ const rad=mp.bearing*Math.PI/180, dx=0.00015*Math.sin(rad), dy=0.00015*Math.cos(rad);
+          const pl=new g.maps.Polyline({ path:[{lat:mp.lat,lng:mp.lon},{lat:mp.lat+dy,lng:mp.lon+dx}], strokeColor:'#00A896', strokeOpacity:0.9, strokeWeight:2, map:this.map });
+          arrows.push(pl); this.layers.polylines.push(pl);
+        }
+      });
+      this._markerIndex.set(loc.id, { anchor:marker, micro, arrows });
+    });
+    if(!bounds.isEmpty()) this.map.fitBounds(bounds, 60);
+  }
+  fitToLocation(loc){
+    if(!this.map) return; const g=this._google; const idx=this._markerIndex.get(loc.id); if(!idx) return;
+    const b=new g.maps.LatLngBounds(); b.extend(idx.anchor.getPosition()); (idx.micro||[]).forEach(m=>b.extend(m.getPosition())); this.map.fitBounds(b, 60);
+  }
+  async etaFromMyLocation(toLatLng,{showAlert=true}={}){
+    if(!navigator.geolocation){ if(showAlert) alert('Geolocation not available.'); return null; }
+    const pos = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej));
+    const origin = new this._google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+    const dest = new this._google.maps.LatLng(toLatLng.lat, toLatLng.lng);
+    const svc = new this._google.maps.DistanceMatrixService();
+    const out = await new Promise((resolve,reject)=>{
+      svc.getDistanceMatrix({ origins:[origin], destinations:[dest], travelMode:this._google.maps.TravelMode.WALKING }, (response, status)=>{
+        if(status==='OK') resolve(response); else reject(new Error(status||'DM failed'));
       });
     });
-    if(!bounds.isEmpty()) gmap.fitBounds(bounds, 80);
-  } else {
-    const pts=[];
-    vis.forEach(loc=>{
-      const a=activeAnchor(loc);
-      L.circleMarker([a.lat,a.lon],{radius:8,weight:2,color:blockColor(loc.block),fillOpacity:.95,fillColor:blockColor(loc.block)}).addTo(lLayer);
-      pts.push([a.lat,a.lon]);
-      computeMicroAbs(loc).forEach(mp=> L.circleMarker([mp.lat,mp.lon],{radius:4,weight:1,color:'#2dd4bf',fillColor:'#2dd4bf',fillOpacity:.95}).addTo(lLayer) );
-    });
-    if(pts.length) lmap.fitBounds(pts, {padding:[80,80]});
+    const cell = out.rows?.[0]?.elements?.[0];
+    if (cell?.status === 'OK'){ const msg=`Walking: ${cell.duration.text} • ${cell.distance.text}`; if(showAlert) alert(msg); return { duration:cell.duration, distance:cell.distance, origin }; }
+    if (showAlert) alert('No walking route found.'); return null;
   }
+  async drawRoute(origin, destination){
+    const g=this._google; const svc=new g.maps.DirectionsService(); const renderer=new g.maps.DirectionsRenderer({ map:this.map, suppressMarkers:true, preserveViewport:true });
+    const res = await new Promise((resolve,reject)=>{
+      svc.route({ origin, destination, travelMode:g.maps.TravelMode.WALKING }, (response, status)=>{ if(status==='OK') resolve(response); else reject(new Error(status||'Route failed')); });
+    }); renderer.setDirections(res); if(this.layers.route) this.layers.route.setMap(null); this.layers.route=renderer;
+  }
+  geocoder(){ return new this._google.maps.Geocoder(); }
+  placesService(){ return new this._google.maps.places.PlacesService(this.map); }
 }
 
-// Reference Images via Places
-function loadReferencePhotos(container, loc){
-  if(!usingGoogle || !gPlaces){ container.textContent='Switch to Google mode to load images.'; return; }
-  const a=activeAnchor(loc); const query=loc.placeQuery||loc.name;
-  gPlaces.findPlaceFromQuery({ query, fields:['place_id','name','geometry'], locationBias:{radius:300, center:{lat:a.lat,lng:a.lon}} }, (res,status)=>{
-    if(status!=='OK' || !res || !res[0]){ container.textContent='No images found.'; return; }
-    gPlaces.getDetails({placeId:res[0].place_id, fields:['name','photos','url']}, (det,s2)=>{
-      if(s2!=='OK' || !det){ container.textContent='No images available.'; return; }
-      const grid=document.createElement('div'); grid.className='ref-grid';
-      (det.photos||[]).slice(0,12).forEach(p=>{ const img=document.createElement('img'); img.loading='lazy'; img.src=p.getUrl({maxWidth:400,maxHeight:400}); img.title=det.name; img.addEventListener('click',()=>window.open(det.url,'_blank')); grid.appendChild(img); });
-      container.innerHTML=''; if(grid.childElementCount) container.appendChild(grid); else container.textContent='No images.';
-    });
-  });
+
+// --- map-leaflet.js ---
+
+
+let _leafletPromise = null;
+function loadLeaflet(){
+  if(_leafletPromise) return _leafletPromise;
+  _leafletPromise = new Promise((resolve, reject) => {
+    if (window.L && window.L.map) return resolve(window.L);
+    const css=document.createElement('link'); css.rel='stylesheet'; css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; css.integrity='sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='; css.crossOrigin=''; document.head.appendChild(css);
+    const s=document.createElement('script'); s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; s.integrity='sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='; s.crossOrigin=''; s.async=true; s.onload=()=>resolve(window.L); s.onerror=()=>reject(new Error('Leaflet failed to load')); document.head.appendChild(s);
+  }); return _leafletPromise;
+}
+const BLOCK_COLORS={ Morning:'#2E86AB', Afternoon:'#6C757D', Evening:'#E07A5F', Night:'#6C5B7B' };
+class LeafletMapEngine {
+  constructor(containerId){ this.containerId=containerId; this.map=null; this.layers={markers:[], polylines:[]}; this._L=null; this._groupById=new Map(); }
+  async init(center={lat:40.7128,lng:-74.0060}, zoom=12){ this._L=await loadLeaflet(); const el=document.getElementById(this.containerId); this.map=this._L.map(el).setView([center.lat, center.lng], zoom); this._L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(this.map); return this; }
+  clear(){ this.layers.markers.forEach(m=>this.map.removeLayer(m)); this.layers.polylines.forEach(p=>this.map.removeLayer(p)); this.layers.markers=[]; this.layers.polylines=[]; this._groupById.clear(); }
+  destroy(){ if(this.map) this.map.remove(); this.map=null; this._L=null; this._groupById.clear(); }
+  _colorFor(block){ return BLOCK_COLORS[block]||'#1976D2'; }
+  renderLocations(locations){ this.clear(); const L=this._L; const group=L.featureGroup(); locations.forEach(loc=>{ const anchor=loc.anchors[loc.activeAnchor]||loc.anchors[0]; const a=L.circleMarker([anchor.lat, anchor.lon],{radius:6,color:'#111',weight:1,fillColor:this._colorFor(loc.block),fillOpacity:1}).addTo(this.map); this.layers.markers.push(a); group.addLayer(a); const micro=[]; const arrows=[]; (loc._microAbs||[]).forEach(mp=>{ const m=L.circleMarker([mp.lat, mp.lon],{radius:4,color:'#0B3D3E',weight:1,fillColor:'#00A896',fillOpacity:1}).addTo(this.map); this.layers.markers.push(m); group.addLayer(m); micro.push(m); if(typeof mp.bearing==='number'){ const rad=mp.bearing*Math.PI/180, dx=0.00015*Math.sin(rad), dy=0.00015*Math.cos(rad); const pl=L.polyline([[mp.lat, mp.lon],[mp.lat+dy, mp.lon+dx]],{color:'#00A896',weight:2,opacity:0.9}).addTo(this.map); this.layers.polylines.push(pl); arrows.push(pl); } }); this._groupById.set(loc.id, { anchor:a, micro, arrows }); }); if(group.getLayers().length) this.map.fitBounds(group.getBounds().pad(0.15)); }
+  fitToLocation(loc){ const grp=this._groupById.get(loc.id); if(!grp) return; const L=this._L; const b=L.latLngBounds([]); b.extend(grp.anchor.getLatLng()); (grp.micro||[]).forEach(m=>b.extend(m.getLatLng())); this.map.fitBounds(b.pad(0.2)); }
+  async etaFromMyLocation(toLatLng,{showAlert=true}={}){ if(!navigator.geolocation){ if(showAlert) alert('Geolocation not available.'); return null; } const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej)); const R=6371000, toRad=v=>v*Math.PI/180; const dLat=toRad(toLatLng.lat-pos.coords.latitude), dLon=toRad(toLatLng.lng-pos.coords.longitude); const lat1=toRad(pos.coords.latitude), lat2=toRad(toLatLng.lat); const a=Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2; const c=2*Math.atan2((a**0.5), ((1-a)**0.5)); const distance=R*c; const speed=1.4; const minutes=round(distance/speed/60); function round(x){ return Math.max(1, Math.round(x)); } const msg=`Walking (est.): ~${minutes} min • ${(distance/1000).toFixed(2)} km`; if(showAlert) alert(msg); return { duration:{text:`${minutes} mins`}, distance:{text:`${(distance/1000).toFixed(2)} km`} }; }
+  async drawRoute(){ alert('Route drawing is available in Google mode only.'); }
 }
 
-// Reverse Geocode
-function revGeocode(lat,lon,cb){
-  if(!usingGoogle || !gGeocoder){ cb(null); return; }
-  gGeocoder.geocode({location:{lat,lng:lon}}, (res,status)=> cb(status==='OK'&&res[0]?res[0].formatted_address:null));
+
+// --- config.js ---
+
+
+const DEFAULTS = {
+  GOOGLE_MAPS_API_KEY: "AIzaSyDsq2ztFeFfmgqiRIZZtK5R7aCVGF66-80",
+  NOAA_STATION_ID: "8518750",
+  NOAA_DATUM: "MLLW",
+  NOAA_PRODUCT: "predictions",
+  NOAA_TIMEZONE: "lst_ldt",
+  NOAA_UNITS: "english",
+  APP_TITLE: "NYC Photo Guide",
+  APP_DEFAULT_CITY: "New York City"
+};
+async function loadConfig() {
+  const cfg = { ...DEFAULTS };
+  const lsKey = localStorage.getItem('GOOGLE_MAPS_API_KEY'); if (lsKey) cfg.GOOGLE_MAPS_API_KEY = lsKey;
+  const urlKey = new URLSearchParams(location.search).get('gm'); if (urlKey) cfg.GOOGLE_MAPS_API_KEY = urlKey;
+  try { const r = await fetch('/env.json'); if (r.ok) { const j = await r.json(); Object.assign(cfg, j); if (j.GOOGLE_MAPS_API_KEY) cfg.GOOGLE_MAPS_API_KEY = j.GOOGLE_MAPS_API_KEY; } } catch {}
+  if (window.ENV && typeof window.ENV === 'object'){ Object.assign(cfg, window.ENV); if(window.ENV.GOOGLE_MAPS_API_KEY) cfg.GOOGLE_MAPS_API_KEY = window.ENV.GOOGLE_MAPS_API_KEY; }
+  try { if (import.meta && import.meta.env) { const env=import.meta.env; cfg.GOOGLE_MAPS_API_KEY = cfg.GOOGLE_MAPS_API_KEY || env.VITE_GOOGLE_MAPS_API_KEY || env.GOOGLE_MAPS_API_KEY || ''; } } catch {}
+  return cfg;
+}
+function setGoogleKey(k){ localStorage.setItem('GOOGLE_MAPS_API_KEY', k || ''); }
+function noaaUrl(dateStr, station="8518750", tz="lst_ldt", datum="MLLW", units="english"){
+  const begin = dateStr.replaceAll('-',''); const end = dateStr.replaceAll('-','');
+  const base = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
+  const qs = new URLSearchParams({ product:"predictions", begin_date:begin, end_date:end, datum, station, time_zone:tz, interval:"hilo", units, format:"json" });
+  return `${base}?${qs.toString()}`;
 }
 
-// ETA / Route
-let myMarker=null;
-function geolocate(cb){
-  if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const pt={lat:pos.coords.latitude,lng:pos.coords.longitude};
-    if(usingGoogle){
-      if(!myMarker) myMarker=new google.maps.Marker({map:gmap,position:pt,icon:{path:google.maps.SymbolPath.CIRCLE,scale:5,fillColor:'#34d399',fillOpacity:1,strokeColor:'#034d36',strokeWeight:2}});
-      else myMarker.setPosition(pt);
-      gmap.panTo(pt);
-    } else {
-      if(myMarker){ lLayer.removeLayer(myMarker); }
-      myMarker=L.circleMarker([pt.lat,pt.lng],{radius:6,color:'#34d399',fillColor:'#34d399',fillOpacity:1}).addTo(lLayer);
-      lmap.panTo([pt.lat,pt.lng]);
-    }
-    cb&&cb(pt);
-  }, err=>alert('Geolocation error: '+err.message), {enableHighAccuracy:true,timeout:10000,maximumAge:30000});
-}
-function etaToAnchor(loc){
-  if(!usingGoogle){ alert('This needs Google mode. Click “Google Maps (online)” above the Light panel.'); return; }
-  geolocate(pt=>{
-    const a=activeAnchor(loc);
-    const svc=new google.maps.DistanceMatrixService();
-    svc.getDistanceMatrix({origins:[pt],destinations:[{lat:a.lat,lng:a.lon}],travelMode:'WALKING'}, (res,status)=>{
-      if(status==='OK'){ const el=res.rows[0].elements[0]; alert(`Walking ETA: ${el.duration.text} • ${el.distance.text}`);} else alert('DistanceMatrix failed: '+status);
-    });
+
+// --- data/locations.js ---
+
+const LOCATIONS = [
+  {
+    "id": "dumbo_washington_water_manhattan_bridge_keyhole",
+    "name": "DUMBO \u2014 Washington & Water (Manhattan Bridge Keyhole)",
+    "day": "2025-10-03",
+    "block": "Morning",
+    "rank": 1,
+    "bearing": "NNE toward Manhattan Bridge/ESB",
+    "whyNow": "Arrive pre\u2011dawn; classic ESB-in-arch alignment.",
+    "gear": "24\u201370mm; CPL/ND",
+    "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7034225,
+        "lon": -73.9893714
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 22.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 22.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 22.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Parking gap watch",
+        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+      },
+      {
+        "title": "Reflections after wash",
+        "detail": "Street or lawn irrigation leaves sheen\u2014use CPL to control glare."
+      },
+      {
+        "title": "Taxi or jogger streaks",
+        "detail": "If traffic begins, try 1/8\u20131/2s for motion streaks."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Establishing wide (16\u201324mm)",
+        "detail": "Include context and sky color; keep verticals straight."
+      },
+      {
+        "title": "Low angle leading lines",
+        "detail": "Camera close to ground; emphasize texture or rails."
+      },
+      {
+        "title": "Human scale",
+        "detail": "Single figure walking/running; time the stride."
+      },
+      {
+        "title": "Compressed crop (50/70mm)",
+        "detail": "Use longer end for a clean graphic frame; crop if needed."
+      },
+      {
+        "title": "Detail cutaway",
+        "detail": "Reflections, signage, patterns that summarize place."
+      }
+    ]
+  },
+  {
+    "id": "pebble_beach_empire_fulton_ferry",
+    "name": "Pebble Beach / Empire\u2013Fulton Ferry",
+    "day": "2025-10-03",
+    "block": "Morning",
+    "rank": 2,
+    "bearing": "WSW toward Lower Manhattan",
+    "whyNow": "Rising tide likely; long exposures for water smoothing.",
+    "gear": "16\u201324mm; 3\u20136\u2011stop ND; tripod",
+    "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7041667,
+        "lon": -73.9922222
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Parking gap watch",
+        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+      },
+      {
+        "title": "Reflections after wash",
+        "detail": "Street or lawn irrigation leaves sheen\u2014use CPL to control glare."
+      },
+      {
+        "title": "Taxi or jogger streaks",
+        "detail": "If traffic begins, try 1/8\u20131/2s for motion streaks."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Establishing wide (16\u201324mm)",
+        "detail": "Include context and sky color; keep verticals straight."
+      },
+      {
+        "title": "Low angle leading lines",
+        "detail": "Camera close to ground; emphasize texture or rails."
+      },
+      {
+        "title": "Human scale",
+        "detail": "Single figure walking/running; time the stride."
+      },
+      {
+        "title": "Compressed crop (50/70mm)",
+        "detail": "Use longer end for a clean graphic frame; crop if needed."
+      },
+      {
+        "title": "Detail cutaway",
+        "detail": "Reflections, signage, patterns that summarize place."
+      }
+    ]
+  },
+  {
+    "id": "brooklyn_heights_promenade",
+    "name": "Brooklyn Heights Promenade",
+    "day": "2025-10-03",
+    "block": "Morning",
+    "rank": 3,
+    "bearing": "WSW across East River",
+    "whyNow": "Tele compression of skyline; benches and trees for layers.",
+    "gear": "24\u201370mm (at 70mm) or 50mm (crop); 24\u201370mm",
+    "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.6969,
+        "lon": -73.9969
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Parking gap watch",
+        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+      },
+      {
+        "title": "Reflections after wash",
+        "detail": "Street or lawn irrigation leaves sheen\u2014use CPL to control glare."
+      },
+      {
+        "title": "Taxi or jogger streaks",
+        "detail": "If traffic begins, try 1/8\u20131/2s for motion streaks."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Establishing wide (16\u201324mm)",
+        "detail": "Include context and sky color; keep verticals straight."
+      },
+      {
+        "title": "Low angle leading lines",
+        "detail": "Camera close to ground; emphasize texture or rails."
+      },
+      {
+        "title": "Human scale",
+        "detail": "Single figure walking/running; time the stride."
+      },
+      {
+        "title": "Compressed crop (50/70mm)",
+        "detail": "Use longer end for a clean graphic frame; crop if needed."
+      },
+      {
+        "title": "Detail cutaway",
+        "detail": "Reflections, signage, patterns that summarize place."
+      }
+    ]
+  },
+  {
+    "id": "manhattan_bridge_pedestrian_walkway_south",
+    "name": "Manhattan Bridge \u2014 Pedestrian Walkway (south)",
+    "day": "2025-10-03",
+    "block": "Morning",
+    "rank": 4,
+    "bearing": "SW toward Financial District",
+    "whyNow": "Train streaks + skyline through fencing patterns.",
+    "gear": "24\u201370mm; mini\u2011tripod",
+    "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7132,
+        "lon": -73.993
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 225,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 225,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 225,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Parking gap watch",
+        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+      },
+      {
+        "title": "Reflections after wash",
+        "detail": "Street or lawn irrigation leaves sheen\u2014use CPL to control glare."
+      },
+      {
+        "title": "Taxi or jogger streaks",
+        "detail": "If traffic begins, try 1/8\u20131/2s for motion streaks."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Establishing wide (16\u201324mm)",
+        "detail": "Include context and sky color; keep verticals straight."
+      },
+      {
+        "title": "Low angle leading lines",
+        "detail": "Camera close to ground; emphasize texture or rails."
+      },
+      {
+        "title": "Human scale",
+        "detail": "Single figure walking/running; time the stride."
+      },
+      {
+        "title": "Compressed crop (50/70mm)",
+        "detail": "Use longer end for a clean graphic frame; crop if needed."
+      },
+      {
+        "title": "Detail cutaway",
+        "detail": "Reflections, signage, patterns that summarize place."
+      }
+    ]
+  },
+  {
+    "id": "brooklyn_bridge_walkway_center_spans",
+    "name": "Brooklyn Bridge \u2014 Walkway (center spans)",
+    "day": "2025-10-03",
+    "block": "Morning",
+    "rank": 5,
+    "bearing": "WNW toward Lower Manhattan",
+    "whyNow": "Cable symmetry; low angle wood planks foreground.",
+    "gear": "16\u201324mm; clamp",
+    "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7067,
+        "lon": -73.9967
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 292.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 292.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 292.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Parking gap watch",
+        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+      },
+      {
+        "title": "Reflections after wash",
+        "detail": "Street or lawn irrigation leaves sheen\u2014use CPL to control glare."
+      },
+      {
+        "title": "Taxi or jogger streaks",
+        "detail": "If traffic begins, try 1/8\u20131/2s for motion streaks."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Establishing wide (16\u201324mm)",
+        "detail": "Include context and sky color; keep verticals straight."
+      },
+      {
+        "title": "Low angle leading lines",
+        "detail": "Camera close to ground; emphasize texture or rails."
+      },
+      {
+        "title": "Human scale",
+        "detail": "Single figure walking/running; time the stride."
+      },
+      {
+        "title": "Compressed crop (50/70mm)",
+        "detail": "Use longer end for a clean graphic frame; crop if needed."
+      },
+      {
+        "title": "Detail cutaway",
+        "detail": "Reflections, signage, patterns that summarize place."
+      }
+    ]
+  },
+  {
+    "id": "grand_central_terminal_main_concourse",
+    "name": "Grand Central Terminal \u2014 Main Concourse",
+    "day": "2025-10-03",
+    "block": "Afternoon",
+    "rank": 1,
+    "bearing": "Interior (multi)",
+    "whyNow": "Motion blur at 1/4\u20131/2s; tripods require permit.",
+    "gear": "16\u201324mm; fast 35/50mm",
+    "settings": "Work shade and geometry; CPL for glare; 1/250s+ @ f/5.6\u20138.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.75278,
+        "lon": -73.97722
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Shadow geometry",
+        "detail": "Look for repeating cast-iron, stoops, or rails to form patterns."
+      },
+      {
+        "title": "Street portrait moment",
+        "detail": "Use 35/50mm for environmental portraits; ask politely."
+      },
+      {
+        "title": "Compression detail",
+        "detail": "Use the 70mm end of 24\u201370; crop if needed for stronger layers."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Shadow lattice (24\u201370mm)",
+        "detail": "Catch window/railing shadows making a grid or stripes."
+      },
+      {
+        "title": "Corner portrait (35/50mm)",
+        "detail": "Subject on edge of light; background in soft shade."
+      },
+      {
+        "title": "Texture macro (50mm)",
+        "detail": "Look for worn stone/metal details; low ISO, high f\u2011stop."
+      },
+      {
+        "title": "Layered street (70mm)",
+        "detail": "Stack elements; shoot through foreground."
+      },
+      {
+        "title": "Signage type",
+        "detail": "Tight crop of iconic typography or tile work."
+      }
+    ]
+  },
+  {
+    "id": "nypl_main_branch_stephen_a_schwarzman",
+    "name": "NYPL Main Branch (Stephen A. Schwarzman)",
+    "day": "2025-10-03",
+    "block": "Afternoon",
+    "rank": 2,
+    "bearing": "E/W fa\u00e7ades; interior symmetry",
+    "whyNow": "No flash/tripods inside; quiet portraits on steps.",
+    "gear": "24\u201370mm; fast 35mm",
+    "settings": "Work shade and geometry; CPL for glare; 1/250s+ @ f/5.6\u20138.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7532,
+        "lon": -73.9822
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 90,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 90,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 90,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Shadow geometry",
+        "detail": "Look for repeating cast-iron, stoops, or rails to form patterns."
+      },
+      {
+        "title": "Street portrait moment",
+        "detail": "Use 35/50mm for environmental portraits; ask politely."
+      },
+      {
+        "title": "Compression detail",
+        "detail": "Use the 70mm end of 24\u201370; crop if needed for stronger layers."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Shadow lattice (24\u201370mm)",
+        "detail": "Catch window/railing shadows making a grid or stripes."
+      },
+      {
+        "title": "Corner portrait (35/50mm)",
+        "detail": "Subject on edge of light; background in soft shade."
+      },
+      {
+        "title": "Texture macro (50mm)",
+        "detail": "Look for worn stone/metal details; low ISO, high f\u2011stop."
+      },
+      {
+        "title": "Layered street (70mm)",
+        "detail": "Stack elements; shoot through foreground."
+      },
+      {
+        "title": "Signage type",
+        "detail": "Tight crop of iconic typography or tile work."
+      }
+    ]
+  },
+  {
+    "id": "flatiron_district_23rd_broadway",
+    "name": "Flatiron District (23rd & Broadway)",
+    "day": "2025-10-03",
+    "block": "Afternoon",
+    "rank": 3,
+    "bearing": "NNE along 5th Ave",
+    "whyNow": "Median for wedge composition; daytime streaks with ND.",
+    "gear": "24\u201370mm; 24\u201370mm (at 70mm) or 50mm (crop); ND",
+    "settings": "Work shade and geometry; CPL for glare; 1/250s+ @ f/5.6\u20138.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7411,
+        "lon": -73.9897
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 22.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 22.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 22.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Shadow geometry",
+        "detail": "Look for repeating cast-iron, stoops, or rails to form patterns."
+      },
+      {
+        "title": "Street portrait moment",
+        "detail": "Use 35/50mm for environmental portraits; ask politely."
+      },
+      {
+        "title": "Compression detail",
+        "detail": "Use the 70mm end of 24\u201370; crop if needed for stronger layers."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Shadow lattice (24\u201370mm)",
+        "detail": "Catch window/railing shadows making a grid or stripes."
+      },
+      {
+        "title": "Corner portrait (35/50mm)",
+        "detail": "Subject on edge of light; background in soft shade."
+      },
+      {
+        "title": "Texture macro (50mm)",
+        "detail": "Look for worn stone/metal details; low ISO, high f\u2011stop."
+      },
+      {
+        "title": "Layered street (70mm)",
+        "detail": "Stack elements; shoot through foreground."
+      },
+      {
+        "title": "Signage type",
+        "detail": "Tight crop of iconic typography or tile work."
+      }
+    ]
+  },
+  {
+    "id": "the_oculus_wtc_plaza",
+    "name": "The Oculus & WTC Plaza",
+    "day": "2025-10-03",
+    "block": "Afternoon",
+    "rank": 4,
+    "bearing": "Interior/exterior ribs",
+    "whyNow": "Symmetry studies; security may restrict tripods inside.",
+    "gear": "16\u201324mm; 24\u201370mm",
+    "settings": "Work shade and geometry; CPL for glare; 1/250s+ @ f/5.6\u20138.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7126,
+        "lon": -74.0098
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Shadow geometry",
+        "detail": "Look for repeating cast-iron, stoops, or rails to form patterns."
+      },
+      {
+        "title": "Street portrait moment",
+        "detail": "Use 35/50mm for environmental portraits; ask politely."
+      },
+      {
+        "title": "Compression detail",
+        "detail": "Use the 70mm end of 24\u201370; crop if needed for stronger layers."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Shadow lattice (24\u201370mm)",
+        "detail": "Catch window/railing shadows making a grid or stripes."
+      },
+      {
+        "title": "Corner portrait (35/50mm)",
+        "detail": "Subject on edge of light; background in soft shade."
+      },
+      {
+        "title": "Texture macro (50mm)",
+        "detail": "Look for worn stone/metal details; low ISO, high f\u2011stop."
+      },
+      {
+        "title": "Layered street (70mm)",
+        "detail": "Stack elements; shoot through foreground."
+      },
+      {
+        "title": "Signage type",
+        "detail": "Tight crop of iconic typography or tile work."
+      }
+    ]
+  },
+  {
+    "id": "the_high_line_10th_ave_overlook_spur",
+    "name": "The High Line \u2014 10th Ave Overlook / Spur",
+    "day": "2025-10-03",
+    "block": "Afternoon",
+    "rank": 5,
+    "bearing": "W to Hudson; S/N along 10th Ave",
+    "whyNow": "Sun slicing between buildings; framed street scenes.",
+    "gear": "24\u201370mm; 24\u201370mm (at 70mm) or 50mm (crop)",
+    "settings": "Work shade and geometry; CPL for glare; 1/250s+ @ f/5.6\u20138.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7425,
+        "lon": -74.0061
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Shadow geometry",
+        "detail": "Look for repeating cast-iron, stoops, or rails to form patterns."
+      },
+      {
+        "title": "Street portrait moment",
+        "detail": "Use 35/50mm for environmental portraits; ask politely."
+      },
+      {
+        "title": "Compression detail",
+        "detail": "Use the 70mm end of 24\u201370; crop if needed for stronger layers."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Shadow lattice (24\u201370mm)",
+        "detail": "Catch window/railing shadows making a grid or stripes."
+      },
+      {
+        "title": "Corner portrait (35/50mm)",
+        "detail": "Subject on edge of light; background in soft shade."
+      },
+      {
+        "title": "Texture macro (50mm)",
+        "detail": "Look for worn stone/metal details; low ISO, high f\u2011stop."
+      },
+      {
+        "title": "Layered street (70mm)",
+        "detail": "Stack elements; shoot through foreground."
+      },
+      {
+        "title": "Signage type",
+        "detail": "Tight crop of iconic typography or tile work."
+      }
+    ]
+  },
+  {
+    "id": "top_of_the_rock_observation_deck",
+    "name": "Top of the Rock \u2014 Observation Deck",
+    "day": "2025-10-03",
+    "block": "Evening",
+    "rank": 1,
+    "bearing": "W & S (sunset, ESB)",
+    "whyNow": "Arrive 60\u201390 min pre\u2011sunset; no tripods on deck.",
+    "gear": "16\u201324mm; 24\u201370mm; cloth",
+    "settings": "Blue-hour blend; 1/60\u20131s @ f/5.6\u20138, ISO 100\u2013800; bracketing if needed.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7591,
+        "lon": -73.9795
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Blue-hour reflections",
+        "detail": "Arrive 45\u201375 min before sunset; water calms near high tide."
+      },
+      {
+        "title": "Silhouette walkers",
+        "detail": "Expose for sky; use crosswalks as a stage."
+      },
+      {
+        "title": "Ferry or car streaks",
+        "detail": "1\u20132s for ferries/traffic; tripod or brace on railing."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Blue-hour skyline (16\u201324mm)",
+        "detail": "Balance ambient & city lights; 10\u201320 min after sunset."
+      },
+      {
+        "title": "Silhouette frame (35/50mm)",
+        "detail": "Backlight against sky/water; faster shutter."
+      },
+      {
+        "title": "Symmetry (24\u201370mm)",
+        "detail": "Use bridges/arches/railings; centered composition."
+      },
+      {
+        "title": "Panning ferry (1/8\u20131/4s)",
+        "detail": "Follow motion for streaky yet readable subject."
+      },
+      {
+        "title": "Detail twinkle",
+        "detail": "Tight crop on lights/signs; sparkle highlights."
+      }
+    ]
+  },
+  {
+    "id": "gapstow_bridge_central_park",
+    "name": "Gapstow Bridge \u2014 Central Park",
+    "day": "2025-10-03",
+    "block": "Evening",
+    "rank": 2,
+    "bearing": "NW toward Midtown",
+    "whyNow": "Shoreline for reflections; silhouettes on bridge.",
+    "gear": "24\u201370mm (at 70mm) or 50mm (crop); 35mm; CPL",
+    "settings": "Blue-hour blend; 1/60\u20131s @ f/5.6\u20138, ISO 100\u2013800; bracketing if needed.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7641,
+        "lon": -73.9739
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 315,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 315,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 315,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Blue-hour reflections",
+        "detail": "Arrive 45\u201375 min before sunset; water calms near high tide."
+      },
+      {
+        "title": "Silhouette walkers",
+        "detail": "Expose for sky; use crosswalks as a stage."
+      },
+      {
+        "title": "Ferry or car streaks",
+        "detail": "1\u20132s for ferries/traffic; tripod or brace on railing."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Blue-hour skyline (16\u201324mm)",
+        "detail": "Balance ambient & city lights; 10\u201320 min after sunset."
+      },
+      {
+        "title": "Silhouette frame (35/50mm)",
+        "detail": "Backlight against sky/water; faster shutter."
+      },
+      {
+        "title": "Symmetry (24\u201370mm)",
+        "detail": "Use bridges/arches/railings; centered composition."
+      },
+      {
+        "title": "Panning ferry (1/8\u20131/4s)",
+        "detail": "Follow motion for streaky yet readable subject."
+      },
+      {
+        "title": "Detail twinkle",
+        "detail": "Tight crop on lights/signs; sparkle highlights."
+      }
+    ]
+  },
+  {
+    "id": "brooklyn_bridge_park_pier_1_pilings",
+    "name": "Brooklyn Bridge Park \u2014 Pier 1 (Pilings)",
+    "day": "2025-10-03",
+    "block": "Evening",
+    "rank": 3,
+    "bearing": "WSW to skyline",
+    "whyNow": "Repeating pilings foreground; ferry streaks at blue hour.",
+    "gear": "16\u201324mm; ND; tripod",
+    "settings": "Blue-hour blend; 1/60\u20131s @ f/5.6\u20138, ISO 100\u2013800; bracketing if needed.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7021,
+        "lon": -73.9969
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Blue-hour reflections",
+        "detail": "Arrive 45\u201375 min before sunset; water calms near high tide."
+      },
+      {
+        "title": "Silhouette walkers",
+        "detail": "Expose for sky; use crosswalks as a stage."
+      },
+      {
+        "title": "Ferry or car streaks",
+        "detail": "1\u20132s for ferries/traffic; tripod or brace on railing."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Blue-hour skyline (16\u201324mm)",
+        "detail": "Balance ambient & city lights; 10\u201320 min after sunset."
+      },
+      {
+        "title": "Silhouette frame (35/50mm)",
+        "detail": "Backlight against sky/water; faster shutter."
+      },
+      {
+        "title": "Symmetry (24\u201370mm)",
+        "detail": "Use bridges/arches/railings; centered composition."
+      },
+      {
+        "title": "Panning ferry (1/8\u20131/4s)",
+        "detail": "Follow motion for streaky yet readable subject."
+      },
+      {
+        "title": "Detail twinkle",
+        "detail": "Tight crop on lights/signs; sparkle highlights."
+      }
+    ]
+  },
+  {
+    "id": "roosevelt_island_tram_queensboro_bridge",
+    "name": "Roosevelt Island Tram & Queensboro Bridge",
+    "day": "2025-10-03",
+    "block": "Evening",
+    "rank": 4,
+    "bearing": "W toward Midtown",
+    "whyNow": "Tram motion blur; bridge tower geometry.",
+    "gear": "24\u201370mm; 24\u201370mm (at 70mm) or 50mm (crop)",
+    "settings": "Blue-hour blend; 1/60\u20131s @ f/5.6\u20138, ISO 100\u2013800; bracketing if needed.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7615,
+        "lon": -73.9597
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Blue-hour reflections",
+        "detail": "Arrive 45\u201375 min before sunset; water calms near high tide."
+      },
+      {
+        "title": "Silhouette walkers",
+        "detail": "Expose for sky; use crosswalks as a stage."
+      },
+      {
+        "title": "Ferry or car streaks",
+        "detail": "1\u20132s for ferries/traffic; tripod or brace on railing."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Blue-hour skyline (16\u201324mm)",
+        "detail": "Balance ambient & city lights; 10\u201320 min after sunset."
+      },
+      {
+        "title": "Silhouette frame (35/50mm)",
+        "detail": "Backlight against sky/water; faster shutter."
+      },
+      {
+        "title": "Symmetry (24\u201370mm)",
+        "detail": "Use bridges/arches/railings; centered composition."
+      },
+      {
+        "title": "Panning ferry (1/8\u20131/4s)",
+        "detail": "Follow motion for streaky yet readable subject."
+      },
+      {
+        "title": "Detail twinkle",
+        "detail": "Tight crop on lights/signs; sparkle highlights."
+      }
+    ]
+  },
+  {
+    "id": "belvedere_castle_turtle_pond",
+    "name": "Belvedere Castle & Turtle Pond",
+    "day": "2025-10-03",
+    "block": "Evening",
+    "rank": 5,
+    "bearing": "SE/NW options",
+    "whyNow": "Castle silhouettes; pond reflections as light drops.",
+    "gear": "24\u201370mm; 16\u201324mm",
+    "settings": "Blue-hour blend; 1/60\u20131s @ f/5.6\u20138, ISO 100\u2013800; bracketing if needed.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7794,
+        "lon": -73.969
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 135,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 135,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 135,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Blue-hour reflections",
+        "detail": "Arrive 45\u201375 min before sunset; water calms near high tide."
+      },
+      {
+        "title": "Silhouette walkers",
+        "detail": "Expose for sky; use crosswalks as a stage."
+      },
+      {
+        "title": "Ferry or car streaks",
+        "detail": "1\u20132s for ferries/traffic; tripod or brace on railing."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Blue-hour skyline (16\u201324mm)",
+        "detail": "Balance ambient & city lights; 10\u201320 min after sunset."
+      },
+      {
+        "title": "Silhouette frame (35/50mm)",
+        "detail": "Backlight against sky/water; faster shutter."
+      },
+      {
+        "title": "Symmetry (24\u201370mm)",
+        "detail": "Use bridges/arches/railings; centered composition."
+      },
+      {
+        "title": "Panning ferry (1/8\u20131/4s)",
+        "detail": "Follow motion for streaky yet readable subject."
+      },
+      {
+        "title": "Detail twinkle",
+        "detail": "Tight crop on lights/signs; sparkle highlights."
+      }
+    ]
+  },
+  {
+    "id": "times_square_duffy_square",
+    "name": "Times Square \u2014 Duffy Square",
+    "day": "2025-10-03",
+    "block": "Night",
+    "rank": 1,
+    "bearing": "Broadway & 7th Ave",
+    "whyNow": "Neon people blur 4\u201310s; portraits at f/1.8\u20132.8.",
+    "gear": "24\u201370mm; fast 50mm; mini\u2011tripod",
+    "settings": "Tripod: 1\u201310s @ f/6.3\u20138, ISO 100\u2013400; expose for highlights.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.758,
+        "lon": -73.9855
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Clean tripod placement",
+        "detail": "Stay behind safety lines; avoid blocking paths."
+      },
+      {
+        "title": "Neon trails",
+        "detail": "1\u20134s exposures; wait for buses to paint the frame."
+      },
+      {
+        "title": "Skyline mirror",
+        "detail": "Use 16\u201324 for big scene; 50mm for graphic details."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Long exposure base (16\u201324mm)",
+        "detail": "1\u201310s; shoot 10\u201320 frames; pick best trails."
+      },
+      {
+        "title": "Tele crop (50/70mm)",
+        "detail": "Abstract geometry; isolate building tops."
+      },
+      {
+        "title": "Reflections",
+        "detail": "Find puddles or river edges; go low for mirror."
+      },
+      {
+        "title": "People blur (1\u20132s)",
+        "detail": "Trace flows of commuters without losing structure."
+      },
+      {
+        "title": "Icon detail",
+        "detail": "Tight shot of recognizable element to close the set."
+      }
+    ]
+  },
+  {
+    "id": "tudor_city_overpass_e_42nd_st",
+    "name": "Tudor City Overpass (E 42nd St)",
+    "day": "2025-10-03",
+    "block": "Night",
+    "rank": 2,
+    "bearing": "WSW down 42nd St",
+    "whyNow": "Chrysler crown + headlight trails 8\u201320s.",
+    "gear": "24\u201370mm (at 70mm) or 50mm (crop); tripod; remote",
+    "settings": "Tripod: 1\u201310s @ f/6.3\u20138, ISO 100\u2013400; expose for highlights.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7495,
+        "lon": -73.9725
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Clean tripod placement",
+        "detail": "Stay behind safety lines; avoid blocking paths."
+      },
+      {
+        "title": "Neon trails",
+        "detail": "1\u20134s exposures; wait for buses to paint the frame."
+      },
+      {
+        "title": "Skyline mirror",
+        "detail": "Use 16\u201324 for big scene; 50mm for graphic details."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Long exposure base (16\u201324mm)",
+        "detail": "1\u201310s; shoot 10\u201320 frames; pick best trails."
+      },
+      {
+        "title": "Tele crop (50/70mm)",
+        "detail": "Abstract geometry; isolate building tops."
+      },
+      {
+        "title": "Reflections",
+        "detail": "Find puddles or river edges; go low for mirror."
+      },
+      {
+        "title": "People blur (1\u20132s)",
+        "detail": "Trace flows of commuters without losing structure."
+      },
+      {
+        "title": "Icon detail",
+        "detail": "Tight shot of recognizable element to close the set."
+      }
+    ]
+  },
+  {
+    "id": "rockefeller_center_channel_gardens",
+    "name": "Rockefeller Center \u2014 Channel Gardens",
+    "day": "2025-10-03",
+    "block": "Night",
+    "rank": 3,
+    "bearing": "S toward 30 Rock",
+    "whyNow": "Flags, fountains, reflections; seasonal installs.",
+    "gear": "24\u201370mm; fast 35mm",
+    "settings": "Tripod: 1\u201310s @ f/6.3\u20138, ISO 100\u2013400; expose for highlights.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7586,
+        "lon": -73.9787
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 180,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 180,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 180,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Clean tripod placement",
+        "detail": "Stay behind safety lines; avoid blocking paths."
+      },
+      {
+        "title": "Neon trails",
+        "detail": "1\u20134s exposures; wait for buses to paint the frame."
+      },
+      {
+        "title": "Skyline mirror",
+        "detail": "Use 16\u201324 for big scene; 50mm for graphic details."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Long exposure base (16\u201324mm)",
+        "detail": "1\u201310s; shoot 10\u201320 frames; pick best trails."
+      },
+      {
+        "title": "Tele crop (50/70mm)",
+        "detail": "Abstract geometry; isolate building tops."
+      },
+      {
+        "title": "Reflections",
+        "detail": "Find puddles or river edges; go low for mirror."
+      },
+      {
+        "title": "People blur (1\u20132s)",
+        "detail": "Trace flows of commuters without losing structure."
+      },
+      {
+        "title": "Icon detail",
+        "detail": "Tight shot of recognizable element to close the set."
+      }
+    ]
+  },
+  {
+    "id": "flatiron_at_night_23rd_broadway",
+    "name": "Flatiron at Night (23rd & Broadway)",
+    "day": "2025-10-03",
+    "block": "Night",
+    "rank": 4,
+    "bearing": "NNE along 5th Ave",
+    "whyNow": "Taxi streaks; puddle mirrors near crosswalks.",
+    "gear": "24\u201370mm; tripod",
+    "settings": "Tripod: 1\u201310s @ f/6.3\u20138, ISO 100\u2013400; expose for highlights.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7411,
+        "lon": -73.9897
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 22.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 22.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 22.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Clean tripod placement",
+        "detail": "Stay behind safety lines; avoid blocking paths."
+      },
+      {
+        "title": "Neon trails",
+        "detail": "1\u20134s exposures; wait for buses to paint the frame."
+      },
+      {
+        "title": "Skyline mirror",
+        "detail": "Use 16\u201324 for big scene; 50mm for graphic details."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Long exposure base (16\u201324mm)",
+        "detail": "1\u201310s; shoot 10\u201320 frames; pick best trails."
+      },
+      {
+        "title": "Tele crop (50/70mm)",
+        "detail": "Abstract geometry; isolate building tops."
+      },
+      {
+        "title": "Reflections",
+        "detail": "Find puddles or river edges; go low for mirror."
+      },
+      {
+        "title": "People blur (1\u20132s)",
+        "detail": "Trace flows of commuters without losing structure."
+      },
+      {
+        "title": "Icon detail",
+        "detail": "Tight shot of recognizable element to close the set."
+      }
+    ]
+  },
+  {
+    "id": "brooklyn_bridge_walkway_night_symmetry",
+    "name": "Brooklyn Bridge \u2014 Walkway (night symmetry)",
+    "day": "2025-10-03",
+    "block": "Night",
+    "rank": 5,
+    "bearing": "WNW to skyline",
+    "whyNow": "Cable geometry; keep to the side, be mindful of cyclists.",
+    "gear": "16\u201324mm; clamp",
+    "settings": "Tripod: 1\u201310s @ f/6.3\u20138, ISO 100\u2013400; expose for highlights.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7067,
+        "lon": -73.9967
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 292.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 292.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 292.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Clean tripod placement",
+        "detail": "Stay behind safety lines; avoid blocking paths."
+      },
+      {
+        "title": "Neon trails",
+        "detail": "1\u20134s exposures; wait for buses to paint the frame."
+      },
+      {
+        "title": "Skyline mirror",
+        "detail": "Use 16\u201324 for big scene; 50mm for graphic details."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Long exposure base (16\u201324mm)",
+        "detail": "1\u201310s; shoot 10\u201320 frames; pick best trails."
+      },
+      {
+        "title": "Tele crop (50/70mm)",
+        "detail": "Abstract geometry; isolate building tops."
+      },
+      {
+        "title": "Reflections",
+        "detail": "Find puddles or river edges; go low for mirror."
+      },
+      {
+        "title": "People blur (1\u20132s)",
+        "detail": "Trace flows of commuters without losing structure."
+      },
+      {
+        "title": "Icon detail",
+        "detail": "Tight shot of recognizable element to close the set."
+      }
+    ]
+  },
+  {
+    "id": "bethesda_terrace_arcade",
+    "name": "Bethesda Terrace \u2014 Arcade",
+    "day": "2025-10-04",
+    "block": "Morning",
+    "rank": 1,
+    "bearing": "N/S arcade axis",
+    "whyNow": "Start at civil dawn; vanishing arches + warm side\u2011light.",
+    "gear": "24\u201370mm; fast 35mm",
+    "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7741,
+        "lon": -73.9701
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Parking gap watch",
+        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+      },
+      {
+        "title": "Reflections after wash",
+        "detail": "Street or lawn irrigation leaves sheen\u2014use CPL to control glare."
+      },
+      {
+        "title": "Taxi or jogger streaks",
+        "detail": "If traffic begins, try 1/8\u20131/2s for motion streaks."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Establishing wide (16\u201324mm)",
+        "detail": "Include context and sky color; keep verticals straight."
+      },
+      {
+        "title": "Low angle leading lines",
+        "detail": "Camera close to ground; emphasize texture or rails."
+      },
+      {
+        "title": "Human scale",
+        "detail": "Single figure walking/running; time the stride."
+      },
+      {
+        "title": "Compressed crop (50/70mm)",
+        "detail": "Use longer end for a clean graphic frame; crop if needed."
+      },
+      {
+        "title": "Detail cutaway",
+        "detail": "Reflections, signage, patterns that summarize place."
+      }
+    ]
+  },
+  {
+    "id": "bow_bridge_the_lake",
+    "name": "Bow Bridge \u2014 The Lake",
+    "day": "2025-10-04",
+    "block": "Morning",
+    "rank": 2,
+    "bearing": "W/NW across The Lake",
+    "whyNow": "Reflections; rowboats add scale; avoid mid\u2011bridge vibration.",
+    "gear": "24\u201370mm (at 70mm) or 50mm (crop); CPL",
+    "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7755,
+        "lon": -73.9703
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Parking gap watch",
+        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+      },
+      {
+        "title": "Reflections after wash",
+        "detail": "Street or lawn irrigation leaves sheen\u2014use CPL to control glare."
+      },
+      {
+        "title": "Taxi or jogger streaks",
+        "detail": "If traffic begins, try 1/8\u20131/2s for motion streaks."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Establishing wide (16\u201324mm)",
+        "detail": "Include context and sky color; keep verticals straight."
+      },
+      {
+        "title": "Low angle leading lines",
+        "detail": "Camera close to ground; emphasize texture or rails."
+      },
+      {
+        "title": "Human scale",
+        "detail": "Single figure walking/running; time the stride."
+      },
+      {
+        "title": "Compressed crop (50/70mm)",
+        "detail": "Use longer end for a clean graphic frame; crop if needed."
+      },
+      {
+        "title": "Detail cutaway",
+        "detail": "Reflections, signage, patterns that summarize place."
+      }
+    ]
+  },
+  {
+    "id": "the_mall_literary_walk",
+    "name": "The Mall / Literary Walk",
+    "day": "2025-10-04",
+    "block": "Morning",
+    "rank": 3,
+    "bearing": "S/N tree tunnel",
+    "whyNow": "Vanishing lines; portraits with layered bokeh.",
+    "gear": "35/85mm primes",
+    "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7735,
+        "lon": -73.9719
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 180,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 180,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 180,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Parking gap watch",
+        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+      },
+      {
+        "title": "Reflections after wash",
+        "detail": "Street or lawn irrigation leaves sheen\u2014use CPL to control glare."
+      },
+      {
+        "title": "Taxi or jogger streaks",
+        "detail": "If traffic begins, try 1/8\u20131/2s for motion streaks."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Establishing wide (16\u201324mm)",
+        "detail": "Include context and sky color; keep verticals straight."
+      },
+      {
+        "title": "Low angle leading lines",
+        "detail": "Camera close to ground; emphasize texture or rails."
+      },
+      {
+        "title": "Human scale",
+        "detail": "Single figure walking/running; time the stride."
+      },
+      {
+        "title": "Compressed crop (50/70mm)",
+        "detail": "Use longer end for a clean graphic frame; crop if needed."
+      },
+      {
+        "title": "Detail cutaway",
+        "detail": "Reflections, signage, patterns that summarize place."
+      }
+    ]
+  },
+  {
+    "id": "the_ramble_central_park",
+    "name": "The Ramble (Central Park)",
+    "day": "2025-10-04",
+    "block": "Morning",
+    "rank": 4,
+    "bearing": "Woodland pockets",
+    "whyNow": "Boardwalk reflections; winding paths; birds.",
+    "gear": "24\u201370mm (at 70mm) or 50mm (crop); close\u2011up filter",
+    "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7783,
+        "lon": -73.9715
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 0.0,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Parking gap watch",
+        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+      },
+      {
+        "title": "Reflections after wash",
+        "detail": "Street or lawn irrigation leaves sheen\u2014use CPL to control glare."
+      },
+      {
+        "title": "Taxi or jogger streaks",
+        "detail": "If traffic begins, try 1/8\u20131/2s for motion streaks."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Establishing wide (16\u201324mm)",
+        "detail": "Include context and sky color; keep verticals straight."
+      },
+      {
+        "title": "Low angle leading lines",
+        "detail": "Camera close to ground; emphasize texture or rails."
+      },
+      {
+        "title": "Human scale",
+        "detail": "Single figure walking/running; time the stride."
+      },
+      {
+        "title": "Compressed crop (50/70mm)",
+        "detail": "Use longer end for a clean graphic frame; crop if needed."
+      },
+      {
+        "title": "Detail cutaway",
+        "detail": "Reflections, signage, patterns that summarize place."
+      }
+    ]
+  },
+  {
+    "id": "conservatory_water_alice_statue",
+    "name": "Conservatory Water & 'Alice' Statue",
+    "day": "2025-10-04",
+    "block": "Morning",
+    "rank": 5,
+    "bearing": "W toward UES skyline",
+    "whyNow": "RC boats; statue details; mirror water in calm air.",
+    "gear": "24\u201370mm; 24\u201370mm (at 70mm) or 50mm (crop)",
+    "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7759,
+        "lon": -73.9667
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Parking gap watch",
+        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+      },
+      {
+        "title": "Reflections after wash",
+        "detail": "Street or lawn irrigation leaves sheen\u2014use CPL to control glare."
+      },
+      {
+        "title": "Taxi or jogger streaks",
+        "detail": "If traffic begins, try 1/8\u20131/2s for motion streaks."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Establishing wide (16\u201324mm)",
+        "detail": "Include context and sky color; keep verticals straight."
+      },
+      {
+        "title": "Low angle leading lines",
+        "detail": "Camera close to ground; emphasize texture or rails."
+      },
+      {
+        "title": "Human scale",
+        "detail": "Single figure walking/running; time the stride."
+      },
+      {
+        "title": "Compressed crop (50/70mm)",
+        "detail": "Use longer end for a clean graphic frame; crop if needed."
+      },
+      {
+        "title": "Detail cutaway",
+        "detail": "Reflections, signage, patterns that summarize place."
+      }
+    ]
+  },
+  {
+    "id": "soho_greene_prince",
+    "name": "SoHo \u2014 Greene & Prince",
+    "day": "2025-10-04",
+    "block": "Afternoon",
+    "rank": 1,
+    "bearing": "N/S street axes",
+    "whyNow": "Cast\u2011iron fa\u00e7ades; cobbles; shadow geometry.",
+    "gear": "35mm prime; CPL",
+    "settings": "Work shade and geometry; CPL for glare; 1/250s+ @ f/5.6\u20138.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7249,
+        "lon": -74.002
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Shadow geometry",
+        "detail": "Look for repeating cast-iron, stoops, or rails to form patterns."
+      },
+      {
+        "title": "Street portrait moment",
+        "detail": "Use 35/50mm for environmental portraits; ask politely."
+      },
+      {
+        "title": "Compression detail",
+        "detail": "Use the 70mm end of 24\u201370; crop if needed for stronger layers."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Shadow lattice (24\u201370mm)",
+        "detail": "Catch window/railing shadows making a grid or stripes."
+      },
+      {
+        "title": "Corner portrait (35/50mm)",
+        "detail": "Subject on edge of light; background in soft shade."
+      },
+      {
+        "title": "Texture macro (50mm)",
+        "detail": "Look for worn stone/metal details; low ISO, high f\u2011stop."
+      },
+      {
+        "title": "Layered street (70mm)",
+        "detail": "Stack elements; shoot through foreground."
+      },
+      {
+        "title": "Signage type",
+        "detail": "Tight crop of iconic typography or tile work."
+      }
+    ]
+  },
+  {
+    "id": "west_village_grove_bedford",
+    "name": "West Village \u2014 Grove & Bedford",
+    "day": "2025-10-04",
+    "block": "Afternoon",
+    "rank": 2,
+    "bearing": "W/E side\u2011streets",
+    "whyNow": "Brownstone stoops; caf\u00e9 life; tele details of signage.",
+    "gear": "35/50mm fast prime",
+    "settings": "Work shade and geometry; CPL for glare; 1/250s+ @ f/5.6\u20138.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7326,
+        "lon": -74.0063
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Shadow geometry",
+        "detail": "Look for repeating cast-iron, stoops, or rails to form patterns."
+      },
+      {
+        "title": "Street portrait moment",
+        "detail": "Use 35/50mm for environmental portraits; ask politely."
+      },
+      {
+        "title": "Compression detail",
+        "detail": "Use the 70mm end of 24\u201370; crop if needed for stronger layers."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Shadow lattice (24\u201370mm)",
+        "detail": "Catch window/railing shadows making a grid or stripes."
+      },
+      {
+        "title": "Corner portrait (35/50mm)",
+        "detail": "Subject on edge of light; background in soft shade."
+      },
+      {
+        "title": "Texture macro (50mm)",
+        "detail": "Look for worn stone/metal details; low ISO, high f\u2011stop."
+      },
+      {
+        "title": "Layered street (70mm)",
+        "detail": "Stack elements; shoot through foreground."
+      },
+      {
+        "title": "Signage type",
+        "detail": "Tight crop of iconic typography or tile work."
+      }
+    ]
+  },
+  {
+    "id": "chinatown_doyers_st_bloody_angle",
+    "name": "Chinatown \u2014 Doyers St (Bloody Angle)",
+    "day": "2025-10-04",
+    "block": "Afternoon",
+    "rank": 3,
+    "bearing": "SE curve alley",
+    "whyNow": "Lanterns; scooter pans at 1/15\u20131/25s; typography.",
+    "gear": "24\u201370mm; fast 35mm",
+    "settings": "Work shade and geometry; CPL for glare; 1/250s+ @ f/5.6\u20138.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7149,
+        "lon": -73.9968
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 135,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 135,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 135,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Shadow geometry",
+        "detail": "Look for repeating cast-iron, stoops, or rails to form patterns."
+      },
+      {
+        "title": "Street portrait moment",
+        "detail": "Use 35/50mm for environmental portraits; ask politely."
+      },
+      {
+        "title": "Compression detail",
+        "detail": "Use the 70mm end of 24\u201370; crop if needed for stronger layers."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Shadow lattice (24\u201370mm)",
+        "detail": "Catch window/railing shadows making a grid or stripes."
+      },
+      {
+        "title": "Corner portrait (35/50mm)",
+        "detail": "Subject on edge of light; background in soft shade."
+      },
+      {
+        "title": "Texture macro (50mm)",
+        "detail": "Look for worn stone/metal details; low ISO, high f\u2011stop."
+      },
+      {
+        "title": "Layered street (70mm)",
+        "detail": "Stack elements; shoot through foreground."
+      },
+      {
+        "title": "Signage type",
+        "detail": "Tight crop of iconic typography or tile work."
+      }
+    ]
+  },
+  {
+    "id": "lower_east_side_orchard_st",
+    "name": "Lower East Side \u2014 Orchard St",
+    "day": "2025-10-04",
+    "block": "Afternoon",
+    "rank": 4,
+    "bearing": "N/S urban canyon",
+    "whyNow": "Tenement fa\u00e7ades; murals; market candids.",
+    "gear": "35mm; 24\u201370mm (at 70mm) or 50mm (crop)",
+    "settings": "Work shade and geometry; CPL for glare; 1/250s+ @ f/5.6\u20138.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7196,
+        "lon": -73.9896
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Shadow geometry",
+        "detail": "Look for repeating cast-iron, stoops, or rails to form patterns."
+      },
+      {
+        "title": "Street portrait moment",
+        "detail": "Use 35/50mm for environmental portraits; ask politely."
+      },
+      {
+        "title": "Compression detail",
+        "detail": "Use the 70mm end of 24\u201370; crop if needed for stronger layers."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Shadow lattice (24\u201370mm)",
+        "detail": "Catch window/railing shadows making a grid or stripes."
+      },
+      {
+        "title": "Corner portrait (35/50mm)",
+        "detail": "Subject on edge of light; background in soft shade."
+      },
+      {
+        "title": "Texture macro (50mm)",
+        "detail": "Look for worn stone/metal details; low ISO, high f\u2011stop."
+      },
+      {
+        "title": "Layered street (70mm)",
+        "detail": "Stack elements; shoot through foreground."
+      },
+      {
+        "title": "Signage type",
+        "detail": "Tight crop of iconic typography or tile work."
+      }
+    ]
+  },
+  {
+    "id": "manhattan_bridge_arch_colonnade_canal_bowery",
+    "name": "Manhattan Bridge Arch & Colonnade (Canal/Bowery)",
+    "day": "2025-10-04",
+    "block": "Afternoon",
+    "rank": 5,
+    "bearing": "W toward arch",
+    "whyNow": "Classical arch symmetry; taxi/bus streaks.",
+    "gear": "24\u201370mm; ND",
+    "settings": "Work shade and geometry; CPL for glare; 1/250s+ @ f/5.6\u20138.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7139,
+        "lon": -73.9967
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Shadow geometry",
+        "detail": "Look for repeating cast-iron, stoops, or rails to form patterns."
+      },
+      {
+        "title": "Street portrait moment",
+        "detail": "Use 35/50mm for environmental portraits; ask politely."
+      },
+      {
+        "title": "Compression detail",
+        "detail": "Use the 70mm end of 24\u201370; crop if needed for stronger layers."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Shadow lattice (24\u201370mm)",
+        "detail": "Catch window/railing shadows making a grid or stripes."
+      },
+      {
+        "title": "Corner portrait (35/50mm)",
+        "detail": "Subject on edge of light; background in soft shade."
+      },
+      {
+        "title": "Texture macro (50mm)",
+        "detail": "Look for worn stone/metal details; low ISO, high f\u2011stop."
+      },
+      {
+        "title": "Layered street (70mm)",
+        "detail": "Stack elements; shoot through foreground."
+      },
+      {
+        "title": "Signage type",
+        "detail": "Tight crop of iconic typography or tile work."
+      }
+    ]
+  },
+  {
+    "id": "gantry_plaza_state_park_lic",
+    "name": "Gantry Plaza State Park (LIC)",
+    "day": "2025-10-04",
+    "block": "Evening",
+    "rank": 1,
+    "bearing": "W to Midtown",
+    "whyNow": "Boardwalk S\u2011curve; skyline pano; check wind for reflections.",
+    "gear": "24\u201370mm; ND; tripod",
+    "settings": "Blue-hour blend; 1/60\u20131s @ f/5.6\u20138, ISO 100\u2013800; bracketing if needed.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7447,
+        "lon": -73.9576
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Blue-hour reflections",
+        "detail": "Arrive 45\u201375 min before sunset; water calms near high tide."
+      },
+      {
+        "title": "Silhouette walkers",
+        "detail": "Expose for sky; use crosswalks as a stage."
+      },
+      {
+        "title": "Ferry or car streaks",
+        "detail": "1\u20132s for ferries/traffic; tripod or brace on railing."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Blue-hour skyline (16\u201324mm)",
+        "detail": "Balance ambient & city lights; 10\u201320 min after sunset."
+      },
+      {
+        "title": "Silhouette frame (35/50mm)",
+        "detail": "Backlight against sky/water; faster shutter."
+      },
+      {
+        "title": "Symmetry (24\u201370mm)",
+        "detail": "Use bridges/arches/railings; centered composition."
+      },
+      {
+        "title": "Panning ferry (1/8\u20131/4s)",
+        "detail": "Follow motion for streaky yet readable subject."
+      },
+      {
+        "title": "Detail twinkle",
+        "detail": "Tight crop on lights/signs; sparkle highlights."
+      }
+    ]
+  },
+  {
+    "id": "domino_park_williamsburg",
+    "name": "Domino Park (Williamsburg)",
+    "day": "2025-10-04",
+    "block": "Evening",
+    "rank": 2,
+    "bearing": "W/SW to skyline",
+    "whyNow": "Catwalk frames; ferry streaks; bridge tele.",
+    "gear": "24\u201370mm; 24\u201370mm (at 70mm) or 50mm (crop); CPL",
+    "settings": "Blue-hour blend; 1/60\u20131s @ f/5.6\u20138, ISO 100\u2013800; bracketing if needed.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7145,
+        "lon": -73.9672
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Blue-hour reflections",
+        "detail": "Arrive 45\u201375 min before sunset; water calms near high tide."
+      },
+      {
+        "title": "Silhouette walkers",
+        "detail": "Expose for sky; use crosswalks as a stage."
+      },
+      {
+        "title": "Ferry or car streaks",
+        "detail": "1\u20132s for ferries/traffic; tripod or brace on railing."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Blue-hour skyline (16\u201324mm)",
+        "detail": "Balance ambient & city lights; 10\u201320 min after sunset."
+      },
+      {
+        "title": "Silhouette frame (35/50mm)",
+        "detail": "Backlight against sky/water; faster shutter."
+      },
+      {
+        "title": "Symmetry (24\u201370mm)",
+        "detail": "Use bridges/arches/railings; centered composition."
+      },
+      {
+        "title": "Panning ferry (1/8\u20131/4s)",
+        "detail": "Follow motion for streaky yet readable subject."
+      },
+      {
+        "title": "Detail twinkle",
+        "detail": "Tight crop on lights/signs; sparkle highlights."
+      }
+    ]
+  },
+  {
+    "id": "four_freedoms_park_roosevelt_island_tip",
+    "name": "Four Freedoms Park (Roosevelt Island tip)",
+    "day": "2025-10-04",
+    "block": "Evening",
+    "rank": 3,
+    "bearing": "WSW toward Midtown East",
+    "whyNow": "Tree all\u00e9e symmetry; granite minimalism; UN skyline.",
+    "gear": "16\u201324mm; 24\u201370mm (at 70mm) or 50mm (crop); tripod",
+    "settings": "Blue-hour blend; 1/60\u20131s @ f/5.6\u20138, ISO 100\u2013800; bracketing if needed.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7532,
+        "lon": -73.9544
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Blue-hour reflections",
+        "detail": "Arrive 45\u201375 min before sunset; water calms near high tide."
+      },
+      {
+        "title": "Silhouette walkers",
+        "detail": "Expose for sky; use crosswalks as a stage."
+      },
+      {
+        "title": "Ferry or car streaks",
+        "detail": "1\u20132s for ferries/traffic; tripod or brace on railing."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Blue-hour skyline (16\u201324mm)",
+        "detail": "Balance ambient & city lights; 10\u201320 min after sunset."
+      },
+      {
+        "title": "Silhouette frame (35/50mm)",
+        "detail": "Backlight against sky/water; faster shutter."
+      },
+      {
+        "title": "Symmetry (24\u201370mm)",
+        "detail": "Use bridges/arches/railings; centered composition."
+      },
+      {
+        "title": "Panning ferry (1/8\u20131/4s)",
+        "detail": "Follow motion for streaky yet readable subject."
+      },
+      {
+        "title": "Detail twinkle",
+        "detail": "Tight crop on lights/signs; sparkle highlights."
+      }
+    ]
+  },
+  {
+    "id": "battery_park_esplanade",
+    "name": "Battery Park Esplanade",
+    "day": "2025-10-04",
+    "block": "Evening",
+    "rank": 4,
+    "bearing": "SW/W to harbor",
+    "whyNow": "Tele Statue of Liberty; jogger silhouettes; golden water.",
+    "gear": "24\u201370mm (at 70mm) or 50mm (crop); ND",
+    "settings": "Blue-hour blend; 1/60\u20131s @ f/5.6\u20138, ISO 100\u2013800; bracketing if needed.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7033,
+        "lon": -74.017
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 225,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 225,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 225,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Blue-hour reflections",
+        "detail": "Arrive 45\u201375 min before sunset; water calms near high tide."
+      },
+      {
+        "title": "Silhouette walkers",
+        "detail": "Expose for sky; use crosswalks as a stage."
+      },
+      {
+        "title": "Ferry or car streaks",
+        "detail": "1\u20132s for ferries/traffic; tripod or brace on railing."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Blue-hour skyline (16\u201324mm)",
+        "detail": "Balance ambient & city lights; 10\u201320 min after sunset."
+      },
+      {
+        "title": "Silhouette frame (35/50mm)",
+        "detail": "Backlight against sky/water; faster shutter."
+      },
+      {
+        "title": "Symmetry (24\u201370mm)",
+        "detail": "Use bridges/arches/railings; centered composition."
+      },
+      {
+        "title": "Panning ferry (1/8\u20131/4s)",
+        "detail": "Follow motion for streaky yet readable subject."
+      },
+      {
+        "title": "Detail twinkle",
+        "detail": "Tight crop on lights/signs; sparkle highlights."
+      }
+    ]
+  },
+  {
+    "id": "hoboken_pier_a_park",
+    "name": "Hoboken \u2014 Pier A Park",
+    "day": "2025-10-04",
+    "block": "Evening",
+    "rank": 5,
+    "bearing": "E to Lower Manhattan",
+    "whyNow": "Full skyline pano; path lamps for starbursts at f/16.",
+    "gear": "24\u201370mm; tripod",
+    "settings": "Blue-hour blend; 1/60\u20131s @ f/5.6\u20138, ISO 100\u2013800; bracketing if needed.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7378,
+        "lon": -74.0261
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 90,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 90,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 90,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Blue-hour reflections",
+        "detail": "Arrive 45\u201375 min before sunset; water calms near high tide."
+      },
+      {
+        "title": "Silhouette walkers",
+        "detail": "Expose for sky; use crosswalks as a stage."
+      },
+      {
+        "title": "Ferry or car streaks",
+        "detail": "1\u20132s for ferries/traffic; tripod or brace on railing."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Blue-hour skyline (16\u201324mm)",
+        "detail": "Balance ambient & city lights; 10\u201320 min after sunset."
+      },
+      {
+        "title": "Silhouette frame (35/50mm)",
+        "detail": "Backlight against sky/water; faster shutter."
+      },
+      {
+        "title": "Symmetry (24\u201370mm)",
+        "detail": "Use bridges/arches/railings; centered composition."
+      },
+      {
+        "title": "Panning ferry (1/8\u20131/4s)",
+        "detail": "Follow motion for streaky yet readable subject."
+      },
+      {
+        "title": "Detail twinkle",
+        "detail": "Tight crop on lights/signs; sparkle highlights."
+      }
+    ]
+  },
+  {
+    "id": "jane_s_carousel_dumbo",
+    "name": "Jane\u2019s Carousel (DUMBO)",
+    "day": "2025-10-04",
+    "block": "Night",
+    "rank": 1,
+    "bearing": "W & N to bridges/skyline",
+    "whyNow": "Carousel glow + long exposure boats.",
+    "gear": "24\u201370mm; mini\u2011tripod; ND",
+    "settings": "Tripod: 1\u201310s @ f/6.3\u20138, ISO 100\u2013400; expose for highlights.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7033,
+        "lon": -73.996
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Clean tripod placement",
+        "detail": "Stay behind safety lines; avoid blocking paths."
+      },
+      {
+        "title": "Neon trails",
+        "detail": "1\u20134s exposures; wait for buses to paint the frame."
+      },
+      {
+        "title": "Skyline mirror",
+        "detail": "Use 16\u201324 for big scene; 50mm for graphic details."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Long exposure base (16\u201324mm)",
+        "detail": "1\u201310s; shoot 10\u201320 frames; pick best trails."
+      },
+      {
+        "title": "Tele crop (50/70mm)",
+        "detail": "Abstract geometry; isolate building tops."
+      },
+      {
+        "title": "Reflections",
+        "detail": "Find puddles or river edges; go low for mirror."
+      },
+      {
+        "title": "People blur (1\u20132s)",
+        "detail": "Trace flows of commuters without losing structure."
+      },
+      {
+        "title": "Icon detail",
+        "detail": "Tight shot of recognizable element to close the set."
+      }
+    ]
+  },
+  {
+    "id": "hunters_point_south_park_lic",
+    "name": "Hunters Point South Park (LIC)",
+    "day": "2025-10-04",
+    "block": "Night",
+    "rank": 2,
+    "bearing": "W/SW to Midtown",
+    "whyNow": "Midtown mirror on calm nights; ferry trails 10\u201330s.",
+    "gear": "16\u201324mm; tripod",
+    "settings": "Tripod: 1\u201310s @ f/6.3\u20138, ISO 100\u2013400; expose for highlights.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.744,
+        "lon": -73.9581
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 270,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Clean tripod placement",
+        "detail": "Stay behind safety lines; avoid blocking paths."
+      },
+      {
+        "title": "Neon trails",
+        "detail": "1\u20134s exposures; wait for buses to paint the frame."
+      },
+      {
+        "title": "Skyline mirror",
+        "detail": "Use 16\u201324 for big scene; 50mm for graphic details."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Long exposure base (16\u201324mm)",
+        "detail": "1\u201310s; shoot 10\u201320 frames; pick best trails."
+      },
+      {
+        "title": "Tele crop (50/70mm)",
+        "detail": "Abstract geometry; isolate building tops."
+      },
+      {
+        "title": "Reflections",
+        "detail": "Find puddles or river edges; go low for mirror."
+      },
+      {
+        "title": "People blur (1\u20132s)",
+        "detail": "Trace flows of commuters without losing structure."
+      },
+      {
+        "title": "Icon detail",
+        "detail": "Tight shot of recognizable element to close the set."
+      }
+    ]
+  },
+  {
+    "id": "brooklyn_heights_promenade_night_skyline",
+    "name": "Brooklyn Heights Promenade (night skyline)",
+    "day": "2025-10-04",
+    "block": "Night",
+    "rank": 3,
+    "bearing": "WSW across East River",
+    "whyNow": "Blue\u2011hour pano; BQE light ribbons below in places.",
+    "gear": "24\u201370mm; tripod",
+    "settings": "Tripod: 1\u201310s @ f/6.3\u20138, ISO 100\u2013400; expose for highlights.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.6969,
+        "lon": -73.9969
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 247.5,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Clean tripod placement",
+        "detail": "Stay behind safety lines; avoid blocking paths."
+      },
+      {
+        "title": "Neon trails",
+        "detail": "1\u20134s exposures; wait for buses to paint the frame."
+      },
+      {
+        "title": "Skyline mirror",
+        "detail": "Use 16\u201324 for big scene; 50mm for graphic details."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Long exposure base (16\u201324mm)",
+        "detail": "1\u201310s; shoot 10\u201320 frames; pick best trails."
+      },
+      {
+        "title": "Tele crop (50/70mm)",
+        "detail": "Abstract geometry; isolate building tops."
+      },
+      {
+        "title": "Reflections",
+        "detail": "Find puddles or river edges; go low for mirror."
+      },
+      {
+        "title": "People blur (1\u20132s)",
+        "detail": "Trace flows of commuters without losing structure."
+      },
+      {
+        "title": "Icon detail",
+        "detail": "Tight shot of recognizable element to close the set."
+      }
+    ]
+  },
+  {
+    "id": "manhattan_bridge_pedestrian_walkway_night",
+    "name": "Manhattan Bridge \u2014 Pedestrian Walkway (night)",
+    "day": "2025-10-04",
+    "block": "Night",
+    "rank": 4,
+    "bearing": "SW toward FiDi",
+    "whyNow": "Train streaks; industrial geometry; gritty B&W options.",
+    "gear": "24\u201370mm; tripod",
+    "settings": "Tripod: 1\u201310s @ f/6.3\u20138, ISO 100\u2013400; expose for highlights.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7132,
+        "lon": -73.993
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 225,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 225,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 225,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Clean tripod placement",
+        "detail": "Stay behind safety lines; avoid blocking paths."
+      },
+      {
+        "title": "Neon trails",
+        "detail": "1\u20134s exposures; wait for buses to paint the frame."
+      },
+      {
+        "title": "Skyline mirror",
+        "detail": "Use 16\u201324 for big scene; 50mm for graphic details."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Long exposure base (16\u201324mm)",
+        "detail": "1\u201310s; shoot 10\u201320 frames; pick best trails."
+      },
+      {
+        "title": "Tele crop (50/70mm)",
+        "detail": "Abstract geometry; isolate building tops."
+      },
+      {
+        "title": "Reflections",
+        "detail": "Find puddles or river edges; go low for mirror."
+      },
+      {
+        "title": "People blur (1\u20132s)",
+        "detail": "Trace flows of commuters without losing structure."
+      },
+      {
+        "title": "Icon detail",
+        "detail": "Tight shot of recognizable element to close the set."
+      }
+    ]
+  },
+  {
+    "id": "34th_st_6th_ave_herald_sq_esb_crosswalk_trails",
+    "name": "34th St & 6th Ave (Herald Sq \u2014 ESB crosswalk trails)",
+    "day": "2025-10-04",
+    "block": "Night",
+    "rank": 5,
+    "bearing": "N/E to ESB",
+    "whyNow": "Crosswalk light trails with ESB framed above.",
+    "gear": "24\u201370mm; tripod",
+    "settings": "Tripod: 1\u201310s @ f/6.3\u20138, ISO 100\u2013400; expose for highlights.",
+    "activeAnchor": 0,
+    "anchors": [
+      {
+        "label": "Main view",
+        "lat": 40.7496,
+        "lon": -73.987
+      }
+    ],
+    "micro": [
+      {
+        "title": "Centerline",
+        "r": 0.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Main alignment from anchor."
+      },
+      {
+        "title": "Step\u2011back",
+        "r": 10.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Step back ~10 m; arrow still toward subject."
+      },
+      {
+        "title": "Corner curb",
+        "r": 22.0,
+        "bearing": 0,
+        "dir": "",
+        "detail": "Diagonal curb vantage; arrow toward subject."
+      }
+    ],
+    "pins": [
+      {
+        "title": "Clean tripod placement",
+        "detail": "Stay behind safety lines; avoid blocking paths."
+      },
+      {
+        "title": "Neon trails",
+        "detail": "1\u20134s exposures; wait for buses to paint the frame."
+      },
+      {
+        "title": "Skyline mirror",
+        "detail": "Use 16\u201324 for big scene; 50mm for graphic details."
+      }
+    ],
+    "shots": [
+      {
+        "title": "Long exposure base (16\u201324mm)",
+        "detail": "1\u201310s; shoot 10\u201320 frames; pick best trails."
+      },
+      {
+        "title": "Tele crop (50/70mm)",
+        "detail": "Abstract geometry; isolate building tops."
+      },
+      {
+        "title": "Reflections",
+        "detail": "Find puddles or river edges; go low for mirror."
+      },
+      {
+        "title": "People blur (1\u20132s)",
+        "detail": "Trace flows of commuters without losing structure."
+      },
+      {
+        "title": "Icon detail",
+        "detail": "Tight shot of recognizable element to close the set."
+      }
+    ]
+  }
+];
+
+
+// --- alias for app imports ---
+
+const RAW_LOCATIONS = (typeof LOCATIONS!=='undefined'? LOCATIONS : []);
+
+
+// --- app.js ---
+
+const state = {
+  dayMap: { A: '2025-10-03', B: '2025-10-04' },
+  showDay: { A: true, B: true },
+  showBlock: { Morning: true, Afternoon: true, Evening: true, Night: true },
+  rankMin: 1, rankMax: 5, search: '',
+  engine: 'google', anchorEdits: {}, config: null, locations: []
+};
+
+const $ = (sel,p=document)=>p.querySelector(sel);
+const $$ = (sel,p=document)=>Array.from(p.querySelectorAll(sel));
+const toFixed = (n,d=6)=>Number.isFinite(n)?Number(n.toFixed(d)):n;
+
+function computeMicroAbs(loc){
+  const anchor = loc.anchors[loc.activeAnchor]||loc.anchors[0]; if(!anchor) return [];
+  const lat=anchor.lat, lon=anchor.lon;
+  return (loc.micro||[]).map(mp=>{
+    const r=mp.r||0, bearing = typeof mp.bearing==='number'?mp.bearing:(parseFloat(mp.bearing)||0);
+    const dlat=(r*Math.cos(bearing*Math.PI/180))/111111;
+    const dlon=(r*Math.sin(bearing*Math.PI/180))/(111111*Math.cos(lat*Math.PI/180));
+    return {...mp, lat:lat+dlat, lon:lon+dlon};
   });
 }
-function routeToAnchor(loc){
-  if(!usingGoogle){ alert('This needs Google mode. Click “Google Maps (online)” above the Light panel.'); return; }
-  geolocate(pt=>{
-    const a=activeAnchor(loc);
-    gDirections.route({origin:pt,destination:{lat:a.lat,lng:a.lon},travelMode:'WALKING'}, (res,status)=>{
-      if(status==='OK'){ gDirRenderer.setDirections(res); } else alert('Directions failed: '+status);
-    });
-  });
+function applyAnchorEdits(locs){
+  const edits = JSON.parse(localStorage.getItem('anchorEdits')||'{}'); state.anchorEdits=edits;
+  return locs.map(loc=>{ const e=edits[loc.id]; if(e){ loc=structuredClone(loc); Object.entries(e).forEach(([idx,val])=>{ if(loc.anchors[+idx]) loc.anchors[+idx] = {...loc.anchors[+idx], ...val}; }); } return loc; });
+}
+function persistAnchorEdit(locId, anchorIdx, lat, lon){
+  const edits = state.anchorEdits || {}; edits[locId]=edits[locId]||{}; edits[locId][anchorIdx]={lat,lon};
+  state.anchorEdits=edits; localStorage.setItem('anchorEdits', JSON.stringify(edits));
+}
+function computePanels(){
+  const lat=40.7128, lon=-74.0060; const a=state.dayMap.A, b=state.dayMap.B;
+  const aSun=computeSunTimes(a,lat,lon), bSun=computeSunTimes(b,lat,lon);
+  const aMoonI=computeMoonIllumination(a), bMoonI=computeMoonIllumination(b);
+  const aMoonT=computeMoonTimes(a,lat,lon), bMoonT=computeMoonTimes(b,lat,lon);
+  const render=(rootSel, label, sun, mi, mt)=>{
+    const root=$(rootSel);
+    root.innerHTML = `<div class="panel-title">Day ${label}: ${state.dayMap[label]}</div>
+      <div class="kv"><span>• Civil dawn</span><b>${fmtTime(sun.dawn)}</b></div>
+      <div class="kv"><span>• Sunrise</span><b>${fmtTime(sun.sunrise)}</b></div>
+      <div class="kv"><span>• Sunset</span><b>${fmtTime(sun.sunset)}</b></div>
+      <div class="kv"><span>• Civil dusk</span><b>${fmtTime(sun.dusk)}</b></div>
+      <hr/><div class="kv"><span>• Moonrise</span><b>${fmtTime(mt.rise)}</b></div>
+      <div class="kv"><span>• Moonset</span><b>${fmtTime(mt.set)}</b></div>
+      <div class="kv"><span>• Illumination</span><b>${Math.round(mi.fraction*100)}% — ${mi.phase}</b></div>`;
+  };
+  render('#panelA','A',aSun,aMoonI,aMoonT); render('#panelB','B',bSun,bMoonT,bMoonT);
+}
+function groupByDayBlock(locs){ const m=new Map(); locs.forEach(loc=>{ const k=`${loc.day}|${loc.block}`; if(!m.has(k)) m.set(k,[]); m.get(k).push(loc); }); m.forEach(a=>a.sort((x,y)=>x.rank-y.rank)); return m; }
+function filterAndPrepLocations(){
+  const q=state.search.trim().toLowerCase();
+  return state.locations.filter(loc=>{
+    const dayOk=(loc.day===state.dayMap.A&&state.showDay.A)||(loc.day===state.dayMap.B&&state.showDay.B);
+    const blockOk=!!state.showBlock[loc.block];
+    const rankOk=loc.rank>=state.rankMin && loc.rank<=state.rankMax;
+    const text=`${loc.name} ${loc.whyNow} ${loc.gear} ${loc.settings} ${loc.bearing} ${(loc.pins||[]).map(p=>p.title+' '+p.detail).join(' ')} ${(loc.shots||[]).map(s=>s.title+' '+s.detail).join(' ')}`.toLowerCase();
+    const qOk=!q || text.includes(q);
+    return dayOk && blockOk && rankOk && qOk;
+  }).map(loc=>{ loc._microAbs=computeMicroAbs(loc); return loc; });
 }
 
-// UI
-function makeExpandableList(items){
-  const ul=document.createElement('ul'); ul.className='expand-list';
-  (items||[]).forEach(it=>{
-    const li=document.createElement('li'); li.className='expand-item';
-    const btn=document.createElement('button'); btn.className='expand-summary'; btn.innerHTML=`<span>${it.title}</span> <span class="hint">Tap for details</span>`;
-    const body=document.createElement('div'); body.className='expand-body'; body.textContent=it.detail||'';
-    btn.addEventListener('click',()=> li.classList.toggle('open'));
-    li.appendChild(btn); li.appendChild(body); ul.appendChild(li);
+let googleEngine=null, leafletEngine=null;
+async function ensureEngine(engineName){
+  const mapWrapGoogle=document.getElementById('map-google'); const mapWrapLeaflet=document.getElementById('map-leaflet');
+  if(engineName==='google'){ mapWrapGoogle.style.display='block'; mapWrapLeaflet.style.display='none'; }
+  else { mapWrapGoogle.style.display='none'; mapWrapLeaflet.style.display='block'; }
+  if(engineName==='google'){ if(!googleEngine){ googleEngine=new GoogleMapEngine('gmap'); await googleEngine.init(state.config.GOOGLE_MAPS_API_KEY); } return googleEngine; }
+  if(!leafletEngine){ leafletEngine=new LeafletMapEngine('lmap'); await leafletEngine.init(); } return leafletEngine;
+}
+function renderMap(locations){
+  ensureEngine(state.engine).then(engine=>engine.renderLocations(locations)).catch(err=>{
+    console.warn('Map engine failed; falling back to Leaflet', err); if(state.engine==='google'){ state.engine='leaflet'; updateEngineTabs(); ensureEngine('leaflet').then(e=>e.renderLocations(locations)); }
   });
-  return ul;
 }
-function timingForBlock(dayKey,block){
-  const t=TIMES[dayKey]; if(!t) return '';
-  if(block==='Morning') return `Arrive 6:00–7:30 am • Civil dawn ${t.civil_dawn} • Sunrise ${t.sunrise}`;
-  if(block==='Afternoon') return `Best 12:00–3:30 pm • Interiors/shade for soft contrast`;
-  if(block==='Evening') return `Arrive 5:30–7:00 pm • Sunset ${t.sunset} • Civil dusk ${t.civil_dusk}`;
-  if(block==='Night') return `Start 6:50–9:00 pm • Civil dusk ${t.civil_dusk} • Moonrise ${t.moonrise}`;
-  return '';
+function clearMap(){ if(googleEngine) googleEngine.clear(); if(leafletEngine) leafletEngine.clear(); }
+
+async function fetchNoaaHiLo(dateStr){
+  try{ const r=await fetch(noaaUrl(dateStr)); if(!r.ok) throw new Error('NOAA fetch failed'); const j=await r.json();
+    if(!j?.predictions?.length) return '—'; return j.predictions.map(p=>`${p.type} ${p.t.split(' ')[1].slice(0,5)}`).join(', ');
+  }catch(e){ console.warn('NOAA error', e); return 'Open NOAA high/low'; }
 }
-async function cardFor(loc){
-  const a=activeAnchor(loc);
-  const card=document.createElement('div'); card.className='card';
-  card.innerHTML=`
-    <div class="card-header">
-      <h3>${loc.name}</h3>
-      <div class="badges"><span class="badge">Rank #${loc.rank}</span><span class="badge block-${loc.block}">${loc.block}</span></div>
+
+function renderPillsets(cardEl, loc){
+  const anchorsEl=cardEl.querySelector('.pillset.anchors'); anchorsEl.innerHTML='<div class="pillset-title">Anchors</div>';
+  loc.anchors.forEach((a,i)=>{ const b=document.createElement('button'); b.className='pill'+(i===loc.activeAnchor?' active':''); b.textContent=a.label||`Anchor ${i+1}`;
+    b.addEventListener('click', ()=>{ loc.activeAnchor=i; const ref=state.locations.find(l=>l.id===loc.id); ref.activeAnchor=i; ref._microAbs=computeMicroAbs(ref); renderMap(filterAndPrepLocations()); const ed=cardEl.querySelector('.anchor-editor'); ed.querySelector('.edit-lat').value=toFixed(a.lat); ed.querySelector('.edit-lon').value=toFixed(a.lon); renderPillsets(cardEl,loc); });
+    anchorsEl.appendChild(b);
+  });
+  const microEl=cardEl.querySelector('.pillset.micro'); microEl.innerHTML='<div class="pillset-title">Micro‑pins</div>';
+  (loc._microAbs||[]).forEach((mp,idx)=>{ const a=document.createElement('a'); a.className='pill'; const arrow=typeof mp.bearing==='number'?' ↗':''; a.textContent=`${idx+1}. ${mp.title}${arrow}`; a.href=`https://www.google.com/maps/dir/?api=1&destination=${mp.lat},${mp.lon}&travelmode=walking`; a.target='_blank'; a.rel='noopener'; a.title=mp.detail||''; microEl.appendChild(a); });
+}
+
+function renderCard(loc){
+  const anchor=loc.anchors[loc.activeAnchor]||loc.anchors[0];
+  const el=document.createElement('article'); el.className='card'; el.dataset.locId=loc.id;
+  el.innerHTML = `
+    <div class="card-head">
+      <div class="title">${loc.name}</div>
+      <div class="badges"><span class="badge">#${loc.rank}</span><span class="badge">${loc.block}</span></div>
     </div>
-    <div class="summary-line">${dayLabelISO(state.dayMap[loc.day])} • <b>${loc.block}</b> • Bearing: ${loc.bearing}</div>
-    <div class="kv">
-      <div class="k">Why now</div><div>${loc.whyNow||''}</div>
-      <div class="k">Timing</div><div>${timingForBlock(loc.day,loc.block)}</div>
-      <div class="k">Face & light</div><div>${loc.bearing||''}</div>
-      <div class="k">Gear</div><div>${loc.gear||''}</div>
+    <div class="summary">${loc.day} • ${loc.block}</div>
+    <div class="kvs">
+      <div class="kv"><span>Why now</span><b>${loc.whyNow}</b></div>
+      <div class="kv"><span>Gear</span><b>${loc.gear}</}</b></div>
+      <div class="kv"><span>Settings</span><b>${loc.settings}</b></div>
     </div>
     <div class="actions">
-      <button class="btnShow">Show on map</button>
-      <button class="btnETA">ETA</button>
-      <button class="btnRoute">Route</button>
-      <a class="btnOpen" href="${gmapsOpen(a.lat,a.lon)}" target="_blank" rel="noopener">Open (anchor)</a>
-      <a class="btnWalk" href="https://www.google.com/maps/dir/?api=1&destination=${a.lat},${a.lon}&travelmode=walking" target="_blank" rel="noopener">Walk to anchor</a>
+      <button class="btn show-map" aria-label="Show on map">Show on map</button>
+      <button class="btn eta" aria-label="ETA">ETA</button>
+      <button class="btn route" aria-label="Route">Route</button>
+      <a class="btn open-anchor" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${anchor.lat},${anchor.lon}">Open (anchor)</a>
+      <a class="btn walk-anchor" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${anchor.lat},${anchor.lon}&travelmode=walking">Walk to anchor</a>
+      <button class="btn toggle-details" aria-expanded="false">Details ▸</button>
     </div>
-  `;
-  const pset=document.createElement('div'); pset.className='pillset';
-  (loc.anchors||[]).forEach((an,idx)=>{ const b=document.createElement('button'); b.className='pill'; b.textContent=an.label+(idx===loc.activeAnchor?' ✓':''); b.addEventListener('click',()=>{loc.activeAnchor=idx; saveLocal(); renderMarkers(); renderList();}); pset.appendChild(b); });
-  const kvA=document.createElement('div'); kvA.className='kv'; kvA.style.marginTop='.5rem'; kvA.appendChild((()=>{const d=document.createElement('div'); d.className='k'; d.textContent='Anchor'; return d;})()); const abox=document.createElement('div'); abox.appendChild(pset); kvA.appendChild(abox); card.appendChild(kvA);
-
-  const det=document.createElement('details'); if(state.expandAll) det.open=true; const sum=document.createElement('summary'); sum.textContent='Pins, shots, settings & reference images'; det.appendChild(sum);
-
-  const pinsBox=document.createElement('div'); pinsBox.appendChild(makeExpandableList(loc.pins));
-  const microAbs=computeMicroAbs(loc); const microPills=document.createElement('div'); microPills.className='pillset';
-  microAbs.forEach(mp=>{ const a=document.createElement('a'); a.className='pill'; a.href=`https://www.google.com/maps/dir/?api=1&destination=${mp.lat},${mp.lon}&travelmode=walking`; a.target='_blank'; a.rel='noopener'; a.textContent=mp.title; microPills.appendChild(a); });
-  const shotsBox=document.createElement('div'); shotsBox.appendChild(makeExpandableList(loc.shots));
-
-  const tideDiv=document.createElement('div'); tideDiv.className='small'; tideDiv.textContent='Loading tides…'; fetchNOAATides(state.dayMap[loc.day]).then(txt=> tideDiv.textContent=txt);
-  const moonDiv=document.createElement('div'); moonDiv.className='small'; const T=TIMES[loc.day]; moonDiv.textContent=`Moonrise ${T.moonrise} • Moonset ${T.moonset} • ${T.moonText}`;
-
-  const refWrap=document.createElement('div'); refWrap.className='expand-item'; const refBtn=document.createElement('button'); refBtn.className='expand-summary'; refBtn.innerHTML='<span>Reference Images</span> <span class="hint">Tap to load</span>'; const refBody=document.createElement('div'); refBody.className='expand-body'; refBody.textContent='Loading…'; refBtn.addEventListener('click',()=>{ refWrap.classList.toggle('open'); if(refWrap.classList.contains('open')) loadReferencePhotos(refBody, loc); }); refWrap.appendChild(refBtn); refWrap.appendChild(refBody);
-
-  const addrDiv=document.createElement('div'); addrDiv.className='small'; revGeocode(a.lat,a.lon,addr=> addrDiv.textContent=addr?`Address: ${addr}`:'');
-
-  const kv=document.createElement('div'); kv.className='kv'; kv.style.marginTop='.5rem';
-  function addKV(k,el){ const kd=document.createElement('div'); kd.className='k'; kd.textContent=k; kv.appendChild(kd); kv.appendChild(el); }
-  addKV('Pins', pinsBox);
-  addKV('Micro‑pins', microPills);
-  addKV('Shots', shotsBox);
-  addKV('Settings', (()=>{const d=document.createElement('div'); d.textContent=loc.settings||''; return d;})());
-  addKV('Tides (The Battery)', tideDiv);
-  addKV('Moon', moonDiv);
-  addKV('Address', addrDiv);
-  det.appendChild(kv); det.appendChild(document.createElement('div')).className='hr'; det.appendChild(refWrap);
-  card.appendChild(det);
-
-  card.querySelector('.btnShow').addEventListener('click',()=>{ if(usingGoogle&&gmap){ const bounds=new google.maps.LatLngBounds(); const a=activeAnchor(loc); bounds.extend({lat:a.lat,lng:a.lon}); computeMicroAbs(loc).forEach(mp=>bounds.extend({lat:mp.lat,lng:mp.lon})); gmap.fitBounds(bounds,120);} else if(lmap){ const pts=computeMicroAbs(loc).map(mp=>[mp.lat,mp.lon]); const a=activeAnchor(loc); pts.push([a.lat,a.lon]); lmap.fitBounds(pts,{padding:[120,120]}); } });
-  card.querySelector('.btnETA').addEventListener('click', ()=>etaToAnchor(loc));
-  card.querySelector('.btnRoute').addEventListener('click', ()=>routeToAnchor(loc));
-  return card;
+    <div class="anchor-editor" hidden>
+      <label>Anchor ${loc.activeAnchor+1} lat <input type="number" step="0.000001" class="edit-lat" value="${toFixed(anchor.lat)}"></label>
+      <label>lon <input type="number" step="0.000001" class="edit-lon" value="${toFixed(anchor.lon)}"></label>
+      <button class="btn save-anchor">Save</button>
+      <button class="btn cancel-anchor">Cancel</button>
+    </div>
+    <div class="expand" hidden>
+      <div class="kv"><span>Tides (Battery)</span><b class="tides">…</b></div>
+      <div class="kv"><span>Moon</span><b>${state.dayMap.A===loc.day?document.querySelector('#panelA .kv:nth-child(8) b')?.textContent:document.querySelector('#panelB .kv:nth-child(8) b')?.textContent}</b></div>
+      <div class="kv"><span>Address</span><b class="address">—</b></div>
+      <div class="subsection"><div class="pillset anchors"></div><div class="pillset micro"></div></div>
+      <details class="dtl"><summary>Pins</summary>${(loc.pins||[]).map(p=>`<div class="li"><b>${p.title}</b> — ${p.detail}</div>`).join('')}</details>
+      <details class="dtl"><summary>Shots</summary>${(loc.shots||[]).map(s=>`<div class="li"><b>${s.title}</b> — ${s.detail}</div>`).join('')}</details>
+      <div class="places"><button class="btn load-photos">Reference Images</button><div class="grid" hidden></div><div class="places-msg" hidden></div></div>
+    </div>`;
+  el.querySelector('.show-map').addEventListener('click', ()=> ensureEngine(state.engine).then(engine=>engine.fitToLocation(loc)));
+  el.querySelector('.eta').addEventListener('click', async ()=>{ const engine=await ensureEngine(state.engine); const aNow=loc.anchors[loc.activeAnchor]||loc.anchors[0]; engine.etaFromMyLocation({lat:aNow.lat, lng:aNow.lon},{showAlert:true}).catch(()=>{}); });
+  el.querySelector('.route').addEventListener('click', async ()=>{
+    const engine=await ensureEngine(state.engine); const aNow=loc.anchors[loc.activeAnchor]||loc.anchors[0]; const to={lat:aNow.lat,lng:aNow.lon};
+    if (engine instanceof GoogleMapEngine){ const eta=await engine.etaFromMyLocation(to,{showAlert:false}).catch(()=>null); if(eta?.origin){ await engine.drawRoute(eta.origin, new google.maps.LatLng(to.lat, to.lng)); alert(`Route drawn. ${eta.duration.text} • ${eta.distance.text}`); } else { alert('Could not obtain route.'); } }
+    else { engine.drawRoute(); }
+  });
+  const toggleBtn=el.querySelector('.toggle-details'); const expand=el.querySelector('.expand');
+  toggleBtn.addEventListener('click', async ()=>{
+    const open=expand.hasAttribute('hidden'); expand.toggleAttribute('hidden'); toggleBtn.textContent=open?'Details ▾':'Details ▸'; toggleBtn.setAttribute('aria-expanded', String(open));
+    if(open){ const tidesEl=el.querySelector('.tides'); tidesEl.textContent='…'; tidesEl.textContent=await fetchNoaaHiLo(loc.day);
+      renderPillsets(el, loc);
+      try{
+        if(state.engine==='google'){ const eng=await ensureEngine('google'); const geocoder=eng.geocoder();
+          const a=loc.anchors[loc.activeAnchor]||loc.anchors[0];
+          geocoder.geocode({ location:{lat:a.lat, lng:a.lon} }, (res,status)=>{ const addrEl=el.querySelector('.address'); if(status==='OK'&&res?.[0]) addrEl.textContent=res[0].formatted_address; else addrEl.textContent='—'; });
+        } else { el.querySelector('.address').textContent='—'; }
+      } catch { el.querySelector('.address').textContent='—'; }
+    }
+  });
+  const editor=el.querySelector('.anchor-editor');
+  el.querySelector('.title').addEventListener('dblclick', ()=>editor.hidden=false);
+  el.querySelector('.cancel-anchor').addEventListener('click', ()=>{ editor.hidden=true; const a=loc.anchors[loc.activeAnchor]||loc.anchors[0]; editor.querySelector('.edit-lat').value=toFixed(a.lat); editor.querySelector('.edit-lon').value=toFixed(a.lon); });
+  el.querySelector('.save-anchor').addEventListener('click', ()=>{ const a=loc.anchors[loc.activeAnchor]||loc.anchors[0]; const lat=parseFloat(editor.querySelector('.edit-lat').value), lon=parseFloat(editor.querySelector('.edit-lon').value); if(!Number.isFinite(lat)||!Number.isFinite(lon)) return alert('Invalid coordinates'); persistAnchorEdit(loc.id, loc.activeAnchor, lat, lon); const locRef=state.locations.find(l=>l.id===loc.id); locRef.anchors[locRef.activeAnchor]={...locRef.anchors[locRef.activeAnchor], lat, lon}; locRef._microAbs=computeMicroAbs(locRef); renderMap(filterAndPrepLocations()); editor.hidden=true; });
+  el.querySelector('.load-photos').addEventListener('click', async ()=>{ const grid=el.querySelector('.grid'); const msg=el.querySelector('.places-msg'); grid.hidden=true; msg.hidden=true; grid.innerHTML=''; msg.textContent='';
+    try{ const eng=await ensureEngine('google'); const svc=eng.placesService(); const a=loc.anchors[loc.activeAnchor]||loc.anchors[0];
+      const req={ query:loc.placeQuery||loc.name, fields:['name','photos','place_id','geometry'], locationBias:{ center:{lat:a.lat,lng:a.lon}, radius:500 } };
+      svc.findPlaceFromQuery(req, (results,status)=>{ if(status!==google.maps.places.PlacesServiceStatus.OK || !results?.length){ msg.textContent='No images found.'; msg.hidden=false; return; }
+        const photos=[]; results.forEach(r=>{ (r.photos||[]).forEach(ph=>{ if(photos.length<12) photos.push(ph); }); });
+        if(!photos.length){ msg.textContent='No images found.'; msg.hidden=false; return; } photos.forEach(ph=>{ const url=ph.getUrl({maxWidth:600,maxHeight:400}); const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener'; const img=document.createElement('img'); img.loading='lazy'; img.alt='Reference'; img.src=url; a.appendChild(img); grid.appendChild(a); }); grid.hidden=false;
+      });
+    } catch(e){ msg.textContent='Places request failed.'; msg.hidden=false; }
+  });
+  return el;
 }
 
-function renderLightPanels(){
-  computeTimes();
-  const el=document.getElementById('lightpanels'); el.innerHTML='';
-  ["2025-10-03","2025-10-04"].forEach(k=>{
-    const t=TIMES[k], p=document.createElement('div'); p.className='panel';
-    p.innerHTML=`<div class="section-title">${dayLabelISO(state.dayMap[k])} — Light • Moon • Tides</div>
-      <div class="kv">
-        <div class="k">Civil dawn</div><div>${t.civil_dawn}</div>
-        <div class="k">Sunrise</div><div>${t.sunrise}</div>
-        <div class="k">Sunset</div><div>${t.sunset}</div>
-        <div class="k">Civil dusk</div><div>${t.civil_dusk}</div>
-        <div class="k">Moon</div><div>Rise ${t.moonrise} • Set ${t.moonset} • ${t.moonText}</div>
-      </div>`;
-    el.appendChild(p);
+function renderCards(locs){
+  const by=groupByDayBlock(locs); const container=document.getElementById('cards'); container.innerHTML='';
+  [[state.dayMap.A,'A'],[state.dayMap.B,'B']].forEach(([day,label])=>{
+    ['Morning','Afternoon','Evening','Night'].forEach(block=>{ const list=by.get(`${day}|${block}`)||[]; if(!list.length) return; const section=document.createElement('section'); section.className='card-section'; section.innerHTML=`<h3>${day} — ${block}</h3>`; list.forEach(loc=>section.appendChild(renderCard(loc))); container.appendChild(section); });
   });
 }
-
-function renderList(){
-  const list=document.getElementById('list'); list.innerHTML='';
-  const grouped=new Map();
-  visibleLocations().forEach(loc=>{ const key=dayLabelISO(state.dayMap[loc.day])+" | "+loc.block; if(!grouped.has(key)) grouped.set(key,[]); grouped.get(key).push(loc); });
-  for(const [key,arr] of grouped){
-    const [label, block]=key.split(" | ");
-    const sec=document.createElement('section'); sec.className='panel';
-    sec.innerHTML=`<div class="section-title">${label} — ${block}</div>`;
-    const grid=document.createElement('div'); grid.className='grid';
-    arr.sort((a,b)=>a.rank-b.rank).forEach(async loc=> grid.appendChild(await cardFor(loc)));
-    sec.appendChild(grid); list.appendChild(sec);
-  }
-  renderMarkers();
-}
-
-// Mode toggle
-function toggleMapMode(mode){
-  state.mapMode=mode;
-  document.getElementById('modeGoogle').classList.toggle('active', mode==='google');
-  document.getElementById('modeLeaflet').classList.toggle('active', mode==='leaflet');
-  if(mode==='google'){
-    injectGoogle().then(()=>{ initGoogle(); renderMarkers(); }).catch(()=>{ alert('Google failed to load; falling back to Leaflet.'); initLeaflet(); renderMarkers(); });
-  } else { initLeaflet(); renderMarkers(); }
-}
-
-// UI init
-function initUI(){
-  document.getElementById('dateA').value=state.dayMap["2025-10-03"];
-  document.getElementById('dateB').value=state.dayMap["2025-10-04"];
-  document.getElementById('dateA').addEventListener('change',e=>{state.dayMap["2025-10-03"]=e.target.value; saveLocal(); renderLightPanels(); renderList();});
-  document.getElementById('dateB').addEventListener('change',e=>{state.dayMap["2025-10-04"]=e.target.value; saveLocal(); renderLightPanels(); renderList();});
-  document.querySelectorAll('input[name="day"]').forEach(cb=>cb.addEventListener('change',e=>{const v=e.target.value; if(e.target.checked) state.day.add(v); else state.day.delete(v); renderList(); renderMarkers();}));
-  document.querySelectorAll('input[name="block"]').forEach(cb=>cb.addEventListener('change',e=>{const v=e.target.value; if(e.target.checked) state.blocks.add(v); else state.blocks.delete(v); renderList(); renderMarkers();}));
-  const rmin=document.getElementById('rankMin'), rmax=document.getElementById('rankMax');
-  [rmin,rmax].forEach(i=> i.addEventListener('input',()=>{ state.rankMin=+rmin.value; state.rankMax=+rmax.value; document.getElementById('rankLabel').textContent=`#${state.rankMin}–#${state.rankMax}`; renderList(); renderMarkers(); }));
-  document.getElementById('proOnly').addEventListener('change',e=>{ state.proOnly=e.target.checked; renderList(); });
-  document.getElementById('q').addEventListener('input',e=>{ state.q=e.target.value; renderList(); });
-  document.getElementById('rain').addEventListener('change',e=>{ state.rain=e.target.checked; renderList(); });
-  document.getElementById('wind').addEventListener('change',e=>{ state.wind=e.target.checked; renderList(); });
-  document.getElementById('expandAll').addEventListener('click',()=>{ state.expandAll=true; renderList(); });
-  document.getElementById('collapseAll').addEventListener('click',()=>{ state.expandAll=false; renderList(); });
+function bindHeader(){
+  const inpA=document.getElementById('dateA'), inpB=document.getElementById('dateB'); inpA.value=state.dayMap.A; inpB.value=state.dayMap.B;
+  inpA.addEventListener('change', ()=>{ state.dayMap.A=inpA.value; computePanels(); render(); });
+  inpB.addEventListener('change', ()=>{ state.dayMap.B=inpB.value; computePanels(); render(); });
+  ['A','B'].forEach(k=>{ const cb=document.getElementById(`toggleDay${k}`); cb.checked=state.showDay[k]; cb.addEventListener('change', ()=>{ state.showDay[k]=cb.checked; render(); }); });
+  ['Morning','Afternoon','Evening','Night'].forEach(b=>{ const cb=document.getElementById(`toggle${b}`); cb.checked=state.showBlock[b]; cb.addEventListener('change', ()=>{ state.showBlock[b]=cb.checked; render(); }); });
+  const rmin=document.getElementById('rankMin'), rmax=document.getElementById('rankMax'), lbl=document.getElementById('rankLabel'); rmin.value=state.rankMin; rmax.value=state.rankMax; lbl.textContent=`#${state.rankMin}–#${state.rankMax}`;
+  const update=()=>{ const min=Math.min(+rmin.value,+rmax.value), max=Math.max(+rmin.value,+rmax.value); state.rankMin=min; state.rankMax=max; lbl.textContent=`#${min}–#${max}`; render(); }; rmin.addEventListener('input', update); rmax.addEventListener('input', update);
+  const s=document.getElementById('search'); s.addEventListener('input', ()=>{ state.search=s.value; render(); });
+  document.getElementById('expandAll').addEventListener('click', ()=>{ document.querySelectorAll('.card .toggle-details').forEach(b=>b.click()); });
+  document.getElementById('collapseAll').addEventListener('click', ()=>{ document.querySelectorAll('.card .expand:not([hidden])').forEach(exp=>exp.previousElementSibling.querySelector('.toggle-details').click()); });
   document.getElementById('exportCSV').addEventListener('click', exportCSV);
   document.getElementById('exportKML').addEventListener('click', exportKML);
   document.getElementById('print').addEventListener('click', ()=>window.print());
-  document.getElementById('theme').addEventListener('click', toggleTheme);
-  (()=>{const _em=document.getElementById('editMode'); if(_em){ _em.addEventListener('click', ()=> alert('Drag pins in Google mode. Use the buttons in each card to jump to the anchor.')); }})();
-  document.getElementById('modeGoogle').addEventListener('click', ()=>toggleMapMode('google'));
-  document.getElementById('modeLeaflet').addEventListener('click', ()=>toggleMapMode('leaflet'));
-  document.getElementById('importJSON').addEventListener('change', e=>{ if(e.target.files[0]){ const r=new FileReader(); r.onload=()=>{ try{ const obj=JSON.parse(r.result); if(obj.LOCATIONS) LOCATIONS=obj.LOCATIONS; if(obj.state?.dayMap) state.dayMap=obj.state.dayMap; saveLocal(); renderLightPanels(); renderList(); renderMarkers(); }catch(err){ alert('Invalid JSON'); } }; r.readAsText(e.target.files[0]); } });
-  document.getElementById('exportJSON').addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify({LOCATIONS,state},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='NYC_Photo_Guide_v7_1.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); });
+  document.getElementById('theme').addEventListener('click', ()=>{ const cur=document.documentElement.dataset.theme||'light'; document.documentElement.dataset.theme = cur==='light'?'dark':'light'; });
+  document.getElementById('exportJSON').addEventListener('click', exportJSON);
+  document.getElementById('importJSON').addEventListener('change', importJSON);
+  document.querySelectorAll('#mapTabs button').forEach(btn=>btn.addEventListener('click', ()=>{ state.engine=btn.dataset.engine; updateEngineTabs(); renderMap(filterAndPrepLocations()); }));
+  document.getElementById('saveKey').addEventListener('click', ()=>{ const v=document.getElementById('keyInput').value.trim(); setGoogleKey(v); alert('API key saved. Switch to Google mode to re-init if needed.'); });
 }
-
-function toggleTheme(){
-  const root=document.documentElement;
-  const dark=getComputedStyle(root).getPropertyValue('--bg').trim()==='#0b1220';
-  if(dark){
-    root.style.setProperty('--bg','#f6f8fb'); root.style.setProperty('--panel','#ffffff'); root.style.setProperty('--card','#ffffff'); root.style.setProperty('--text','#0b1220');
-    root.style.setProperty('--muted','#465a77'); root.style.setProperty('--border','#d7e1ef'); root.style.setProperty('--shadow','rgba(0,0,0,.07)');
-  } else {
-    root.style.setProperty('--bg','#0b1220'); root.style.setProperty('--panel','#0f172a'); root.style.setProperty('--card','#0e1426'); root.style.setProperty('--text','#e6edf6');
-    root.style.setProperty('--muted','#9bb0c9'); root.style.setProperty('--border','#1f2a44'); root.style.setProperty('--shadow','rgba(0,0,0,.35)');
-  }
+function updateEngineTabs(){ document.querySelectorAll('#mapTabs button').forEach(b=>b.classList.toggle('active', b.dataset.engine===state.engine)); }
+function dl(filename, text, type='text/plain'){ const blob=new Blob([text],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(url),2000); }
+function exportCSV(){ const locs=filterAndPrepLocations(); const rows=[['id','name','day','block','rank','anchorLat','anchorLon','microTitle','microLat','microLon','bearing']];
+  locs.forEach(loc=>{ const a=loc.anchors[loc.activeAnchor]||loc.anchors[0]; if((loc._microAbs||[]).length){ loc._microAbs.forEach(mp=>rows.push([loc.id,loc.name,loc.day,loc.block,loc.rank,a.lat,a.lon,mp.title,mp.lat,mp.lon,mp.bearing])); } else { rows.push([loc.id,loc.name,loc.day,loc.block,loc.rank,a.lat,a.lon,'','','','']); } });
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n'); dl('nyc-photo-guide.csv', csv, 'text/csv'); }
+function escapeXml(s){ return String(s).replace(/[<>&'"]/g, c=>({ '<':'&lt;','>':'&gt;','&':'&amp;',"'" :'&apos;','"':'&quot;' }[c])); }
+function exportKML(){ const locs=filterAndPrepLocations(); const placemarks=[]; locs.forEach(loc=>{ const a=loc.anchors[loc.activeAnchor]||loc.anchors[0]; placemarks.push(`<Placemark><name>${escapeXml(loc.name)} (Anchor)</name><Point><coordinates>${a.lon},${a.lat},0</coordinates></Point></Placemark>`); (loc._microAbs||[]).forEach(mp=>{ placemarks.push(`<Placemark><name>${escapeXml(loc.name)} — ${escapeXml(mp.title)}</name><Point><coordinates>${mp.lon},${mp.lat},0</coordinates></Point></Placemark>`); }); });
+  const kml=`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>NYC Photo Guide</name>${placemarks.join('')}</Document></kml>`; dl('nyc-photo-guide.kml', kml, 'application/vnd.google-earth.kml+xml'); }
+function exportJSON(){ const data={ LOCATIONS: state.locations, state:{ dayMap: state.dayMap } }; dl('nyc-photo-guide.json', JSON.stringify(data,null,2), 'application/json'); }
+async function importJSON(ev){ const f=ev.target.files[0]; if(!f) return; try{ const j=JSON.parse(await f.text()); if(Array.isArray(j.LOCATIONS)) state.locations=j.LOCATIONS; if(j.state?.dayMap) state.dayMap=j.state.dayMap; computePanels(); render(); alert('Imported and re-rendered.'); } catch(e){ alert('Import failed: '+e.message); } finally { ev.target.value=''; } }
+function render(){ const locs=filterAndPrepLocations(); renderCards(locs); renderMap(locs); }
+async function boot(){
+  state.config = await loadConfig();
+  document.title = state.config.APP_TITLE || 'NYC Photo Guide';
+  document.getElementById('appTitle').textContent = state.config.APP_TITLE || 'NYC Photo Guide';
+  state.locations = applyAnchorEdits((RAW_LOCATIONS||[]).map(x=>structuredClone(x)));
+  computePanels(); bindHeader(); updateEngineTabs(); render();
 }
-
-// Export helpers
-function exportCSV(){
-  const rows=[["dayLabel","block","rank","name","activeAnchor","anchorLat","anchorLon"]];
-  visibleLocations().forEach(l=>{ const a=activeAnchor(l); rows.push([dayLabelISO(state.dayMap[l.day]), l.block, l.rank, l.name, a.label, a.lat, a.lon]); });
-  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/plain'})); a.download='NYC_Photo_Guide_Anchors.csv'; a.click();
-}
-function exportKML(){
-  let kml=`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>NYC Photo Pins (Anchors+Micro)</name>`;
-  visibleLocations().forEach(p=>{
-    const a=activeAnchor(p);
-    const desc=`${dayLabelISO(state.dayMap[p.day])} • ${p.block} • Rank ${p.rank}`;
-    kml+=`<Placemark><name>${p.name} — ${a.label}</name><description><![CDATA[${desc}]]></description><Point><coordinates>${a.lon},${a.lat},0</coordinates></Point></Placemark>`;
-    computeMicroAbs(p).forEach(mp=>{
-      const d2=`${p.name} / ${mp.title}`;
-      kml+=`<Placemark><name>${p.name} — ${mp.title}</name><description><![CDATA[${d2}]]></description><Point><coordinates>${mp.lon},${mp.lat},0</coordinates></Point></Placemark>`;
-    });
-  });
-  kml+=`</Document></kml>`;
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([kml],{type:'text/plain'})); a.download='NYC_Photo_Pins.kml'; a.click();
-}
-
-// Persistence
-function saveLocal(){ localStorage.setItem('nyc_photo_guide_'+CFG.dataVersion, JSON.stringify({LOCATIONS, state:{dayMap:state.dayMap}})); }
-function loadLocal(){ try{ const s=localStorage.getItem('nyc_photo_guide_'+CFG.dataVersion); if(s){ const o=JSON.parse(s); if(o.LOCATIONS) LOCATIONS=o.LOCATIONS; if(o.state?.dayMap) state.dayMap=o.state.dayMap; } }catch{} }
-
-// Boot
-async function init(){
-  loadLocal();
-  initUI();
-  renderLightPanels();
-  // Initialize map engine first to avoid clearLayers() errors
-  try{
-    await injectGoogle();
-    initGoogle();
-    document.getElementById('modeGoogle').classList.add('active');
-  }catch{
-    initLeaflet();
-    document.getElementById('modeLeaflet').classList.add('active');
-  }
-  renderList();
-}
-window.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', boot); } else { boot(); }
 
 </script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
