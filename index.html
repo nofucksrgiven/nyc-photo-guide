@@ -1,327 +1,1265 @@
 <!doctype html>
-<html lang="en" data-theme="light">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NYC Photo Guide</title>
-  <!-- Optional: set your Google Maps key at runtime (fallback if no .env build) -->
-  <!-- <meta name="maps:apiKey" content=""> -->
-
-  <!-- Leaflet CSS for offline/fallback map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="" crossorigin="">
-
-  <style>
-    :root {
-      --bg: #ffffff;
-      --fg: #111111;
-      --muted: #555;
-      --accent: #0067c5;
-      --panel: #f6f7f9;
-      --border: #e2e6ec;
-      --ok: #0a8754;
-      --warn: #b4690e;
-      --err: #b00020;
-
-      --morning: #f59e0b;
-      --afternoon: #2563eb;
-      --evening: #7c3aed;
-      --night: #334155;
-      --micro: #0d9488;
-    }
-    [data-theme="dark"] {
-      --bg: #0b0e12;
-      --fg: #f5f6f8;
-      --muted: #aab3c2;
-      --accent: #6ab0ff;
-      --panel: #141a22;
-      --border: #263244;
-      --ok: #22c55e;
-      --warn: #f59e0b;
-      --err: #ef4444;
-
-      --morning: #fbbf24;
-      --afternoon: #60a5fa;
-      --evening: #a78bfa;
-      --night: #94a3b8;
-      --micro: #2dd4bf;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--fg);
-      font: 15px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    }
-    a { color: var(--accent); }
-    .wrap {
-      display: grid;
-      grid-template-rows: auto 1fr;
-      height: 100vh;
-    }
-    header {
-      position: sticky; top: 0; z-index: 10;
-      background: var(--panel);
-      border-bottom: 1px solid var(--border);
-    }
-    .bar {
-      display: grid; gap: 8px;
-      grid-template-columns: repeat(12, 1fr);
-      padding: 10px 12px;
-    }
-    .bar > * { min-width: 0; }
-    .title { grid-column: span 3; font-weight: 700; display:flex; gap:10px; align-items:center; }
-    .dates { grid-column: span 3; display:flex; gap:8px; align-items:center; }
-    .toggles { grid-column: span 3; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .utils { grid-column: span 3; display:flex; gap:8px; justify-content:flex-end; align-items:center; flex-wrap:wrap; }
-    .searchRow { grid-column: 1 / -1; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-
-    .content {
-      display: grid; gap: 12px;
-      grid-template-columns: 320px 1fr;
-      padding: 12px;
-      height: calc(100vh - 68px);
-    }
-    .leftCol {
-      overflow: auto;
-      padding-right: 6px;
-    }
-    .panels {
-      display: grid; gap: 10px;
-    }
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
-    }
-    .panel h3 { margin: 0 0 6px; font-size: 15px; }
-    .kv { display:grid; grid-template-columns: 1fr auto; gap:8px; }
-    .kv div { color: var(--muted); }
-    .kv b { color: var(--fg); }
-
-    .rightCol {
-      position: relative;
-      min-height: 320px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-      background: var(--panel);
-    }
-    #gmap, #lmap { position:absolute; inset:0; }
-    #lmap { display:none; }
-
-    .list {
-      grid-column: 1 / -1;
-      height: 100%;
-      overflow: auto;
-      padding-right: 6px;
-    }
-
-    .section {
-      margin-top: 12px;
-    }
-    .section h2 {
-      margin: 10px 0;
-      font-size: 16px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 6px;
-    }
-
-    .card {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: var(--bg);
-    }
-    .cardHeader {
-      display:flex; gap:10px; align-items:center; justify-content:space-between;
-    }
-    .badge {
-      display:inline-flex; align-items:center; gap:6px;
-      padding: 2px 8px; border-radius: 14px; font-size: 12px; border:1px solid var(--border);
-      background: var(--panel);
-    }
-    .badge .dot { width:8px; height:8px; border-radius: 50%; display:inline-block; }
-    .dot.morning { background: var(--morning); }
-    .dot.afternoon { background: var(--afternoon); }
-    .dot.evening { background: var(--evening); }
-    .dot.night { background: var(--night); }
-    .muted { color: var(--muted); }
-
-    .actions { display:flex; gap:6px; flex-wrap:wrap; }
-    .btn {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    .btn[disabled] { opacity: 0.5; cursor: default; }
-    .btn.primary {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-    .btn.warn { border-color: var(--warn); color: var(--warn); }
-
-    details { margin-top: 8px; }
-    summary { cursor: pointer; font-weight: 600; }
-
-    .pills { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0; }
-    .pill {
-      border:1px solid var(--border); background: var(--panel);
-      border-radius: 999px; padding:4px 10px; font-size: 12px; cursor: pointer;
-    }
-    .pill.active { outline: 2px solid var(--accent); }
-
-    .grid {
-      display:grid; gap:8px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .grid.kv { grid-template-columns: 120px 1fr; }
-    .grid.photos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .photos img { width:100%; height: 100px; object-fit: cover; border-radius: 6px; }
-
-    .toast {
-      position: fixed; left: 50%; transform: translateX(-50%);
-      bottom: 12px; padding: 10px 12px; border-radius: 8px;
-      background: var(--panel); border:1px solid var(--border);
-      box-shadow: 0 6px 20px rgba(0,0,0,.25);
-      display:none; z-index: 50;
-      max-width: 90vw;
-    }
-    .toast.show { display: block; }
-
-    .rangeRow { display:flex; align-items:center; gap:6px; }
-    .rangeRow input[type=range] { width: 130px; }
-
-    .mapTabs { display:flex; gap:10px; }
-    .mapTabs label { display:flex; gap:6px; align-items:center; cursor: pointer; }
-
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <header>
-      <div class="bar" role="region" aria-label="App controls">
-        <div class="title">
-          <span style="font-size:18px;">📸 NYC Photo Guide</span>
-          <span class="mapTabs" role="tablist" aria-label="Map engine">
-            <label><input type="radio" name="mapMode" value="google" checked aria-label="Google Maps (online)" /> Google</label>
-            <label><input type="radio" name="mapMode" value="leaflet" aria-label="Leaflet (offline)"/> Leaflet</label>
-          </span>
-        </div>
-
-        <div class="dates">
-          <label>Day A <input id="dayA" type="date" aria-label="Pick Day A date"/></label>
-          <label>Day B <input id="dayB" type="date" aria-label="Pick Day B date"/></label>
-        </div>
-
-        <div class="toggles">
-          <label><input id="showA" type="checkbox" checked aria-label="Show Day A"/> Show A</label>
-          <label><input id="showB" type="checkbox" checked aria-label="Show Day B"/> Show B</label>
-
-          <label><input class="blk" value="Morning" type="checkbox" checked/> Morning</label>
-          <label><input class="blk" value="Afternoon" type="checkbox" checked/> Afternoon</label>
-          <label><input class="blk" value="Evening" type="checkbox" checked/> Evening</label>
-          <label><input class="blk" value="Night" type="checkbox" checked/> Night</label>
-
-          <div class="rangeRow" title="Rank filter">
-            <span id="rankLabel" class="muted">#1–#5</span>
-            <input id="rankMin" type="range" min="1" max="5" value="1" aria-label="Minimum rank"/>
-            <input id="rankMax" type="range" min="1" max="5" value="5" aria-label="Maximum rank"/>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>NYC Photo Guide</title>
+    <style>
+      :root {
+        --bg: #0b0d10;
+        --fg: #e6ecf2;
+        --muted: #9fb3c8;
+        --accent: #5cc8ff;
+        --ok: #43d17a;
+        --warn: #f7b23b;
+        --danger: #ff6b6b;
+        --card: #131720;
+        --card-muted: #0f1320;
+        --border: #263043;
+        --chip: #1d2433;
+      }
+      [data-theme="light"]{
+        --bg: #f6f8fb;
+        --fg: #111827;
+        --muted: #4b5563;
+        --accent: #0066ff;
+        --ok: #10b981;
+        --warn: #d97706;
+        --danger: #ef4444;
+        --card: #ffffff;
+        --card-muted: #f1f5f9;
+        --border: #e5e7eb;
+        --chip: #eef2f7;
+      }
+      html,body{height:100%}
+      body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+      a{color:var(--accent);text-decoration:none}
+      a:hover{text-decoration:underline}
+      .app{display:grid;grid-template-columns:320px 1fr;grid-template-rows:auto 1fr;grid-template-areas:'hdr hdr''left right';min-height:100vh}
+      header{grid-area:hdr;position:sticky;top:0;background:linear-gradient(to bottom,var(--bg),rgba(0,0,0,0));z-index:5;border-bottom:1px solid var(--border)}
+      .hdr-wrap{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;padding:.75rem 1rem}
+      .title{font-weight:700;margin-right:1rem}
+      .controls{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+      .chip{background:var(--chip);border:1px solid var(--border);border-radius:.5rem;padding:.35rem .5rem;display:inline-flex;gap:.35rem;align-items:center}
+      .chip input[type="date"]{background:transparent;border:none;color:var(--fg)}
+      .chip input[type="text"]{background:transparent;border:none;color:var(--fg);width:180px}
+      .btn{background:var(--chip);border:1px solid var(--border);border-radius:.5rem;padding:.35rem .6rem;cursor:pointer}
+      .btn[disabled]{opacity:.6;cursor:not-allowed}
+      .left{grid-area:left;padding:1rem;border-right:1px solid var(--border);position:sticky;align-self:start;top:3.25rem;height:calc(100vh - 3.25rem);overflow:auto}
+      .right{grid-area:right;display:grid;grid-template-columns:1fr 440px;gap:0;border-left:none}
+      .list{padding:1rem;overflow:auto;max-height:calc(100vh - 3.25rem)}
+      .map-wrap{position:sticky;top:3.25rem;height:calc(100vh - 3.25rem);border-left:1px solid var(--border)}
+      .map-tabs{display:flex;gap:.25rem;padding:.5rem;border-bottom:1px solid var(--border);background:var(--card)}
+      .tab{padding:.35rem .6rem;border:1px solid var(--border);border-radius:.5rem;background:var(--chip);cursor:pointer}
+      .tab.active{outline:2px solid var(--accent)}
+      #map-google,#map-leaflet{height:100%;width:100%;display:none}
+      #map-google.active,#map-leaflet.active{display:block}
+      .panel{background:var(--card);border:1px solid var(--border);border-radius:.75rem;margin-bottom:.75rem;overflow:hidden}
+      .panel h3{margin:0;padding:.6rem .75rem;border-bottom:1px solid var(--border);font-size:1rem}
+      .panel .body{padding:.75rem}
+      .kvs{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem}
+      .kv{display:flex;gap:.35rem;align-items:center;font-size:.93rem}
+      .kv .k{color:var(--muted);min-width:110px}
+      .card{background:var(--card);border:1px solid var(--border);border-radius:.75rem;margin:0 0 .75rem 0}
+      .card .hdr{padding:.6rem .75rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:.5rem;align-items:center}
+      .badges{display:flex;gap:.35rem;align-items:center}
+      .badge{background:var(--chip);border:1px solid var(--border);padding:.2rem .45rem;border-radius:999px;font-size:.78rem}
+      .card .sum{padding:.5rem .75rem;color:var(--muted);font-size:.93rem;border-bottom:1px dashed var(--border)}
+      .card .actions{padding:.5rem .75rem;display:flex;flex-wrap:wrap;gap:.35rem}
+      .card .actions .btn{font-size:.9rem}
+      .pillset{padding:.5rem .75rem;display:flex;flex-wrap:wrap;gap:.35rem}
+      .pill{background:var(--chip);border:1px solid var(--border);border-radius:999px;padding:.25rem .45rem;cursor:pointer}
+      .pill.active{outline:2px solid var(--accent)}
+      .exp{padding:.5rem .75rem;display:none}
+      .exp.open{display:block}
+      .grid-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:.25rem;margin-top:.5rem}
+      .grid-photos img{width:100%;height:92px;object-fit:cover;border-radius:.4rem;border:1px solid var(--border);}
+      .toast{position:fixed;bottom:1rem;right:1rem;z-index:99;background:var(--card);border:1px solid var(--border);padding:.6rem .8rem;border-radius:.6rem;box-shadow:0 6px 20px rgba(0,0,0,.3);}
+      .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+      .row{display:flex;gap:.25rem;align-items:center}
+      .flex{display:flex;gap:.5rem;align-items:center}
+      .rightcol{border-left:1px solid var(--border);display:flex;flex-direction:column}
+      .map-head{display:flex;justify-content:space-between;align-items:center;padding:.5rem;border-bottom:1px solid var(--border)}
+      .small{font-size:.85rem;color:var(--muted)}
+      .muted{color:var(--muted)}
+      .danger{color:var(--danger)}
+      .ok{color:var(--ok)}
+      .warn{color:var(--warn)}
+      .hr{height:1px;background:var(--border);margin:.5rem 0}
+      .range{display:flex;gap:.35rem;align-items:center}
+      .range input[type="range"]{width:120px}
+      .sticky-title{position:sticky;top:3.25rem;background:var(--bg);z-index:3;padding:.5rem 1rem;border-bottom:1px solid var(--border)}
+      .section-title{margin:.5rem 0 .25rem;font-size:.95rem;color:var(--muted)}
+      .hidden{display:none !important}
+    </style>
+  </head>
+  <body>
+    <div class="app" role="application">
+      <header>
+        <div class="hdr-wrap">
+          <div class="title" aria-label="App Title">📷 NYC Photo Guide</div>
+          <div class="controls" role="toolbar" aria-label="Header controls">
+            <span class="chip" title="Day A"><label for="dayA" class="sr-only">Day A</label><input id="dayA" type="date"/></span>
+            <span class="chip" title="Day B"><label for="dayB" class="sr-only">Day B</label><input id="dayB" type="date"/></span>
+            <span class="chip" title="Day filters">
+              <label><input id="showA" type="checkbox" checked/> Fri</label>
+              <label><input id="showB" type="checkbox" checked/> Sat</label>
+            </span>
+            <span class="chip" title="Block filters">
+              <label><input id="fMorning" type="checkbox" checked/> Morning</label>
+              <label><input id="fAfternoon" type="checkbox" checked/> Afternoon</label>
+              <label><input id="fEvening" type="checkbox" checked/> Evening</label>
+              <label><input id="fNight" type="checkbox" checked/> Night</label>
+            </span>
+            <span class="chip range" title="Rank range">
+              <span class="small" id="rankLabel">#1–#5</span>
+              <input id="rankMin" type="range" min="1" max="5" step="1" value="1" aria-label="Min rank"/>
+              <input id="rankMax" type="range" min="1" max="5" step="1" value="5" aria-label="Max rank"/>
+            </span>
+            <span class="chip" title="Search">
+              🔎 <label for="search" class="sr-only">Search</label><input id="search" type="text" placeholder="Search locations…"/>
+            </span>
+            <button id="expandAll" class="btn">Expand all</button>
+            <button id="collapseAll" class="btn">Collapse all</button>
+            <button id="exportCSV" class="btn">Export CSV</button>
+            <button id="exportKML" class="btn">Export KML</button>
+            <button id="print" class="btn">Print</button>
+            <button id="exportJSON" class="btn">Export JSON</button>
+            <label class="btn" title="Import JSON">
+              Import JSON<input id="importJSON" type="file" accept="application/json" class="hidden"/>
+            </label>
+            <button id="theme" class="btn" aria-pressed="true">Theme</button>
+            <label class="btn" title="Toggle anchor edit mode">
+              <input id="editAnchors" type="checkbox"/> Edit anchors
+            </label>
           </div>
         </div>
-
-        <div class="utils">
-          <button id="expandAll" class="btn" aria-label="Expand all cards">Expand all</button>
-          <button id="collapseAll" class="btn" aria-label="Collapse all cards">Collapse</button>
-          <button id="exportCSV" class="btn" aria-label="Export CSV">Export CSV</button>
-          <button id="exportKML" class="btn" aria-label="Export KML">Export KML</button>
-          <button id="exportJSON" class="btn" aria-label="Export JSON">Export JSON</button>
-          <label class="btn" title="Import JSON">
-            Import JSON
-            <input id="importJSON" type="file" accept="application/json" class="sr-only"/>
-          </label>
-          <button id="printBtn" class="btn" aria-label="Print">Print</button>
-          <button id="themeBtn" class="btn" aria-label="Toggle theme">Theme</button>
-        </div>
-
-        <div class="searchRow">
-          <input id="q" type="search" placeholder="Search (name, gear, why, pins, shots…)" style="flex:1; padding:6px 10px; border-radius: 6px; border:1px solid var(--border); background:var(--bg); color:var(--fg);" aria-label="Search"/>
-        </div>
-      </div>
-    </header>
-
-    <div class="content">
-      <div class="leftCol">
-        <div class="panels">
-          <div class="panel" id="panelA" aria-live="polite">
-            <h3>Day A — Light & Moon</h3>
-            <div class="kv">
-              <div>Date</div><b id="labelA">—</b>
-              <div>Dawn</div><b id="aDawn">—</b>
-              <div>Sunrise</div><b id="aSunrise">—</b>
-              <div>Sunset</div><b id="aSunset">—</b>
-              <div>Dusk</div><b id="aDusk">—</b>
-              <div>Moonrise</div><b id="aMoonrise">—</b>
-              <div>Moonset</div><b id="aMoonset">—</b>
-              <div>Illumination</div><b id="aIllum">—</b>
-              <div>Tides (Battery)</div><b id="aTides">—</b>
+      </header>
+      <aside class="left" aria-label="Light and Moon Panels">
+        <div id="panels"></div>
+      </aside>
+      <main class="right">
+        <div class="list" id="list" aria-live="polite"></div>
+        <div class="rightcol">
+          <div class="map-head">
+            <div class="map-tabs" role="tablist" aria-label="Map mode">
+              <button id="tabGoogle" class="tab" role="tab" aria-controls="map-google" aria-selected="false">Google</button>
+              <button id="tabLeaflet" class="tab active" role="tab" aria-controls="map-leaflet" aria-selected="true">Leaflet</button>
             </div>
+            <div class="small">Switch engine anytime. Routes available in Google mode.</div>
           </div>
-          <div class="panel" id="panelB" aria-live="polite">
-            <h3>Day B — Light & Moon</h3>
-            <div class="kv">
-              <div>Date</div><b id="labelB">—</b>
-              <div>Dawn</div><b id="bDawn">—</b>
-              <div>Sunrise</div><b id="bSunrise">—</b>
-              <div>Sunset</div><b id="bSunset">—</b>
-              <div>Dusk</div><b id="bDusk">—</b>
-              <div>Moonrise</div><b id="bMoonrise">—</b>
-              <div>Moonset</div><b id="bMoonset">—</b>
-              <div>Illumination</div><b id="bIllum">—</b>
-              <div>Tides (Battery)</div><b id="bTides">—</b>
-            </div>
+          <div class="map-wrap">
+            <div id="map-google" aria-label="Google Map"></div>
+            <div id="map-leaflet" aria-label="Leaflet Map" class="active"></div>
           </div>
         </div>
-      </div>
+      </main>
+    </div>
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+    
+<script type="module">
+const SRC = {
+  app: `// /public/app.js
+import { loadConfig } from './config.js';
+import { LOCATIONS as RAW } from './data/locations.js';
+import { computeSunTimes, computeMoonInfo } from './lib/sunmoon.js';
+import { loadGoogle, hasGoogle } from './lib/googleLoader.js';
+import * as GMap from './map-google.js';
+import * as LMap from './map-leaflet.js';
 
-      <div class="rightCol">
-        <div id="gmap" role="region" aria-label="Google Map"></div>
-        <div id="lmap" role="region" aria-label="Leaflet Map"></div>
-      </div>
+// --- State & persistence ---
+const defaultDays = deduceDefaultDays(RAW);
+const state = {
+  dayA: defaultDays[0],
+  dayB: defaultDays[1],
+  showDays: { [defaultDays[0]]: true, [defaultDays[1]]: true },
+  blocks: { Morning:true, Afternoon:true, Evening:true, Night:true },
+  rankMin: 1, rankMax: 5,
+  search: '',
+  mapMode: 'leaflet', // default offline-friendly
+  editAnchors: false,
+  tidesCache: {}, // YYYY-MM-DD -> string
+};
 
-      <div class="list" id="list" aria-live="polite" aria-busy="false">
-        <!-- Cards injected -->
+const STORAGE_KEY = 'nyc-photo-guide:v1';
+const LOC_KEY = 'nyc-photo-guide:locations';
+let LOCATIONS = hydrateLocations(RAW);
+
+function deduceDefaultDays(arr){
+  // pick the two distinct day strings present in data (sorted)
+  const days = Array.from(new Set(arr.map(x=>x.day))).sort();
+  return [days[0], days[1] ?? days[0]];
+}
+
+function hydrateLocations(raw){
+  const cloned = JSON.parse(JSON.stringify(raw));
+  // Merge local edits if any
+  try{
+    const saved = JSON.parse(localStorage.getItem(LOC_KEY) || 'null');
+    if (Array.isArray(saved)) {
+      const byId = Object.fromEntries(cloned.map(x=>[x.id,x]));
+      saved.forEach(item => { if (byId[item.id]) byId[item.id].anchors = item.anchors; });
+    }
+  }catch{}
+  // Precompute micro-pin absolute coords for active anchor
+  cloned.forEach(loc => computeMicroAbs(loc));
+  return cloned;
+}
+
+function computeMicroAbs(loc){
+  const a = loc.anchors[loc.activeAnchor ?? 0];
+  const out = [];
+  const lat = a.lat, lon=a.lon;
+  const toRad = (d)=>d*Math.PI/180, toDeg = (r)=>r*180/Math.PI;
+  const cos = Math.cos, sin = Math.sin;
+  const metersPerDegLat = 111111;
+  const metersPerDegLon = 111111 * Math.cos(toRad(lat));
+  (loc.micro || []).forEach(m => {
+    const b = (m.bearing ?? 0) * Math.PI/180;
+    const dlat = (m.r * Math.cos(b)) / metersPerDegLat;
+    const dlon = (m.r * Math.sin(b)) / metersPerDegLon;
+    const lat2 = lat + dlat;
+    const lon2 = lon + dlon;
+    // short arrow direction from micro-pin in bearing dir (~16 m)
+    const arrowLen = 16;
+    const dlat2 = (arrowLen * Math.cos(b)) / metersPerDegLat;
+    const dlon2 = (arrowLen * Math.sin(b)) / metersPerDegLon;
+    out.push({ title: m.title, detail: m.detail, lat:lat2, lon:lon2, lat2: lat2+dlat2, lon2: lon2+dlon2 });
+  });
+  loc.__microAbs = out;
+}
+
+// Persist local edits of anchors
+function persistAnchors(){
+  try{
+    const subset = LOCATIONS.map(x=>({ id:x.id, anchors:x.anchors }));
+    localStorage.setItem(LOC_KEY, JSON.stringify(subset));
+  }catch{}
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      dayA: state.dayA, dayB: state.dayB, showDays: state.showDays,
+      blocks: state.blocks, rankMin: state.rankMin, rankMax: state.rankMax, theme: document.documentElement.getAttribute('data-theme'),
+      mapMode: state.mapMode
+    }));
+  }catch{}
+}
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (s){
+      Object.assign(state, s);
+      if (s.theme) document.documentElement.setAttribute('data-theme', s.theme);
+    }
+  }catch{}
+}
+loadState();
+
+// --- Boot ---
+const cfg = await loadConfig();
+await LMap.initLeaflet();
+wireHeader();
+renderPanels();
+renderList();
+await renderMap();
+
+// --- Header wiring ---
+function wireHeader(){
+  const $ = (id)=>document.getElementById(id);
+  $('dayA').value = state.dayA;
+  $('dayB').value = state.dayB;
+  $('showA').checked = !!state.showDays[state.dayA];
+  $('showB').checked = !!state.showDays[state.dayB];
+  $('fMorning').checked = state.blocks.Morning;
+  $('fAfternoon').checked = state.blocks.Afternoon;
+  $('fEvening').checked = state.blocks.Evening;
+  $('fNight').checked = state.blocks.Night;
+  $('rankMin').value = state.rankMin;
+  $('rankMax').value = state.rankMax;
+  updateRankLabel();
+  $('tabGoogle').classList.toggle('active', state.mapMode==='google');
+  $('tabLeaflet').classList.toggle('active', state.mapMode==='leaflet');
+  document.getElementById('map-google').classList.toggle('active', state.mapMode==='google');
+  document.getElementById('map-leaflet').classList.toggle('active', state.mapMode==='leaflet');
+  $('editAnchors').checked = state.editAnchors;
+
+  $('dayA').addEventListener('change', (e)=>{ state.dayA = e.target.value; renderPanels(); renderList(); renderMap(); saveState(); });
+  $('dayB').addEventListener('change', (e)=>{ state.dayB = e.target.value; renderPanels(); renderList(); renderMap(); saveState(); });
+  $('showA').addEventListener('change', (e)=>{ state.showDays[state.dayA] = e.target.checked; renderList(); renderMap(); saveState(); });
+  $('showB').addEventListener('change', (e)=>{ state.showDays[state.dayB] = e.target.checked; renderList(); renderMap(); saveState(); });
+  $('fMorning').addEventListener('change', (e)=>{ state.blocks.Morning = e.target.checked; renderList(); renderMap(); saveState(); });
+  $('fAfternoon').addEventListener('change', (e)=>{ state.blocks.Afternoon = e.target.checked; renderList(); renderMap(); saveState(); });
+  $('fEvening').addEventListener('change', (e)=>{ state.blocks.Evening = e.target.checked; renderList(); renderMap(); saveState(); });
+  $('fNight').addEventListener('change', (e)=>{ state.blocks.Night = e.target.checked; renderList(); renderMap(); saveState(); });
+  $('rankMin').addEventListener('input', onRankChange);
+  $('rankMax').addEventListener('input', onRankChange);
+  $('search').addEventListener('input', (e)=>{ state.search = e.target.value.toLowerCase(); renderList(); renderMap(); });
+  $('expandAll').addEventListener('click', ()=>{ document.querySelectorAll('.exp').forEach(x=>x.classList.add('open')); });
+  $('collapseAll').addEventListener('click', ()=>{ document.querySelectorAll('.exp').forEach(x=>x.classList.remove('open')); });
+  $('exportCSV').addEventListener('click', exportCSV);
+  $('exportKML').addEventListener('click', exportKML);
+  $('exportJSON').addEventListener('click', exportJSON);
+  $('importJSON').addEventListener('change', importJSON);
+  $('print').addEventListener('click', ()=>window.print());
+  $('theme').addEventListener('click', toggleTheme);
+  $('tabGoogle').addEventListener('click', async ()=>{ state.mapMode='google'; await renderMap(true); saveState(); });
+  $('tabLeaflet').addEventListener('click', async ()=>{ state.mapMode='leaflet'; await renderMap(true); saveState(); });
+  $('editAnchors').addEventListener('change', async (e)=>{
+    state.editAnchors = e.target.checked;
+    if (state.mapMode==='google') GMap.setEditMode(state.editAnchors);
+  });
+
+  window.addEventListener('keydown', (e)=>{
+    if (e.key==='Escape') hideToast();
+    if (e.key==='Enter' && document.activeElement && document.activeElement.classList.contains('pill')){
+      document.activeElement.click();
+    }
+  });
+}
+
+function onRankChange(){
+  const min = parseInt(document.getElementById('rankMin').value, 10);
+  const max = parseInt(document.getElementById('rankMax').value, 10);
+  // keep thumbs ordered
+  if (min > max){ if (this.id==='rankMin') document.getElementById('rankMax').value = String(min); else document.getElementById('rankMin').value = String(max); }
+  state.rankMin = parseInt(document.getElementById('rankMin').value,10);
+  state.rankMax = parseInt(document.getElementById('rankMax').value,10);
+  updateRankLabel();
+  renderList(); renderMap(); saveState();
+}
+function updateRankLabel(){ document.getElementById('rankLabel').textContent = \`#${state.rankMin}–#${state.rankMax}\`; }
+
+function toggleTheme(){
+  const html = document.documentElement;
+  const now = html.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', now);
+  saveState();
+}
+
+// --- Panels (Light/Moon/Tides) ---
+async function renderPanels(){
+  const panels = document.getElementById('panels');
+  panels.innerHTML = '';
+  for (const day of [state.dayA, state.dayB]){
+    const d = new Date(day+'T00:00:00');
+    const sun = computeSunTimes(d, 40.7128, -74.0060);
+    const moon = computeMoonInfo(d, 40.7128, -74.0060);
+    const tides = await getTidesHiLo(day).catch(()=>null);
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.innerHTML = \`
+      <h3>Light / Moon / Tides — ${day}</h3>
+      <div class="body">
+        <div class="kvs">
+          <div class="kv"><div class="k">Civil dawn</div><div>${fmtTime(sun.civilDawn)}</div></div>
+          <div class="kv"><div class="k">Sunrise</div><div>${fmtTime(sun.sunrise)}</div></div>
+          <div class="kv"><div class="k">Sunset</div><div>${fmtTime(sun.sunset)}</div></div>
+          <div class="kv"><div class="k">Civil dusk</div><div>${fmtTime(sun.civilDusk)}</div></div>
+          <div class="kv"><div class="k">Moonrise</div><div>${fmtTime(moon.rise)}</div></div>
+          <div class="kv"><div class="k">Moonset</div><div>${fmtTime(moon.set)}</div></div>
+          <div class="kv"><div class="k">Moon illum.</div><div>${moon.illuminationPct?.toFixed(1) ?? '—'}%</div></div>
+          <div class="kv"><div class="k">Battery tides</div><div>${tides ?? '<span class="muted">—</span>'}</div></div>
+        </div>
+      </div>\`;
+    panels.appendChild(panel);
+  }
+}
+
+function fmtTime(d){
+  if (!(d instanceof Date) || isNaN(d)) return '—';
+  const dt = new Date(d);
+  const hh = dt.getHours().toString().padStart(2,'0');
+  const mm = dt.getMinutes().toString().padStart(2,'0');
+  return \`${hh}:${mm}\`;
+}
+
+async function getTidesHiLo(dayStr){
+  if (state.tidesCache[dayStr]) return state.tidesCache[dayStr];
+  const yyyymmdd = dayStr.replaceAll('-','');
+  const url = \`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&begin_date=${yyyymmdd}&end_date=${yyyymmdd}&datum=MLLW&station=8518750&time_zone=lst_ldt&interval=hilo&units=english&format=json\`;
+  try{
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('NOAA HTTP '+r.status);
+    const j = await r.json();
+    if (Array.isArray(j?.predictions) && j.predictions.length){
+      const parts = j.predictions.map(p => {
+        const t = p.t.split(' ')[1].slice(0,5);
+        return \`${t} ${p.type}\`;
+      });
+      const s = parts.join(' • ');
+      state.tidesCache[dayStr] = s;
+      return s;
+    }
+    throw new Error('NOAA empty');
+  }catch(e){
+    console.warn('NOAA tides failed', e);
+    return 'Open NOAA high/low';
+  }
+}
+
+// --- List rendering ---
+function renderList(){
+  const list = document.getElementById('list');
+  const visible = filterLocations();
+  list.innerHTML = '';
+
+  // Group by day then block
+  const groups = {};
+  visible.forEach(loc => {
+    const k = loc.day+'|'+loc.block;
+    (groups[k] ||= []).push(loc);
+  });
+  const order = ['Morning','Afternoon','Evening','Night'];
+
+  Object.keys(groups).sort((a,b)=>{
+    const [da,ba] = a.split('|'); const [db,bb] = b.split('|');
+    if (da!==db) return da.localeCompare(db);
+    return order.indexOf(ba) - order.indexOf(bb);
+  }).forEach(key => {
+    const [day, block] = key.split('|');
+    const h = document.createElement('div');
+    h.className = 'sticky-title';
+    h.innerHTML = \`<div class="section-title">${day} • ${block}</div>\`;
+    list.appendChild(h);
+    groups[key].sort((a,b)=>a.rank - b.rank).forEach(loc => list.appendChild(renderCard(loc)));
+  });
+}
+
+function filterLocations(){
+  return LOCATIONS.filter(loc => {
+    if (!state.showDays[loc.day]) return false;
+    if (!state.blocks[loc.block]) return false;
+    if (loc.rank < state.rankMin || loc.rank > state.rankMax) return false;
+    if (state.search){
+      const hay = [loc.name, loc.bearing, loc.whyNow, loc.gear, loc.settings, JSON.stringify(loc.pins), JSON.stringify(loc.shots)].join(' ').toLowerCase();
+      if (!hay.includes(state.search)) return false;
+    }
+    return true;
+  });
+}
+
+function renderCard(loc){
+  const card = document.createElement('section');
+  card.className = 'card';
+  card.id = 'card-'+loc.id;
+  const anchor = loc.anchors[loc.activeAnchor ?? 0];
+  const sum = \`${loc.day} • ${loc.block} • ${loc.bearing}\`;
+
+  card.innerHTML = \`
+    <div class="hdr">
+      <div>${loc.name}</div>
+      <div class="badges">
+        <span class="badge">Rank #${loc.rank}</span>
+        <span class="badge">${loc.block}</span>
       </div>
     </div>
-  </div>
+    <div class="sum">${sum}</div>
+    <div class="actions">
+      <button class="btn" data-act="show">Show on map</button>
+      <button class="btn" data-act="eta">ETA</button>
+      <button class="btn" data-act="route">Route</button>
+      <a class="btn" href="https://www.google.com/maps/search/?api=1&query=${anchor.lat},${anchor.lon}" target="_blank" rel="noopener">Open (anchor)</a>
+      <a class="btn" href="https://www.google.com/maps/dir/?api=1&destination=${anchor.lat},${anchor.lon}&travelmode=walking" target="_blank" rel="noopener">Walk to anchor</a>
+    </div>
+    <div class="pillset" role="tablist" aria-label="Anchors">
+      ${loc.anchors.map((a,i)=>\`<button class="pill ${i===loc.activeAnchor?'active':''}" data-p="anchor" data-idx="${i}" aria-selected="${i===loc.activeAnchor}">Anchor: ${a.label}</button>\`).join('')}
+    </div>
+    <div class="pillset" role="tablist" aria-label="Micro-pins">
+      ${(loc.__microAbs||[]).map((m,i)=>{
+        const url = \`https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lon}&travelmode=walking\`;
+        return \`<a class="pill" href="${url}" target="_blank" rel="noopener" data-p="micro" data-idx="${i}" title="${m.detail||''}">${m.title} ↗</a>\`;
+      }).join('')}
+    </div>
+    <div class="exp" id="exp-${loc.id}">
+      <div class="hr"></div>
+      <div class="kvs">
+        <div class="kv"><div class="k">Why now</div><div>${loc.whyNow}</div></div>
+        <div class="kv"><div class="k">Timing</div><div>${loc.settings}</div></div>
+        <div class="kv"><div class="k">Face & light</div><div>${loc.bearing}</div></div>
+        <div class="kv"><div class="k">Gear</div><div>${loc.gear}</div></div>
+      </div>
+      <div class="hr"></div>
+      <div><strong>Pins</strong><ul>${loc.pins.map(p=>\`<li>${p.title} — ${p.detail}</li>\`).join('')}</ul></div>
+      <div><strong>Shots</strong><ol>${loc.shots.map(s=>\`<li>${s.title} — ${s.detail}</li>\`).join('')}</ol></div>
+      <div class="hr"></div>
+      <div class="row">
+        <button class="btn" data-act="addr">Show address</button>
+        <button class="btn" data-act="photos">Reference Images</button>
+        <span class="small muted">Max 12; loaded on demand</span>
+      </div>
+      <div class="grid-photos" id="photos-${loc.id}"></div>
+      <div class="small" id="addr-${loc.id}"></div>
+    </div>
+  \`;
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  // Card behaviors
+  card.querySelectorAll('[data-act]').forEach(el => el.addEventListener('click', ev => onCardAction(ev, loc)));
+  card.querySelectorAll('[data-p="anchor"]').forEach(el => el.addEventListener('click', ev => onAnchorSelect(ev, loc)));
+  // Expand/Collapse by clicking header
+  card.querySelector('.hdr').addEventListener('click', ()=>{
+    const ex = card.querySelector('.exp');
+    ex.classList.toggle('open');
+  });
+  return card;
+}
 
-  
-<script type="module">
-// Build blob-URL modules, inject an import map into <head>, then import('app').
-// Note: document.currentScript is null inside module scripts, so we don't use it.
-const MODULES = {"app": "// app.js \u2014 main SPA logic (ES modules, no globals)\nimport { LOCATIONS } from 'data/locations';\nimport { getGoogleMapsApiKey, STORAGE, saveLocal, loadLocal, fmtTime, NYC } from 'config';\nimport { computeLightAndMoon } from 'lib/sunmoon';\nimport { GoogleMapEngine } from 'map-google';\nimport { LeafletMapEngine } from 'map-leaflet';\nimport { loadGoogleMaps } from './lib/googleLoader.js';\n\n\nconst OVERRIDE_KEY = 'NYCPhotoGuide:overrideLocations';\nlet RUNTIME_LOCATIONS = (() => {\n  try { const o = localStorage.getItem(OVERRIDE_KEY); return o ? JSON.parse(o) : LOCATIONS; } catch(e){ return LOCATIONS; }\n})();\n\nfunction getLocations() {\n  return RUNTIME_LOCATIONS;\n}\nconst state = {\n  dayA: null,\n  dayB: null,\n  showA: true,\n  showB: true,\n  blocks: { Morning: true, Afternoon: true, Evening: true, Night: true },\n  rankMin: 1,\n  rankMax: 5,\n  q: '',\n  mapMode: 'google',\n  dayMap: {}, // 'YYYY-MM-DD' => 'A'/'B'\n  anchors: loadLocal(STORAGE.anchors, {}),\n  activeAnchor: loadLocal(STORAGE.activeAnchor, {}),\n};\n\nconst $ = (q, el=document) => el.querySelector(q);\nconst $$ = (q, el=document) => Array.from(el.querySelectorAll(q));\n\nfunction toast(msg, cls='') {\n  const t = $('#toast');\n  t.textContent = msg; t.className = 'toast show ' + cls;\n  const onKey = (e)=>{ if(e.key==='Escape') hide(); }\n  function hide(){ t.className = 'toast'; window.removeEventListener('keydown', onKey); }\n  setTimeout(hide, 4000);\n  window.addEventListener('keydown', onKey);\n}\n\nfunction groupByDayBlock(items) {\n  const g = {};\n  for (const it of items) {\n    const day = it.day;\n    g[day] = g[day] || { Morning: [], Afternoon: [], Evening: [], Night: [] };\n    g[day][it.block].push(it);\n  }\n  for (const d of Object.keys(g)) {\n    for (const b of Object.keys(g[d])) g[d][b] = g[d][b].sort((a,b)=>a.rank-b.rank);\n  }\n  return g;\n}\n\nfunction applyAnchorOverrides(loc) {\n  // Persisted anchor edits\n  const o = state.anchors?.[loc.id];\n  if (!o) return loc;\n  const copy = JSON.parse(JSON.stringify(loc));\n  for (const k of Object.keys(o)) {\n    if (copy.anchors[k]) {\n      copy.anchors[k].lat = o[k].lat;\n      copy.anchors[k].lon = o[k].lon;\n    }\n  }\n  // Active anchor selection\n  const aa = state.activeAnchor?.[loc.id];\n  if (typeof aa === 'number') copy.activeAnchor = aa;\n  return copy;\n}\n\nfunction filtered() {\n  const q = state.q.trim().toLowerCase();\n  const dateFilter = (loc) => {\n    const label = state.dayMap[loc.day];\n    if (label === 'A' && !state.showA) return false;\n    if (label === 'B' && !state.showB) return false;\n    return true;\n  };\n  const blockFilter = (loc) => !!state.blocks[loc.block];\n  const rankFilter = (loc) => loc.rank >= state.rankMin && loc.rank <= state.rankMax;\n  const searchFilter = (loc) => {\n    if (!q) return true;\n    const hay = [loc.name, loc.whyNow, loc.gear, loc.settings]\n      .concat((loc.pins||[]).map(p=>\\`${p.title} ${p.detail}\\`))\n      .concat((loc.shots||[]).map(s=>\\`${s.title} ${s.detail}\\`))\n      .join(' ').toLowerCase();\n    return hay.includes(q);\n  };\n  return getLocations().map(applyAnchorOverrides).filter(l => dateFilter(l) && blockFilter(l) && rankFilter(l) && searchFilter(l));\n}\n\nfunction badgeDot(block) {\n  const cls = block.toLowerCase();\n  return \\`<span class=\"dot ${cls}\" aria-hidden=\"true\"></span>\\`;\n}\n\nfunction dayLabel(dateStr) {\n  const d = new Date(dateStr + 'T00:00:00');\n  const lab = d.toLocaleDateString([], { weekday:'short', month:'short', day:'numeric' });\n  const ab = state.dayMap[dateStr] || '?';\n  return \\`${ab} \u2022 ${lab}\\`;\n}\n\nfunction microLatLon(anchor, micro) {\n  const bearing = (micro.bearing || 0) * Math.PI / 180;\n  const lat = anchor.lat;\n  const dlat = (micro.r * Math.cos(bearing)) / 111111;\n  const dlon = (micro.r * Math.sin(bearing)) / (111111 * Math.cos(lat * Math.PI/180));\n  return { lat: lat + dlat, lon: anchor.lon + dlon };\n}\n\nfunction cardHTML(loc) {\n  const a = loc.anchors[loc.activeAnchor||0] || loc.anchors[0];\n  const dl = dayLabel(loc.day);\n  const summary = \\`${dl} \u2022 ${loc.block} \u2022 ${loc.bearing}\\`;\n  const anchorPills = (loc.anchors||[]).map((anc, i)=>{\n    const active = i === (loc.activeAnchor||0);\n    return \\`<button class=\"pill anchor-pill ${active?'active':''}\" data-id=\"${loc.id}\" data-index=\"${i}\" aria-label=\"Use anchor ${anc.label}\">${anc.label}</button>\\`;\n  }).join('');\n\n  const microPills = (loc.micro||[]).map((m,i)=>{\n    const p = microLatLon(a, m);\n    const walk = \\`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=walking\\`;\n    return \\`<a class=\"pill\" href=\"${walk}\" target=\"_blank\" rel=\"noopener\" aria-label=\"Walk to ${m.title}\">${m.title} \u2192</a>\\`;\n  }).join('');\n\n  const open = \\`https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lon}\\`;\n  const walk = \\`https://www.google.com/maps/dir/?api=1&destination=${a.lat},${a.lon}&travelmode=walking\\`;\n\n  return \\`\n    <div class=\"card\" id=\"card-${loc.id}\">\n      <div class=\"cardHeader\">\n        <div>\n          <div style=\"display:flex; gap:8px; align-items:center; flex-wrap:wrap;\">\n            <strong>${loc.name}</strong>\n            <span class=\"badge\"><span class=\"muted\">Rank</span> <b>#${loc.rank}</b></span>\n            <span class=\"badge\"><span class=\"muted\">Block</span> ${badgeDot(loc.block)} <b>${loc.block}</b></span>\n          </div>\n          <div class=\"muted\">${summary}</div>\n        </div>\n        <div class=\"actions\">\n          <button class=\"btn showMap\" data-id=\"${loc.id}\">Show on map</button>\n          <button class=\"btn eta\" data-id=\"${loc.id}\">ETA</button>\n          <button class=\"btn route\" data-id=\"${loc.id}\">Route</button>\n          <a class=\"btn\" href=\"${open}\" target=\"_blank\" rel=\"noopener\">Open (anchor)</a>\n          <a class=\"btn\" href=\"${walk}\" target=\"_blank\" rel=\"noopener\">Walk to anchor</a>\n        </div>\n      </div>\n\n      <div class=\"pills\" role=\"group\" aria-label=\"Anchor options\">${anchorPills}</div>\n      <div class=\"pills\" role=\"group\" aria-label=\"Micro pins\">${microPills}</div>\n\n      <details>\n        <summary>Details</summary>\n        <div class=\"grid kv\" style=\"margin-top:6px;\">\n          <div>Why now</div><div>${loc.whyNow}</div>\n          <div>Timing</div><div>${loc.settings}</div>\n          <div>Face & light</div><div>${loc.bearing}</div>\n          <div>Gear</div><div>${loc.gear}</div>\n          <div>Tides</div><div class=\"tides\" data-id=\"${loc.id}\" data-day=\"${loc.day}\">Loading\u2026</div>\n          <div>Moon</div><div class=\"moon\" data-day=\"${loc.day}\">\u2014</div>\n          <div>Address</div><div class=\"addr\" data-lat=\"${a.lat}\" data-lon=\"${a.lon}\">\u2014</div>\n        </div>\n\n        <div style=\"margin-top:6px;\">\n          <div><b>Pins</b></div>\n          <ul>${(loc.pins||[]).map(p=>\\`<li><b>${p.title}:</b> ${p.detail}</li>\\`).join('')}</ul>\n        </div>\n        <div>\n          <div><b>Shots</b></div>\n          <ul>${(loc.shots||[]).map(s=>\\`<li><b>${s.title}:</b> ${s.detail}</li>\\`).join('')}</ul>\n        </div>\n\n        <div style=\"margin-top:6px;\">\n          <button class=\"btn photosBtn\" data-id=\"${loc.id}\">Reference Images</button>\n          <div class=\"grid photos\" id=\"photos-${loc.id}\" style=\"margin-top:6px;\"></div>\n        </div>\n\n        <div style=\"margin-top:6px;\">\n          <button class=\"btn warn editAnchorBtn\" data-id=\"${loc.id}\">Edit anchor lat/lon</button>\n          <div id=\"edit-${loc.id}\" style=\"display:none; margin-top:4px;\">\n            <label>Lat <input type=\"number\" step=\"0.0000001\" class=\"anchor-lat\" value=\"${a.lat}\"/></label>\n            <label>Lon <input type=\"number\" step=\"0.0000001\" class=\"anchor-lon\" value=\"${a.lon}\"/></label>\n            <button class=\"btn saveAnchorBtn\" data-id=\"${loc.id}\">Save</button>\n          </div>\n        </div>\n      </details>\n    </div>\n  \\`;\n}\n\nfunction renderList() {\n  const list = $('#list');\n  list.setAttribute('aria-busy', 'true');\n  const items = filtered();\n  const g = groupByDayBlock(items);\n  const days = Object.keys(g).sort(); // chronological\n  let html = '';\n  for (const day of days) {\n    const label = dayLabel(day);\n    for (const block of ['Morning','Afternoon','Evening','Night']) {\n      const arr = g[day][block] || [];\n      if (!arr.length) continue;\n      html += \\`<div class=\"section\" data-day=\"${day}\" data-block=\"${block}\"><h2>${label} \u2014 ${block}</h2>\\`;\n      html += arr.map(cardHTML).join('');\n      html += \\`</div>\\`;\n    }\n  }\n  list.innerHTML = html || '<div class=\"muted\" style=\"padding:8px;\">No results match current filters.</div>';\n  list.setAttribute('aria-busy', 'false');\n\n  // Wire actions\n  $$('.showMap').forEach(b=>b.addEventListener('click', () => {\n    const id = b.dataset.id;\n    const loc = filtered().find(x=>x.id===id);\n    engine.fitToLocation(loc);\n  }));\n  $$('.anchor-pill').forEach(p=>p.addEventListener('click', ()=>{\n    const id = p.dataset.id; const idx = Number(p.dataset.index);\n    state.activeAnchor[id] = idx;\n    saveLocal(STORAGE.activeAnchor, state.activeAnchor);\n    renderAll();\n  }));\n  $$('.eta').forEach(b=>b.addEventListener('click', ()=> onETA(b.dataset.id)));\n  $$('.route').forEach(b=>b.addEventListener('click', ()=> onRoute(b.dataset.id)));\n\n  $$('.photosBtn').forEach(b=>b.addEventListener('click', ()=> loadPhotos(b.dataset.id)));\n  $$('.editAnchorBtn').forEach(b=>{\n    b.addEventListener('click', ()=>{\n      const id = b.dataset.id;\n      const box = $('#edit-'+id);\n      box.style.display = box.style.display === 'none' ? 'block' : 'none';\n    });\n  });\n  $$('.saveAnchorBtn').forEach(b=>b.addEventListener('click', ()=>{\n    const id = b.dataset.id;\n    const wrap = $('#edit-'+id);\n    const lat = Number($('.anchor-lat', wrap).value);\n    const lon = Number($('.anchor-lon', wrap).value);\n    if (!isFinite(lat) || !isFinite(lon)) return toast('Invalid lat/lon');\n    const exists = state.anchors[id] || {};\n    const loc = getLocations().find(x=>x.id===id);\n    const ai = (state.activeAnchor[id] != null) ? state.activeAnchor[id] : (loc.activeAnchor||0);\n    exists[ai] = { lat, lon };\n    state.anchors[id] = exists;\n    saveLocal(STORAGE.anchors, state.anchors);\n    toast('Anchor updated and saved.');\n    renderAll();\n  }));\n\n  // Fill tides & moon inline\n  $$('.tides').forEach(el => {\n    const day = el.dataset.day;\n    fetchTides(day).then(str => { el.textContent = str; })\n      .catch(()=> el.innerHTML = \\`<a href=\"https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=8518750\" target=\"_blank\" rel=\"noopener\">Open NOAA high/low</a>\\`);\n  });\n  $$('.moon').forEach(el => {\n    const day = el.dataset.day;\n    const d = new Date(day + 'T12:00:00');\n    const lm = lightByDay[day];\n    if (lm) {\n      const ill = Math.round(lm.illum * 100) + '%';\n      const mr = fmtTime(lm.moonrise);\n      const ms = fmtTime(lm.moonset);\n      el.textContent = \\`Rise ${mr} \u2022 Set ${ms} \u2022 ${ill}\\`;\n    } else {\n      el.textContent = '\u2014';\n    }\n  });\n\n  // Resolve address via Geocoder if available\n  geocodeAll();\n}\n\nlet engine = null; // current map engine instance\nlet engineMode = 'google';\nlet googleKey = '';\n\nasync function ensureEngine(mode) {\n  if (engine && engineMode === mode) return engine;\n  // Tear down previous\n  if (engine && engine.clear) engine.clear();\n  // Hide/show containers\n  $('#gmap').style.display = mode === 'google' ? 'block' : 'none';\n  $('#lmap').style.display = mode === 'leaflet' ? 'block' : 'none';\n  if (mode === 'google') {\n    if (!googleKey) googleKey = await getGoogleMapsApiKey();\n    try {\n      engine = new GoogleMapEngine($('#gmap'), googleKey);\n      await engine.init();\n      engineMode = 'google';\n    } catch(e) {\n      console.warn('Google failed, swapping to Leaflet', e);\n      toast('Google Maps failed \u2014 using Leaflet fallback.');\n      engine = new LeafletMapEngine($('#lmap'));\n      await engine.init();\n      engineMode = 'leaflet';\n    }\n  } else {\n    engine = new LeafletMapEngine($('#lmap'));\n    await engine.init();\n    engineMode = 'leaflet';\n  }\n  return engine;\n}\n\nfunction blockColor(block) {\n  return getComputedStyle(document.documentElement).getPropertyValue('--' + block.toLowerCase()).trim();\n}\n\nasync function onETA(id) {\n  const loc = filtered().find(x=>x.id===id);\n  const a = loc.anchors[loc.activeAnchor||0] || loc.anchors[0];\n  // Geolocation guard\n  if (!navigator.geolocation) return toast('Geolocation not available in this browser.');\n  navigator.geolocation.getCurrentPosition(async pos => {\n    const from = { lat: pos.coords.latitude, lon: pos.coords.longitude };\n    try {\n      if (!window.google || !window.google.maps) {\n        // Load Google for Distance Matrix even in Leaflet mode\n        if (!googleKey) googleKey = await getGoogleMapsApiKey();\n        await loadGoogleMaps(googleKey, ['places']);\n      }\n      const svc = new google.maps.DistanceMatrixService();\n      svc.getDistanceMatrix({\n        origins: [new google.maps.LatLng(from.lat, from.lon)],\n        destinations: [new google.maps.LatLng(a.lat, a.lon)],\n        travelMode: google.maps.TravelMode.WALKING\n      }, (res, status) => {\n        if (status === 'OK' && res && res.rows[0].elements[0].status === 'OK') {\n          const el = res.rows[0].elements[0];\n          toast(\\`ETA ${el.duration.text} \u2022 ${el.distance.text}\\`);\n        } else {\n          toast('Distance Matrix failed.');\n        }\n      });\n    } catch(e) {\n      console.warn(e);\n      toast('Google API unavailable for ETA.');\n    }\n  }, err => {\n    toast('Geolocation denied.');\n  }, { enableHighAccuracy: true, timeout: 8000 });\n}\n\nasync function onRoute(id) {\n  const loc = filtered().find(x=>x.id===id);\n  const a = loc.anchors[loc.activeAnchor||0] || loc.anchors[0];\n  if (engineMode !== 'google') return toast('Route drawing available in Google mode only.');\n  if (!navigator.geolocation) return toast('Geolocation not available.');\n  navigator.geolocation.getCurrentPosition(async pos => {\n    const from = { lat: pos.coords.latitude, lon: pos.coords.longitude };\n    try {\n      await engine.drawRoute(from, { lat: a.lat, lon: a.lon });\n      toast('Route drawn on map.');\n    } catch(e) {\n      toast('Directions failed.');\n    }\n  }, err => toast('Geolocation denied.'), { enableHighAccuracy: true, timeout: 8000 });\n}\n\n// NOAA tides\nconst noaaCache = {};\nasync function fetchTides(dayStr) {\n  if (noaaCache[dayStr]) return noaaCache[dayStr];\n  const ymd = dayStr.replace(/-/g, '');\n  const url = \\`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&begin_date=${ymd}&end_date=${ymd}&datum=MLLW&station=8518750&time_zone=lst_ldt&interval=hilo&units=english&format=json\\`;\n  const res = await fetch(url, { cache: 'no-store' });\n  if (!res.ok) throw new Error('NOAA error');\n  const j = await res.json();\n  const preds = j?.predictions || [];\n  const txt = preds.map(p=>\\`${p.type.toUpperCase()} ${new Date(p.t).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })} ${p.v} ft\\`).join(' \u2022 ');\n  const out = txt || '\u2014';\n  noaaCache[dayStr] = out;\n  return out;\n}\n\n// Places Photos (lazy)\nasync function loadPhotos(id) {\n  const loc = filtered().find(x=>x.id===id);\n  const a = loc.anchors[loc.activeAnchor||0] || loc.anchors[0];\n  const grid = $('#photos-' + id);\n  grid.innerHTML = 'Loading\u2026';\n  try {\n    if (!googleKey) googleKey = await getGoogleMapsApiKey();\n    await loadGoogleMaps(googleKey, ['places']);\n    const svc = new google.maps.places.PlacesService(document.createElement('div'));\n    const query = loc.placeQuery || loc.name;\n    const req = {\n      query,\n      fields: ['name', 'photos', 'geometry'],\n      locationBias: { radius: 800, center: new google.maps.LatLng(a.lat, a.lon) }\n    };\n    svc.findPlaceFromQuery(req, (results, status) => {\n      if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {\n        grid.innerHTML = '<div class=\"muted\">No images found.</div>';\n        return;\n      }\n      const photos = [];\n      for (const r of results) {\n        for (const p of (r.photos || [])) {\n          const url = p.getUrl({ maxWidth: 480, maxHeight: 480 });\n          if (url) photos.push(url);\n          if (photos.length >= 12) break;\n        }\n        if (photos.length >= 12) break;\n      }\n      if (!photos.length) {\n        grid.innerHTML = '<div class=\"muted\">No images found.</div>';\n      } else {\n        grid.innerHTML = photos.map(u=>\\`<img loading=\"lazy\" src=\"${u}\" alt=\"Reference image\"/>\\`).join('');\n      }\n    });\n  } catch(e) {\n    console.warn(e);\n    grid.innerHTML = '<div class=\"muted\">Could not load images (network/API issue).</div>';\n  }\n}\n\n// Geocode address (Google if available); otherwise leave '\u2014'\nasync function geocodeAll() {\n  if (!window.google || !google.maps) return;\n  const geocoder = new google.maps.Geocoder();\n  $$('.addr').forEach(el => {\n    const lat = Number(el.dataset.lat), lon = Number(el.dataset.lon);\n    geocoder.geocode({ location: { lat, lng: lon } }, (res, status) => {\n      if (status === 'OK' && res && res[0]) {\n        el.textContent = res[0].formatted_address;\n      }\n    });\n  });\n}\n\n// Light/Moon panels per day\nconst lightByDay = {};\nfunction renderLightPanels() {\n  const a = new Date(state.dayA + 'T12:00:00');\n  const b = new Date(state.dayB + 'T12:00:00');\n  const ca = computeLightAndMoon(a, NYC.lat, NYC.lon);\n  const cb = computeLightAndMoon(b, NYC.lat, NYC.lon);\n  lightByDay[state.dayA] = ca;\n  lightByDay[state.dayB] = cb;\n\n  $('#labelA').textContent = a.toLocaleDateString();\n  $('#aDawn').textContent = fmtTime(ca.dawn);\n  $('#aSunrise').textContent = fmtTime(ca.sunrise);\n  $('#aSunset').textContent = fmtTime(ca.sunset);\n  $('#aDusk').textContent = fmtTime(ca.dusk);\n  $('#aMoonrise').textContent = fmtTime(ca.moonrise);\n  $('#aMoonset').textContent = fmtTime(ca.moonset);\n  $('#aIllum').textContent = Math.round(ca.illum*100) + '%';\n\n  $('#labelB').textContent = b.toLocaleDateString();\n  $('#bDawn').textContent = fmtTime(cb.dawn);\n  $('#bSunrise').textContent = fmtTime(cb.sunrise);\n  $('#bSunset').textContent = fmtTime(cb.sunset);\n  $('#bDusk').textContent = fmtTime(cb.dusk);\n  $('#bMoonrise').textContent = fmtTime(cb.moonrise);\n  $('#bMoonset').textContent = fmtTime(cb.moonset);\n  $('#bIllum').textContent = Math.round(cb.illum*100) + '%';\n\n  // Tides panels\n  $('#aTides').textContent = 'Loading\u2026';\n  $('#bTides').textContent = 'Loading\u2026';\n  fetchTides(state.dayA).then(s=> $('#aTides').textContent = s).catch(()=> $('#aTides').innerHTML = \\`<a href=\"https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=8518750\" target=\"_blank\" rel=\"noopener\">Open NOAA high/low</a>\\`);\n  fetchTides(state.dayB).then(s=> $('#bTides').textContent = s).catch(()=> $('#bTides').innerHTML = \\`<a href=\"https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=8518750\" target=\"_blank\" rel=\"noopener\">Open NOAA high/low</a>\\`);\n}\n\nfunction defaultDayMap() {\n  // Use the two distinct days present in the dataset\n  const days = Array.from(new Set(getLocations().map(l=>l.day))).sort();\n  const map = {};\n  if (days[0]) map[days[0]] = 'A';\n  if (days[1]) map[days[1]] = 'B';\n  return map;\n}\n\nasync function renderMap() {\n  const eng = await ensureEngine(state.mapMode);\n  eng.render(filtered());\n}\n\nfunction renderAll() {\n  renderLightPanels();\n  renderList();\n  renderMap();\n}\n\nfunction setupControls() {\n  // day inputs; default from dataset\n  const days = Array.from(new Set(getLocations().map(l=>l.day))).sort();\n  state.dayA = days[0] || new Date().toISOString().slice(0,10);\n  state.dayB = days[1] || new Date(Date.now()+86400000).toISOString().slice(0,10);\n  state.dayMap = defaultDayMap();\n\n  $('#dayA').value = state.dayA;\n  $('#dayB').value = state.dayB;\n  $('#dayA').addEventListener('change', e => {\n    state.dayA = e.target.value;\n    state.dayMap = defaultDayMap(); // keep labels tied to specific dates\n    renderAll();\n  });\n  $('#dayB').addEventListener('change', e => {\n    state.dayB = e.target.value;\n    state.dayMap = defaultDayMap();\n    renderAll();\n  });\n\n  $('#showA').checked = state.showA;\n  $('#showB').checked = state.showB;\n  $('#showA').addEventListener('change', e => { state.showA = e.target.checked; renderAll(); });\n  $('#showB').addEventListener('change', e => { state.showB = e.target.checked; renderAll(); });\n\n  $$('.blk').forEach(chk => {\n    chk.checked = !!state.blocks[chk.value];\n    chk.addEventListener('change', e=> { state.blocks[chk.value] = chk.checked; renderAll(); });\n  });\n\n  const updateRankLabel = () => {\n    if (state.rankMin > state.rankMax) { const t = state.rankMin; state.rankMin = state.rankMax; state.rankMax = t; }\n    $('#rankLabel').textContent = \\`#${state.rankMin}\u2013#${state.rankMax}\\`;\n  };\n  $('#rankMin').value = state.rankMin;\n  $('#rankMax').value = state.rankMax;\n  $('#rankMin').addEventListener('input', e => { state.rankMin = Number(e.target.value); updateRankLabel(); renderAll(); });\n  $('#rankMax').addEventListener('input', e => { state.rankMax = Number(e.target.value); updateRankLabel(); renderAll(); });\n  updateRankLabel();\n\n  $('#q').addEventListener('input', e => { state.q = e.target.value; renderAll(); });\n\n  // Map mode\n  $$('input[name=\"mapMode\"]').forEach(r => {\n    if (r.value === state.mapMode) r.checked = true;\n    r.addEventListener('change', async (e) => {\n      if (e.target.checked) {\n        state.mapMode = e.target.value;\n        await ensureEngine(state.mapMode);\n        renderMap();\n      }\n    });\n  });\n\n  // Utilities\n  $('#expandAll').addEventListener('click', ()=> $$('details').forEach(d=> d.open = true));\n  $('#collapseAll').addEventListener('click', ()=> $$('details').forEach(d=> d.open = false));\n  $('#exportCSV').addEventListener('click', exportCSV);\n  $('#exportKML').addEventListener('click', exportKML);\n  $('#exportJSON').addEventListener('click', exportJSON);\n  $('#importJSON').addEventListener('change', importJSON);\n  $('#printBtn').addEventListener('click', ()=> window.print());\n\n  // Theme\n  const savedTheme = loadLocal(STORAGE.theme, null);\n  if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);\n  $('#themeBtn').addEventListener('click', ()=> {\n    const cur = document.documentElement.getAttribute('data-theme') || 'light';\n    const next = cur === 'light' ? 'dark' : 'light';\n    document.documentElement.setAttribute('data-theme', next);\n    saveLocal(STORAGE.theme, next);\n  });\n\n  // Accessibility helpers\n  window.addEventListener('keydown', e=> {\n    if (e.key === 'Enter' && document.activeElement?.classList.contains('pill')) {\n      document.activeElement.click();\n    }\n  });\n}\n\nfunction download(filename, text, type='text/plain') {\n  const blob = new Blob([text], { type });\n  const url = URL.createObjectURL(blob);\n  const a = document.createElement('a');\n  a.href = url; a.download = filename; a.click();\n  setTimeout(()=> URL.revokeObjectURL(url), 1500);\n}\n\nfunction exportCSV() {\n  // Flatten to anchors (active) + micro pins\n  const items = filtered();\n  const rows = [['id','name','day','block','rank','anchorLabel','lat','lon','microTitle','microLat','microLon']];\n  for (const loc of items) {\n    const a = loc.anchors[loc.activeAnchor||0] || loc.anchors[0];\n    if (!(loc.micro && loc.micro.length)) {\n      rows.push([loc.id, loc.name, loc.day, loc.block, loc.rank, a.label, a.lat, a.lon, '', '', '']);\n    } else {\n      for (const m of loc.micro) {\n        const p = microLatLon(a, m);\n        rows.push([loc.id, loc.name, loc.day, loc.block, loc.rank, a.label, a.lat, a.lon, m.title, p.lat, p.lon]);\n      }\n    }\n  }\n  const csv = rows.map(r => r.map(v => \\`\"${String(v).replace(/\"/g,'\"\"')}\"\\`).join(',')).join('\\n');\n  download('nyc-photo-guide.csv', csv, 'text/csv');\n}\n\nfunction exportKML() {\n  const items = filtered();\n  const esc = (s)=> String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\n  let kml = \\`<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n  <Document>\n    <name>NYC Photo Guide</name>\n\\`;\n  for (const loc of items) {\n    const a = loc.anchors[loc.activeAnchor||0] || loc.anchors[0];\n    kml += \\`    <Placemark><name>${esc(loc.name)} (Anchor: ${esc(a.label)})</name><Point><coordinates>${a.lon},${a.lat},0</coordinates></Point></Placemark>\\n\\`;\n    for (const m of loc.micro || []) {\n      const p = microLatLon(a, m);\n      kml += \\`    <Placemark><name>${esc(loc.name)} \u2014 ${esc(m.title)}</name><Point><coordinates>${p.lon},${p.lat},0</coordinates></Point></Placemark>\\n\\`;\n    }\n  }\n  kml += \\`  </Document>\\n</kml>\\`;\n  download('nyc-photo-guide.kml', kml, 'application/vnd.google-earth.kml+xml');\n}\n\nfunction exportJSON() {\n  const out = {\n    LOCATIONS: getLocations(), // current dataset (original or imported override) (edits are persisted separately to keep diff clear)\n    state: {\n      dayMap: state.dayMap\n    }\n  };\n  download('nyc-photo-guide.json', JSON.stringify(out, null, 2), 'application/json');\n}\n\nfunction importJSON(ev) {\n  const file = ev.target.files?.[0];\n  if (!file) return;\n  const reader = new FileReader();\n  reader.onload = () => {\n    try {\n      const j = JSON.parse(reader.result);\n      let changed = false;\n      if (j && j.LOCATIONS) {\n        try {\n          localStorage.setItem(OVERRIDE_KEY, JSON.stringify(j.LOCATIONS));\n          RUNTIME_LOCATIONS = j.LOCATIONS;\n          changed = true;\n          toast('Locations dataset imported.');\n        } catch(e) {\n          console.warn('Failed to persist imported LOCATIONS', e);\n        }\n      }\n      if (j && j.state && j.state.dayMap) {\n        state.dayMap = j.state.dayMap;\n        changed = true;\n        toast('State imported.');\n      }\n      if (changed) renderAll();\n      else toast('JSON did not include expected fields.');\n    } catch(e) {\n      toast('Import failed.');\n    }\n  };\n  reader.readAsText(file);\n}\n\n// Bootstrap\n(async function init() {\n  setupControls();\n  await ensureEngine(state.mapMode);\n  renderAll();\n})();\n", "config": "// config.js \u2014 API key & app configuration helpers\nexport async function getGoogleMapsApiKey() {\n  // 1) Meta tag fallback\n  const meta = document.querySelector('meta[name=\"maps:apiKey\"]');\n  if (meta && meta.content) return meta.content.trim();\n\n  // 2) Pre-injected window global\n  if (window.__ENV && window.__ENV.GOOGLE_MAPS_API_KEY) return window.__ENV.GOOGLE_MAPS_API_KEY;\n\n  // 3) bundlers (Vite) inject into import.meta.env at build-time\n  try {\n    const maybe = import.meta && import.meta.env && import.meta.env.GOOGLE_MAPS_API_KEY;\n    if (maybe) return maybe;\n  } catch (e) {}\n\n  // 4) Attempt to fetch /env.json (if provided by server)\n  try {\n    const res = await fetch('/env.json', { cache: 'no-store' });\n    if (res.ok) {\n      const j = await res.json();\n      if (j && j.GOOGLE_MAPS_API_KEY) return j.GOOGLE_MAPS_API_KEY;\n    }\n  } catch (e) {}\n\n  console.warn('GOOGLE_MAPS_API_KEY is missing \u2014 Google mode may not load.');\n  return '';\n}\n\nexport const STORAGE = {\n  theme: 'NYCPhotoGuide:theme',\n  anchors: 'NYCPhotoGuide:anchors',\n  activeAnchor: 'NYCPhotoGuide:activeAnchor',\n  state: 'NYCPhotoGuide:state'\n};\n\nexport function saveLocal(k, v) {\n  try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){ console.warn('saveLocal failed', e); }\n}\nexport function loadLocal(k, d) {\n  try {\n    const v = localStorage.getItem(k);\n    return v ? JSON.parse(v) : d;\n  } catch(e) { return d; }\n}\n\nexport function fmtTime(dt) {\n  if (!dt) return '\u2014';\n  try {\n    return (dt instanceof Date ? dt : new Date(dt)).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });\n  } catch(e) { return '\u2014'; }\n}\n\nexport function km(vMeters) { return (vMeters/1000).toFixed(2) + ' km'; }\nexport function minutes(vSecs) { return Math.round(vSecs/60) + ' min'; }\n\nexport const NYC = { lat: 40.7128, lon: -74.0060 };\n", "data/locations": "// data/locations.js \u2014 import JSON dataset and export as LOCATIONS\n// Uses JSON module assertions (modern browsers). If your static host disallows JSON module MIME,\n// you can replace this with a plain JS export of the array.\nimport DATA from './locations.json' assert { type: 'json' };\nexport const LOCATIONS = DATA;\n", "lib/googleLoader": "// lib/googleLoader.js \u2014 idempotent Promise-based Google Maps JS SDK loader\nlet _promise = null;\n\nexport function loadGoogleMaps(apiKey, libraries = ['places']) {\n  if (typeof window !== 'undefined' && window.google && window.google.maps) {\n    return Promise.resolve(window.google);\n  }\n  if (_promise) return _promise;\n  _promise = new Promise((resolve, reject) => {\n    if (!apiKey) {\n      console.warn('Google Maps API key missing.');\n    }\n    const cbName = '__googleMapsReady__' + Math.random().toString(36).slice(2);\n    window[cbName] = () => {\n      if (window.google && window.google.maps) {\n        resolve(window.google);\n      } else {\n        reject(new Error('Google Maps loaded but google.maps missing'));\n      }\n      // cleanup\n      try { delete window[cbName]; } catch(e){}\n    };\n    const s = document.createElement('script');\n    const libs = libraries && libraries.length ? '&libraries=' + libraries.join(',') : '';\n    s.src = \\`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey||'')}${libs}&v=weekly&callback=${cbName}\\`;\n    s.async = true;\n    s.onerror = () => reject(new Error('Google Maps failed to load'));\n    document.head.appendChild(s);\n  });\n  return _promise;\n}\n", "lib/sunmoon": "// lib/sunmoon.js \u2014 lightweight solar times + moon illumination\n// NOTE: Times are approximate; sufficient for planning UI. Moonrise/set are coarse or may be unavailable (\u2014).\n\nconst rad = Math.PI / 180;\nfunction dayOfYear(d) {\n  const start = new Date(d.getFullYear(), 0, 0);\n  const diff = d - start + ((start.getTimezoneOffset() - d.getTimezoneOffset()) * 60 * 1000);\n  return Math.floor(diff / 86400000);\n}\n\n// Equation of time & declination using NOAA approximations\nfunction solarParams(date) {\n  const N = dayOfYear(date);                 // 1..366 (local time)\n  const gamma = 2 * Math.PI / 365 * (N - 1 + ((12 - 12) / 24)); // fractional year at local noon\n  const eqTime = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma)\n                - 0.014615 * Math.cos(2*gamma) - 0.040849 * Math.sin(2*gamma)); // minutes\n  const decl = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma)\n             - 0.006758 * Math.cos(2*gamma) + 0.000907 * Math.sin(2*gamma)\n             - 0.002697 * Math.cos(3*gamma) + 0.00148 * Math.sin(3*gamma); // radians\n  return { eqTime, decl };\n}\n\nfunction solarEvent(date, lat, lon, zenithDeg, isSunrise) {\n  // Returns Date in local time for sunrise/sunset-like events; null if no event that day\n  const { eqTime, decl } = solarParams(date);\n  const latitude = lat * rad;\n  const zenith = zenithDeg * rad; // 90.833: sunrise/set; 96: civil dawn/dusk\n  const ha = Math.acos(Math.min(1, Math.max(-1,\n    (Math.cos(zenith) / (Math.cos(latitude) * Math.cos(decl))) - Math.tan(latitude) * Math.tan(decl)\n  ))); // radians\n  if (isNaN(ha)) return null; // no sunrise/sunset at this latitude+date\n\n  const haDeg = ha / rad;\n  const minutesUTC = 720 - 4 * (lon + (isSunrise ? haDeg : -haDeg)) - (solarParams(date).eqTime);\n  // convert to local Date\n  const dt = new Date(date); dt.setHours(0,0,0,0);\n  const local = new Date(dt.getTime() + minutesUTC * 60000);\n  return local;\n}\n\n// Moon illumination \u2014 simple synodic cycle approximation\nfunction moonIllumination(date) {\n  const synodic = 29.530588853; // days\n  // reference new moon: 2000-01-06 18:14 UTC (JDN 2451550.1)\n  const ref = Date.UTC(2000, 0, 6, 18, 14, 0);\n  const phase = ((date.getTime() - ref) / 86400000) / synodic % 1;\n  const illum = 0.5 * (1 - Math.cos(2 * Math.PI * phase));\n  return { fraction: illum, phase };\n}\n\n// Coarse moonrise/moonset: not guaranteed. We sample altitude over the day using crude model.\n// If not reliable, return null to display '\u2014'.\nfunction moonRiseSet(date, lat, lon) {\n  try {\n    // Crude elevation sampling; if we detect a sign change in altitude, we mark rise/set.\n    // Using simplified lunar RA/Dec from Meeus-ish approximations (very rough).\n    const times = [];\n    const start = new Date(date); start.setHours(0,0,0,0);\n    const end = new Date(start.getTime() + 24*3600*1000);\n    let prevAlt = null, prevT = null;\n    let rise = null, setT = null;\n    for (let t = start.getTime(); t <= end.getTime(); t += 10*60*1000) { // every 10 minutes\n      const alt = lunarAltitude(new Date(t), lat, lon);\n      if (prevAlt != null) {\n        if (prevAlt < 0 && alt >= 0 && !rise) {\n          rise = new Date(t - 5*60*1000); // rough\n        } else if (prevAlt >= 0 && alt < 0 && !setT) {\n          setT = new Date(t - 5*60*1000);\n        }\n      }\n      prevAlt = alt; prevT = t;\n      if (rise && setT) break;\n    }\n    return { rise: rise || null, set: setT || null };\n  } catch(e) {\n    return { rise: null, set: null };\n  }\n}\n\n// Very rough lunar altitude \u2014 adequate for detecting crossings in NYC latitudes\nfunction lunarAltitude(date, lat, lon) {\n  // Based on simplified algorithms; not for precise navigation.\n  const d = (date - new Date(Date.UTC(2000, 0, 1, 12))) / 86400000; // days since J2000\n  // Moon's mean longitude, mean anomaly, argument of latitude (deg)\n  const L = (218.316 + 13.176396 * d) % 360;\n  const M = (134.963 + 13.064993 * d) % 360;\n  const F = (93.272 + 13.229350 * d) % 360;\n  // Ecliptic longitude and latitude (deg) \u2014 simplified\n  const lonEcl = L + 6.289 * Math.sin(M * rad);\n  const latEcl = 5.128 * Math.sin(F * rad);\n\n  const e = 23.4397 * rad; // obliquity\n  const l = lonEcl * rad, b = latEcl * rad;\n\n  // Convert to RA/Dec\n  const sinDec = Math.sin(b) * Math.cos(e) + Math.cos(b) * Math.sin(e) * Math.sin(l);\n  const dec = Math.asin(sinDec);\n  const ra = Math.atan2(Math.sin(l) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(l));\n\n  // Sidereal time\n  const lw = -lon * rad;\n  const GMST = 280.16 + 360.9856235 * d;\n  const sid = (GMST * rad + lw) % (2*Math.PI);\n  const H = (sid - ra); // hour angle\n\n  // Altitude\n  const phi = lat * rad;\n  const alt = Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H));\n  // Approx atmospheric refraction correction could be applied, but unnecessary here\n  return alt;\n}\n\nexport function computeLightAndMoon(date, lat, lon) {\n  // Civil twilight: 96\u00b0, sunrise/sunset: 90.833\u00b0\n  const dawn = solarEvent(date, lat, lon, 96, true);\n  const sunrise = solarEvent(date, lat, lon, 90.833, true);\n  const sunset = solarEvent(date, lat, lon, 90.833, false);\n  const dusk = solarEvent(date, lat, lon, 96, false);\n  const illum = moonIllumination(date);\n  const mrs = moonRiseSet(date, lat, lon);\n\n  return {\n    dawn, sunrise, sunset, dusk,\n    moonrise: mrs.rise, moonset: mrs.set,\n    illum: illum.fraction\n  };\n}\n", "map-google": "// map-google.js \u2014 Google Maps engine\nimport { loadGoogleMaps } from 'lib/googleLoader';\nimport { NYC } from './config.js';\n\nconst COLORS = {\n  Morning: getComputedStyle(document.documentElement).getPropertyValue('--morning') || '#f59e0b',\n  Afternoon: getComputedStyle(document.documentElement).getPropertyValue('--afternoon') || '#2563eb',\n  Evening: getComputedStyle(document.documentElement).getPropertyValue('--evening') || '#7c3aed',\n  Night: getComputedStyle(document.documentElement).getPropertyValue('--night') || '#334155',\n  Micro: getComputedStyle(document.documentElement).getPropertyValue('--micro') || '#0d9488'\n};\n\nexport class GoogleMapEngine {\n  constructor(container, apiKey) {\n    this.container = container;\n    this.apiKey = apiKey;\n    this.map = null;\n    this.markers = [];\n    this.overlays = [];\n    this.dirs = null;\n    this.dirRenderer = null;\n  }\n\n  async init() {\n    const google = await loadGoogleMaps(this.apiKey, ['places']);\n    this.map = new google.maps.Map(this.container, {\n      center: { lat: NYC.lat, lng: NYC.lon },\n      zoom: 12,\n      disableDefaultUI: false,\n      mapTypeControl: false,\n      streetViewControl: true,\n      fullscreenControl: false,\n      clickableIcons: true\n    });\n    this.dirs = new google.maps.DirectionsService();\n    this.dirRenderer = new google.maps.DirectionsRenderer({ map: this.map, suppressMarkers: true });\n    return this;\n  }\n\n  clear() {\n    for (const m of this.markers) { m.setMap(null); }\n    for (const o of this.overlays) { o.setMap && o.setMap(null); }\n    this.markers = [];\n    this.overlays = [];\n    if (this.dirRenderer) this.dirRenderer.set('directions', null);\n  }\n\n  // Compute absolute micro pin lat/lng from anchor + r/bearing (degrees)\n  static microFrom(anchor, micro) {\n    const bearing = (micro.bearing || 0) * Math.PI / 180;\n    const lat = anchor.lat;\n    const dlat = (micro.r * Math.cos(bearing)) / 111111;\n    const dlon = (micro.r * Math.sin(bearing)) / (111111 * Math.cos(lat * Math.PI/180));\n    return { lat: lat + dlat, lon: anchor.lon + dlon };\n  }\n\n  render(locations) {\n    if (!this.map) return;\n    this.clear();\n    const google = window.google;\n    const bounds = new google.maps.LatLngBounds();\n    for (const loc of locations) {\n      const a = loc.anchors[loc.activeAnchor || 0] || loc.anchors[0];\n      const pos = { lat: a.lat, lng: a.lon };\n      const col = (COLORS[loc.block] || '#999').trim() || '#999';\n\n      const m = new google.maps.Marker({\n        position: pos,\n        map: this.map,\n        title: loc.name,\n        icon: {\n          path: google.maps.SymbolPath.CIRCLE,\n          scale: 6,\n          fillColor: col, fillOpacity: 1,\n          strokeColor: '#ffffff', strokeWeight: 1\n        }\n      });\n      this.markers.push(m);\n      bounds.extend(pos);\n\n      // Micro pins + arrows\n      for (const micro of loc.micro || []) {\n        const mp = GoogleMapEngine.microFrom({ lat: a.lat, lon: a.lon }, micro);\n        const mpos = { lat: mp.lat, lng: mp.lon };\n        const mm = new google.maps.Marker({\n          position: mpos,\n          map: this.map,\n          title: \\`${loc.name} \u2014 ${micro.title}\\`,\n          icon: {\n            path: google.maps.SymbolPath.CIRCLE,\n            scale: 4,\n            fillColor: COLORS.Micro.trim(), fillOpacity: 1,\n            strokeColor: '#fff', strokeWeight: 1\n          }\n        });\n        this.markers.push(mm);\n        bounds.extend(mpos);\n\n        // Arrow line (20m)\n        const arrowLen = 20;\n        const br = (micro.bearing || 0) * Math.PI/180;\n        const endLat = mp.lat + (arrowLen * Math.cos(br)) / 111111;\n        const endLon = mp.lon + (arrowLen * Math.sin(br)) / (111111 * Math.cos(mp.lat * Math.PI/180));\n        const pl = new google.maps.Polyline({\n          path: [mpos, { lat: endLat, lng: endLon }],\n          map: this.map,\n          strokeColor: COLORS.Micro.trim(),\n          strokeWeight: 2,\n          icons: [{\n            icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW },\n            offset: '100%'\n          }]\n        });\n        this.overlays.push(pl);\n      }\n    }\n    if (!bounds.isEmpty()) this.map.fitBounds(bounds, { top:40, bottom:40, left:40, right:40 });\n  }\n\n  fitToLocation(loc) {\n    const google = window.google;\n    const a = loc.anchors[loc.activeAnchor || 0] || loc.anchors[0];\n    const b = new google.maps.LatLngBounds();\n    b.extend({ lat: a.lat, lng: a.lon });\n    for (const micro of loc.micro || []) {\n      const mp = GoogleMapEngine.microFrom({ lat: a.lat, lon: a.lon }, micro);\n      b.extend({ lat: mp.lat, lng: mp.lon });\n    }\n    this.map.fitBounds(b, { top:40, bottom:40, left:40, right:40 });\n  }\n\n  async drawRoute(from, to) {\n    if (!this.dirs || !this.dirRenderer) return;\n    const google = window.google;\n    return new Promise((resolve, reject) => {\n      this.dirs.route({\n        origin: new google.maps.LatLng(from.lat, from.lon),\n        destination: new google.maps.LatLng(to.lat, to.lon),\n        travelMode: google.maps.TravelMode.WALKING\n      }, (res, status) => {\n        if (status === 'OK' && res) {\n          this.dirRenderer.setDirections(res);\n          resolve(res);\n        } else {\n          reject(new Error('Directions failed: ' + status));\n        }\n      });\n    });\n  }\n}\n", "map-leaflet": "// map-leaflet.js \u2014 Leaflet engine (ESM from CDN)\nimport { NYC } from './config.js';\n\nconst TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';\n\nexport class LeafletMapEngine {\n  constructor(container) {\n    this.container = container;\n    this.map = null;\n    this.layerGroup = null;\n    this.L = null;\n  }\n\n  async init() {\n    // Load ESM build of Leaflet dynamically\n    this.L = await import('https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js');\n    const L = this.L;\n    this.map = L.map(this.container, { center: [NYC.lat, NYC.lon], zoom: 12, preferCanvas: true });\n    L.tileLayer(TILE_URL, {\n      attribution: '&copy; OpenStreetMap contributors'\n    }).addTo(this.map);\n    this.layerGroup = L.layerGroup().addTo(this.map);\n    return this;\n  }\n\n  clear() {\n    if (this.layerGroup) this.layerGroup.clearLayers();\n  }\n\n  static microFrom(anchor, micro) {\n    const bearing = (micro.bearing || 0) * Math.PI / 180;\n    const lat = anchor.lat;\n    const dlat = (micro.r * Math.cos(bearing)) / 111111;\n    const dlon = (micro.r * Math.sin(bearing)) / (111111 * Math.cos(lat * Math.PI/180));\n    return { lat: lat + dlat, lon: anchor.lon + dlon };\n  }\n\n  render(locations) {\n    const L = this.L;\n    this.clear();\n    let b = null;\n    for (const loc of locations) {\n      const a = loc.anchors[loc.activeAnchor || 0] || loc.anchors[0];\n      const col = getComputedStyle(document.documentElement).getPropertyValue(\n        '--' + (loc.block.toLowerCase())\n      ).trim() || '#999';\n      const anchorM = L.circleMarker([a.lat, a.lon], { radius: 6, color: '#fff', weight:1, fillColor: col, fillOpacity: 1 });\n      anchorM.addTo(this.layerGroup).bindTooltip(loc.name);\n      b = b || L.latLngBounds([a.lat, a.lon], [a.lat, a.lon]);\n      b.extend([a.lat, a.lon]);\n\n      for (const micro of loc.micro || []) {\n        const mp = LeafletMapEngine.microFrom({ lat: a.lat, lon: a.lon }, micro);\n        const mm = L.circleMarker([mp.lat, mp.lon], { radius: 4, color: '#fff', weight:1, fillColor: getComputedStyle(document.documentElement).getPropertyValue('--micro').trim() || '#0d9488', fillOpacity:1 });\n        mm.addTo(this.layerGroup).bindTooltip(micro.title);\n\n        // Arrow (20m)\n        const arrowLen = 20;\n        const br = (micro.bearing || 0) * Math.PI/180;\n        const endLat = mp.lat + (arrowLen * Math.cos(br)) / 111111;\n        const endLon = mp.lon + (arrowLen * Math.sin(br)) / (111111 * Math.cos(mp.lat * Math.PI/180));\n        L.polyline([[mp.lat, mp.lon], [endLat, endLon]], { color: getComputedStyle(document.documentElement).getPropertyValue('--micro').trim(), weight: 2 }).addTo(this.layerGroup);\n        b.extend([mp.lat, mp.lon]);\n        b.extend([endLat, endLon]);\n      }\n    }\n    if (b) this.map.fitBounds(b.pad(0.15));\n  }\n\n  fitToLocation(loc) {\n    const L = this.L;\n    const a = loc.anchors[loc.activeAnchor || 0] || loc.anchors[0];\n    let b = L.latLngBounds([a.lat, a.lon], [a.lat, a.lon]);\n    for (const micro of loc.micro || []) {\n      const mp = LeafletMapEngine.microFrom({ lat: a.lat, lon: a.lon }, micro);\n      b.extend([mp.lat, mp.lon]);\n    }\n    this.map.fitBounds(b.pad(0.15));\n  }\n\n  async drawRoute(from, to) {\n    // Not supported in Leaflet engine in this minimal build\n    throw new Error('Route drawing is supported in Google mode only.');\n  }\n}\n"};
-const urls = Object.fromEntries(Object.entries(MODULES).map(([name, code]) => {
-  const blob = new Blob([code], { type: 'text/javascript' });
-  return [name, URL.createObjectURL(blob)];
-}));
+function onAnchorSelect(ev, loc){
+  const idx = Number(ev.currentTarget.getAttribute('data-idx'));
+  loc.activeAnchor = idx;
+  computeMicroAbs(loc);
+  // update UI pills
+  document.querySelectorAll(\`#card-${loc.id} [data-p="anchor"]\`).forEach((b,i)=>{
+    const sel = i===idx; b.classList.toggle('active', sel); b.setAttribute('aria-selected', sel);
+  });
+  // refresh micro-pin pillset
+  const pillset = document.querySelector(\`#card-${loc.id} .pillset[aria-label="Micro-pins"]\`);
+  pillset.innerHTML = (loc.__microAbs||[]).map((m,i)=>{
+    const url = \`https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lon}&travelmode=walking\`;
+    return \`<a class="pill" href="${url}" target="_blank" rel="noopener" data-p="micro" data-idx="${i}" title="${m.detail||''}">${m.title} ↗</a>\`;
+  }).join('');
+  renderMap(); // re-render markers and arrows
+}
 
-// Create import map
-const im = document.createElement('script');
-im.type = 'importmap';
-im.textContent = JSON.stringify({ imports: urls });
-document.head.appendChild(im);
+async function onCardAction(ev, loc){
+  const act = ev.currentTarget.getAttribute('data-act');
+  const a = loc.anchors[loc.activeAnchor ?? 0];
+  if (act==='show'){
+    await renderMap();
+    fitOnMap(loc);
+  } else if (act==='eta' || act==='route'){
+    if (state.mapMode!=='google') {
+      showToast('Route requires Google mode. Switch to Google tab.');
+      return;
+    }
+    // Ensure Google map is ready
+    await ensureGoogleMap();
+    getPosition().then(async pos => {
+      const google = window.google;
+      try{
+        const result = await GMap.distanceAndRoute(google, { lat: pos.coords.latitude, lng: pos.coords.longitude }, { lat: a.lat, lng: a.lon }, act==='route');
+        const dist = result.distance?.text || '—', dur = result.duration?.text || '—';
+        showToast(\`Walk: ${dist} • ${dur}\`);
+      }catch(e){
+        console.warn(e);
+        showToast('Could not compute route/ETA.');
+      }
+    }).catch(err => {
+      console.warn('Geolocation denied', err);
+      showToast('Geolocation needed for ETA/Route.');
+    });
+  } else if (act==='addr'){
+    await ensureGoogleMap();
+    try{
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat:a.lat, lng: a.lon } }, (results, status)=>{
+        const el = document.getElementById('addr-'+loc.id);
+        if (status==='OK' && results?.[0]) el.textContent = results[0].formatted_address;
+        else el.innerHTML = '<span class="muted">—</span>';
+      });
+    }catch{
+      document.getElementById('addr-'+loc.id).innerHTML = '<span class="muted">—</span>';
+    }
+  } else if (act==='photos'){
+    const grid = document.getElementById('photos-'+loc.id);
+    if (grid.dataset.loaded) { grid.classList.toggle('hidden'); return; }
+    grid.dataset.loaded = '1';
+    // Requires Places library; we will call Nearby Search with keyword
+    try{
+      await ensureGoogleMap();
+      const service = new google.maps.places.PlacesService(document.createElement('div'));
+      const request = {
+        location: { lat: a.lat, lng: a.lon },
+        radius: 600,
+        keyword: loc.name
+      };
+      service.nearbySearch(request, (results, status)=>{
+        if (status!=='OK' || !results?.length){
+          grid.innerHTML = '<div class="small muted">No images found.</div>';
+          return;
+        }
+        const photos = [];
+        for (const r of results){
+          if (Array.isArray(r.photos)){
+            for (const p of r.photos){
+              try{
+                const url = p.getUrl({maxWidth:400,maxHeight:400});
+                if (url) photos.push(url);
+                if (photos.length>=12) break;
+              }catch{}
+            }
+          }
+          if (photos.length>=12) break;
+        }
+        if (!photos.length) grid.innerHTML = '<div class="small muted">No images found.</div>';
+        else grid.innerHTML = photos.map(u=>\`<img loading="lazy" alt="Reference photo" src="${u}"/>\`).join('');
+      });
+    }catch(e){
+      console.warn('Places failed', e);
+      grid.innerHTML = '<div class="small muted">Could not load images.</div>';
+    }
+  }
+}
 
-// Import the app after the import map is parsed
-Promise.resolve().then(() => import('app'));
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=> t.classList.add('hidden'), 5000);
+}
+function hideToast(){ document.getElementById('toast').classList.add('hidden'); }
+
+function getPosition(){
+  return new Promise((res, rej)=>{
+    if (!navigator.geolocation) return rej(new Error('No geolocation'));
+    navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
+  });
+}
+
+// --- Map engine management ---
+async function renderMap(force=false){
+  const visible = filterLocations();
+  if (state.mapMode==='google'){
+    try{
+      const google = await ensureGoogleMap(); // loads and init if needed
+      GMap.renderMarkers(google, visible, onAnchorMoved);
+    }catch(e){
+      console.warn('Google map failed, switching to Leaflet', e);
+      state.mapMode='leaflet';
+      document.getElementById('tabGoogle').classList.remove('active');
+      document.getElementById('tabLeaflet').classList.add('active');
+      document.getElementById('map-google').classList.remove('active');
+      document.getElementById('map-leaflet').classList.add('active');
+      await ensureLeafletMap(true);
+      LMap.renderMarkers(visible);
+    }
+  } else {
+    await ensureLeafletMap(force);
+    LMap.renderMarkers(visible);
+  }
+}
+
+async function ensureGoogleMap(){
+  // Create if missing
+  if (!GMap.isReady()){
+    const key = (await loadConfig()).GOOGLE_MAPS_API_KEY || '';
+    document.getElementById('map-leaflet').classList.remove('active');
+    document.getElementById('map-google').classList.add('active');
+    document.getElementById('tabLeaflet').classList.remove('active');
+    document.getElementById('tabGoogle').classList.add('active');
+    await GMap.initGoogleMap(key);
+    GMap.setEditMode(state.editAnchors);
+  }
+  return window.google;
+}
+
+async function ensureLeafletMap(force=false){
+  if (force){ LMap.teardown(); }
+  if (!document.getElementById('map-leaflet').classList.contains('active')){
+    document.getElementById('map-google').classList.remove('active');
+    document.getElementById('map-leaflet').classList.add('active');
+    document.getElementById('tabGoogle').classList.remove('active');
+    document.getElementById('tabLeaflet').classList.add('active');
+  }
+  // If map already exists, we assume LMap handles its own state
+  if (!document.querySelector('#map-leaflet .leaflet-pane')){
+    await LMap.initLeaflet();
+  }
+}
+
+function fitOnMap(loc){
+  if (state.mapMode==='google') GMap.fitOne(window.google, loc);
+  else LMap.fitOne(loc);
+}
+
+function onAnchorMoved(id, lat, lon){
+  const loc = LOCATIONS.find(x=>x.id===id);
+  if (!loc) return;
+  const anchor = loc.anchors[loc.activeAnchor ?? 0];
+  anchor.lat = lat; anchor.lon = lon;
+  computeMicroAbs(loc);
+  persistAnchors();
+  renderMap();
+}
+
+// --- Exporters ---
+function download(filename, text, mime='text/plain'){
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+}
+
+function exportCSV(){
+  const rows = [['id','name','day','block','rank','bearing','anchor_label','lat','lon']];
+  LOCATIONS.forEach(loc => {
+    const a = loc.anchors[loc.activeAnchor ?? 0];
+    rows.push([loc.id, loc.name, loc.day, loc.block, loc.rank, loc.bearing, a.label, a.lat, a.lon]);
+    (loc.__microAbs||[]).forEach(m => rows.push([loc.id+':micro', m.title, loc.day, loc.block, loc.rank, '', 'micro', m.lat, m.lon]));
+  });
+  const csv = rows.map(r => r.map(v => String(v).replaceAll('"','""')).map(v=>\`"${v}"\`).join(',')).join('\\n');
+  download('nyc-photo-guide.csv', csv, 'text/csv');
+}
+
+function exportKML(){
+  const placemarks = LOCATIONS.map(loc => {
+    const a = loc.anchors[loc.activeAnchor ?? 0];
+    const micro = (loc.__microAbs||[]).map(m => \`
+      <Placemark><name>${xmlEscape(m.title)}</name>
+        <Point><coordinates>${m.lon},${m.lat},0</coordinates></Point>
+      </Placemark>\`).join('');
+    return \`
+    <Folder><name>${xmlEscape(loc.name)}</name>
+      <Placemark><name>${xmlEscape(loc.name)} (Anchor: ${xmlEscape(a.label)})</name>
+        <Point><coordinates>${a.lon},${a.lat},0</coordinates></Point>
+      </Placemark>
+      ${micro}
+    </Folder>\`;
+  }).join('');
+  const kml = \`<?xml version="1.0" encoding="UTF-8"?>
+  <kml xmlns="http://www.opengis.net/kml/2.2">
+    <Document><name>NYC Photo Guide</name>${placemarks}</Document>
+  </kml>\`;
+  download('nyc-photo-guide.kml', kml, 'application/vnd.google-earth.kml+xml');
+}
+
+function xmlEscape(s){ return String(s).replace(/[<>&'"]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c])); }
+
+function exportJSON(){
+  const payload = { LOCATIONS, state: { dayMap: state.showDays } };
+  download('nyc-photo-guide.json', JSON.stringify(payload, null, 2), 'application/json');
+}
+
+async function importJSON(ev){
+  const file = ev.target.files?.[0];
+  if (!file) return;
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (Array.isArray(data.LOCATIONS)) {
+      LOCATIONS = data.LOCATIONS;
+      LOCATIONS.forEach(loc => computeMicroAbs(loc));
+      localStorage.setItem(LOC_KEY, JSON.stringify(LOCATIONS.map(l=>({id:l.id,anchors:l.anchors}))));
+    }
+    if (data.state?.dayMap) state.showDays = data.state.dayMap;
+    renderPanels(); renderList(); renderMap(); saveState();
+    showToast('JSON imported.');
+  }catch(e){
+    console.warn('Import failed', e);
+    showToast('Import failed.');
+  } finally {
+    ev.target.value = '';
+  }
+}
+
+// --- Utils ---
+async function ensureGoogle(){
+  if (!hasGoogle()){
+    const key = (await loadConfig()).GOOGLE_MAPS_API_KEY || '';
+    await loadGoogle(key);
+  }
+}
+
+window.__NYC_APP__ = { state, LOCATIONS, renderMap, renderList, renderPanels }; // for debugging
+`,
+  config: `// /public/config.js
+export async function loadConfig() {
+  // Priority: runtime window._ENV > /env.json > empty string (expect build-time injection)
+  const out = { GOOGLE_MAPS_API_KEY: '' };
+  try {
+    if (window._ENV && window._ENV.GOOGLE_MAPS_API_KEY) {
+      out.GOOGLE_MAPS_API_KEY = window._ENV.GOOGLE_MAPS_API_KEY;
+      return out;
+    }
+  } catch {}
+  try {
+    const r = await fetch('./env.json', { cache: 'no-store' });
+    if (r.ok) {
+      const j = await r.json();
+      if (j && typeof j.GOOGLE_MAPS_API_KEY === 'string') {
+        out.GOOGLE_MAPS_API_KEY = j.GOOGLE_MAPS_API_KEY;
+      }
+    }
+  } catch (e) {
+    console.warn('No env.json found; expecting build-time injection via .env');
+  }
+  return out;
+}
+`,
+  locations: `// /public/data/locations.js
+export let LOCATIONS = [];
+try {
+  // Modern browsers support JSON modules with import assertions.
+  const mod = await import('../locations.json', { assert: { type: 'json' } });
+  LOCATIONS = Array.isArray(mod) ? mod : (mod.default ?? mod);
+} catch (err) {
+  console.warn('JSON import failed; falling back to fetch', err);
+  const resp = await fetch('../locations.json');
+  LOCATIONS = await resp.json();
+}
+`,
+  googleLoader: `// /public/lib/googleLoader.js
+let _googlePromise = null;
+let _googleFailed = false;
+
+export function loadGoogle(key) {
+  if (_googleFailed) {
+    return Promise.reject(new Error('Google previously failed to load'));
+  }
+  if (window.google && window.google.maps) return Promise.resolve(window.google);
+  if (_googlePromise) return _googlePromise;
+
+  _googlePromise = new Promise((resolve, reject) => {
+    const scriptId = 'gmaps-sdk';
+    if (document.getElementById(scriptId)) {
+      // If script tag exists but google not yet ready, wait for onload.
+      return;
+    }
+    const s = document.createElement('script');
+    s.id = scriptId;
+    const libs = 'places';
+    s.src = \`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=${libs}\`;
+    s.async = true;
+    s.onerror = () => {
+      _googleFailed = true;
+      reject(new Error('Google Maps failed to load'));
+    };
+    s.onload = () => {
+      if (window.google && window.google.maps) resolve(window.google);
+      else {
+        _googleFailed = true;
+        reject(new Error('Google Maps SDK did not initialize'));
+      }
+    };
+    document.head.appendChild(s);
+  });
+  return _googlePromise;
+}
+
+export function hasGoogle() {
+  return !!(window.google && window.google.maps);
+}
+
+export function markGoogleFailed() { _googleFailed = true; }
+`,
+  sunmoon: `// /public/lib/sunmoon.js
+// Lightweight solar & lunar calculations for NYC Photo Guide.
+// Not astronomical-grade; adequate for planner UI. Missing values are returned as null.
+
+const RAD = Math.PI / 180;
+function toJulian(date){
+  return date / 86400000 - 0.5 + 2440587.5;
+}
+function fromJulian(j){ return new Date((j + 0.5 - 2440587.5) * 86400000); }
+function toDays(date){ return toJulian(date) - 2451545; } // days since J2000
+
+// Solar position helpers (NOAA / Meeus approximations)
+function solarMeanAnomaly(d){ return RAD * (357.5291 + 0.98560028 * d); }
+function eclipticLongitude(M){
+  const C = RAD*(1.9148 * Math.sin(M) + 0.0200 * Math.sin(2*M) + 0.0003 * Math.sin(3*M));
+  const P = RAD*102.9372; // perihelion of the Earth
+  return M + C + P + Math.PI;
+}
+function rightAscension(l, b){
+  const e = RAD*23.4397;
+  return Math.atan2(Math.sin(l) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(l));
+}
+function declination(l, b){
+  const e = RAD*23.4397;
+  return Math.asin(Math.sin(b) * Math.cos(e) + Math.cos(b) * Math.sin(e) * Math.sin(l));
+}
+function azimuth(H, phi, dec){
+  return Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(phi) - Math.tan(dec) * Math.cos(phi));
+}
+function altitude(H, phi, dec){
+  return Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H));
+}
+function siderealTime(d, lw){
+  return RAD*(280.16 + 360.9856235 * d) - lw;
+}
+function hourAngle(h, phi, d){
+  return Math.acos((Math.sin(h) - Math.sin(phi) * Math.sin(d)) / (Math.cos(phi) * Math.cos(d)));
+}
+
+const J0 = 0.0009;
+function julianCycle(d, lw){ return Math.round(d - J0 - lw / (2*Math.PI)); }
+function approxTransit(Ht, lw, n){ return J0 + (Ht + lw) / (2*Math.PI) + n; }
+function solarTransitJ(ds, M, L){ return 2451545 + ds + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L); }
+
+function getSetJ(h, phi, dec, lw, n, M, L){
+  const w = hourAngle(h, phi, dec);
+  const a = approxTransit(w, lw, n);
+  return solarTransitJ(a, M, L);
+}
+
+export function computeSunTimes(date, lat=40.7128, lon=-74.0060) {
+  // Returns civil dawn, sunrise, sunset, civil dusk (local)
+  try{
+    const d = toDays(new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())));
+    const lw = RAD * -lon;
+    const phi = RAD * lat;
+    const M = solarMeanAnomaly(d);
+    const L = eclipticLongitude(M);
+    const dec = declination(L, 0);
+    const n = julianCycle(d, lw);
+    const Jnoon = solarTransitJ(approxTransit(0, lw, n), M, L);
+
+    const h0 = -0.833 * RAD; // sunrise/sunset
+    const hc = -6 * RAD;     // civil twilight
+
+    const Jrise = getSetJ(h0, phi, dec, lw, n, M, L) - (getSetJ(h0, phi, dec, lw, n, M, L) - Jnoon);
+    const Jset = Jnoon + (Jnoon - Jrise);
+
+    const Jcdawn = getSetJ(hc, phi, dec, lw, n, M, L) - (getSetJ(hc, phi, dec, lw, n, M, L) - Jnoon);
+    const Jcdusk = Jnoon + (Jnoon - Jcdawn);
+
+    return {
+      sunrise: fromJulian(Jrise),
+      sunset: fromJulian(Jset),
+      civilDawn: fromJulian(Jcdawn),
+      civilDusk: fromJulian(Jcdusk),
+    };
+  }catch(e){
+    console.warn('Sun calculation failed', e);
+    return { sunrise:null, sunset:null, civilDawn:null, civilDusk:null };
+  }
+}
+
+// Very small lunar illumination & rough rise/set estimation
+// Illumination: from simplified phase angle
+export function computeMoonInfo(date, lat=40.7128, lon=-74.0060){
+  const d = toDays(date);
+  // Moon mean longitude, anomaly, distance (simplified)
+  const L = RAD*(218.316 + 13.176396*d);
+  const M = RAD*(134.963 + 13.064993*d);
+  const F = RAD*(93.272 + 13.229350*d);
+
+  // Ecliptic longitude/latitude (approx)
+  const l = L + RAD*6.289 * Math.sin(M);
+  const b = RAD*5.128 * Math.sin(F);
+  const dt = 385001 - 20905 * Math.cos(M);
+
+  // Sun ecliptic longitude for phase
+  const Ms = solarMeanAnomaly(d);
+  const Ls = eclipticLongitude(Ms);
+
+  // Phase angle & illumination
+  const phi = Math.acos(Math.sin(0)*Math.sin(b) + Math.cos(0)*Math.cos(b)*Math.cos(l - Ls));
+  const k = (1 + Math.cos(phi)) / 2; // fraction
+  const illum = Math.round(k*1000)/10;
+
+  // Rough rise/set finder: scan hours for altitude 0 crossing
+  let rise = null, set = null;
+  try {
+    for (let h=0; h<24; h++){
+      const t = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), h));
+      const d2 = toDays(t);
+      const lw = RAD * -lon;
+      const phiLat = RAD * lat;
+      // Moon RA/DEC (approx)
+      const ra = rightAscension(l, b);
+      const dec = declination(l, b);
+      const H = siderealTime(d2, lw) - ra;
+      const alt = altitude(H, phiLat, dec);
+      // Next hour
+      const tNext = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), h+1));
+      const d3 = toDays(tNext);
+      const H2 = siderealTime(d3, lw) - ra;
+      const alt2 = altitude(H2, phiLat, dec);
+      if (alt<=0 && alt2>0 && !rise) rise = new Date(t.getTime()+ (0 - alt)/(alt2-alt)*3600*1000);
+      if (alt>0 && alt2<=0 && !set) set = new Date(t.getTime()+ (0 - alt)/(alt2-alt)*3600*1000);
+      if (rise && set) break;
+    }
+  } catch(e){ /* keep nulls */ }
+  return { rise, set, illuminationPct: illum };
+}
+`,
+  mapGoogle: `// /public/map-google.js
+import { loadGoogle, hasGoogle } from './lib/googleLoader.js';
+
+let gmap = null;
+let overlays = { markers: [], arrows: [], route: null };
+let editMode = false;
+
+export function isReady(){ return !!gmap; }
+
+export async function initGoogleMap(key, containerId='map-google') {
+  const container = document.getElementById(containerId);
+  if (!container) throw new Error('Missing Google map container');
+  const google = await loadGoogle(key);
+  gmap = new google.maps.Map(container, {
+    center: { lat: 40.7128, lng: -74.0060 },
+    zoom: 12,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: true,
+    clickableIcons: false,
+  });
+  clear();
+  return gmap;
+}
+
+export function setEditMode(on){
+  editMode = !!on;
+  // Make existing markers draggable accordingly
+  overlays.markers.forEach(m => m.setDraggable(editMode));
+}
+
+function clear(){
+  if (!hasGoogle() || !gmap) return;
+  overlays.markers.forEach(m => m.setMap(null));
+  overlays.arrows.forEach(p => p.setMap(null));
+  overlays.markers = []; overlays.arrows = [];
+  if (overlays.route){ overlays.route.setMap(null); overlays.route = null; }
+}
+
+export function teardown(){
+  clear();
+  gmap = null;
+}
+
+export function renderMarkers(google, visibleLocations, onAnchorMoved){
+  clear();
+  const bounds = new google.maps.LatLngBounds();
+  visibleLocations.forEach(loc => {
+    // Anchor marker
+    const a = loc.anchors[loc.activeAnchor ?? 0];
+    const pos = new google.maps.LatLng(a.lat, a.lon);
+    const marker = new google.maps.Marker({
+      position: pos,
+      map: gmap,
+      title: loc.name,
+      draggable: !!editMode,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 6,
+        fillColor: colorForBlock(loc.block),
+        fillOpacity: 1, strokeColor: '#111', strokeWeight: 1
+      }
+    });
+    marker.addListener('dragend', (ev)=>{
+      a.lat = ev.latLng.lat();
+      a.lon = ev.latLng.lng();
+      onAnchorMoved && onAnchorMoved(loc.id, a.lat, a.lon);
+    });
+    overlays.markers.push(marker);
+    bounds.extend(pos);
+
+    // Micro-pin markers & arrows
+    (loc.__microAbs || []).forEach(mp => {
+      const mm = new google.maps.Marker({
+        position: { lat: mp.lat, lng: mp.lon },
+        map: gmap,
+        title: mp.title,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 4,
+          fillColor: '#00bfb3',
+          fillOpacity: 1, strokeColor: '#004f4a', strokeWeight: 1
+        }
+      });
+      overlays.markers.push(mm);
+      bounds.extend(mm.getPosition());
+
+      // Subject arrow (short line in bearing direction)
+      const line = new google.maps.Polyline({
+        path: [
+          { lat: mp.lat, lng: mp.lon },
+          { lat: mp.lat2, lng: mp.lon2 }
+        ],
+        geodesic: true,
+        strokeColor: '#00bfb3',
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        map: gmap
+      });
+      overlays.arrows.push(line);
+    });
+  });
+  if (!bounds.isEmpty()) gmap.fitBounds(bounds, 60);
+}
+
+export function fitOne(google, loc){
+  const bounds = new google.maps.LatLngBounds();
+  const a = loc.anchors[loc.activeAnchor ?? 0];
+  bounds.extend(new google.maps.LatLng(a.lat, a.lon));
+  (loc.__microAbs || []).forEach(mp => {
+    bounds.extend(new google.maps.LatLng(mp.lat, mp.lon));
+  });
+  if (!bounds.isEmpty()) gmap.fitBounds(bounds, 80);
+}
+
+export async function distanceAndRoute(google, origin, destLatLng, draw=true){
+  return new Promise((resolve, reject)=>{
+    const dm = new google.maps.DistanceMatrixService();
+    dm.getDistanceMatrix({
+      origins: [origin],
+      destinations: [destLatLng],
+      travelMode: google.maps.TravelMode.WALKING,
+      unitSystem: google.maps.UnitSystem.IMPERIAL
+    }, (res, status)=>{
+      if (status !== 'OK' || !res.rows?.[0]?.elements?.[0]) {
+        return reject(new Error('Distance matrix failed'));
+      }
+      const el = res.rows[0].elements[0];
+      if (!draw) return resolve(el);
+      const dir = new google.maps.DirectionsService();
+      const ren = new google.maps.DirectionsRenderer({ suppressMarkers:true, preserveViewport:true });
+      dir.route({
+        origin, destination: destLatLng, travelMode: google.maps.TravelMode.WALKING
+      }, (routeRes, s2)=>{
+        if (s2 !== 'OK') return reject(new Error('Directions failed'));
+        if (overlays.route) overlays.route.setMap(null);
+        ren.setMap(gmap);
+        ren.setDirections(routeRes);
+        overlays.route = ren;
+        resolve(el);
+      });
+    });
+  });
+}
+
+function colorForBlock(b){
+  switch(b){
+    case 'Morning': return '#22c55e';
+    case 'Afternoon': return '#f59e0b';
+    case 'Evening': return '#3b82f6';
+    case 'Night': return '#a855f7';
+    default: return '#9ca3af';
+  }
+}
+
+export const _internal = { clear, colorForBlock };
+`,
+  mapLeaflet: `// /public/map-leaflet.js
+let Lmod = null;
+let lmap = null;
+let layers = [];
+
+async function ensureLeaflet(){
+  if (Lmod) return Lmod;
+  // Load ESM build from unpkg
+  const css = document.createElement('link');
+  css.rel = 'stylesheet';
+  css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  document.head.appendChild(css);
+  Lmod = await import('https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js');
+  return Lmod;
+}
+
+export async function initLeaflet(containerId='map-leaflet'){
+  const L = await ensureLeaflet();
+  const el = document.getElementById(containerId);
+  lmap = L.map(el, { zoomControl: true, attributionControl: true }).setView([40.7128,-74.0060], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(lmap);
+  clear();
+  return lmap;
+}
+
+export function teardown(){
+  if (!lmap) return;
+  lmap.remove();
+  lmap = null;
+  layers = [];
+}
+
+export function renderMarkers(visibleLocations){
+  if (!lmap) return;
+  clear();
+  const L = Lmod;
+  const bounds = [];
+  visibleLocations.forEach(loc => {
+    const a = loc.anchors[loc.activeAnchor ?? 0];
+    const anchor = L.circleMarker([a.lat, a.lon], {radius:6,color:'#111',fillColor:colorForBlock(loc.block),fillOpacity:1,weight:1});
+    anchor.addTo(lmap); layers.push(anchor);
+    bounds.push([a.lat, a.lon]);
+    (loc.__microAbs || []).forEach(mp => {
+      const m = L.circleMarker([mp.lat, mp.lon], {radius:4,color:'#004f4a',fillColor:'#00bfb3',fillOpacity:1,weight:1});
+      m.addTo(lmap); layers.push(m);
+      bounds.push([mp.lat, mp.lon]);
+      // Arrow
+      const line = L.polyline([[mp.lat, mp.lon],[mp.lat2, mp.lon2]], {color:'#00bfb3',weight:2,opacity:.9});
+      line.addTo(lmap); layers.push(line);
+    });
+  });
+  if (bounds.length) lmap.fitBounds(bounds, { padding: [60,60] });
+}
+
+export function fitOne(loc){
+  const bounds = [];
+  const a = loc.anchors[loc.activeAnchor ?? 0];
+  bounds.push([a.lat, a.lon]);
+  (loc.__microAbs || []).forEach(mp => bounds.push([mp.lat, mp.lon]));
+  if (bounds.length) lmap.fitBounds(bounds, { padding: [80,80] });
+}
+
+function clear(){
+  layers.forEach(layer => { try { layer.remove(); } catch{} });
+  layers = [];
+}
+
+function colorForBlock(b){
+  switch(b){
+    case 'Morning': return '#22c55e';
+    case 'Afternoon': return '#f59e0b';
+    case 'Evening': return '#3b82f6';
+    case 'Night': return '#a855f7';
+    default: return '#9ca3af';
+  }
+}
+
+export const _internal = { clear };
+`,
+};
+
+const urls = {}
+urls['config'] = URL.createObjectURL(new Blob([SRC.config], {type:'text/javascript'}));
+urls['data/locations'] = URL.createObjectURL(new Blob([SRC.locations], {type:'text/javascript'}));
+urls['lib/googleLoader'] = URL.createObjectURL(new Blob([SRC.googleLoader], {type:'text/javascript'}));
+urls['lib/sunmoon'] = URL.createObjectURL(new Blob([SRC.sunmoon], {type:'text/javascript'}));
+urls['map-leaflet'] = URL.createObjectURL(new Blob([SRC.mapLeaflet], {type:'text/javascript'}));
+
+let mg = SRC.mapGoogle
+  .replaceAll("from './lib/googleLoader.js'", `from '${urls['lib/googleLoader']}'`)
+  .replaceAll('from "./lib/googleLoader.js"', `from '${urls['lib/googleLoader']}'`)
+  .replaceAll("from 'lib/googleLoader'", `from '${urls['lib/googleLoader']}'`)
+  .replaceAll('from "lib/googleLoader"', `from '${urls['lib/googleLoader']}'`);
+urls['map-google'] = URL.createObjectURL(new Blob([mg], {type:'text/javascript'}));
+
+let appSrc = SRC.app
+  .replaceAll("from './data/locations.js'", `from '${urls['data/locations']}'`)
+  .replaceAll('from "./data/locations.js"', `from '${urls['data/locations']}'`)
+  .replaceAll("from 'data/locations'", `from '${urls['data/locations']}'`)
+  .replaceAll('from "data/locations"', `from '${urls['data/locations']}'`)
+  .replaceAll("from './config.js'", `from '${urls['config']}'`)
+  .replaceAll('from "./config.js"', `from '${urls['config']}'`)
+  .replaceAll("from 'config'", `from '${urls['config']}'`)
+  .replaceAll('from "config"', `from '${urls['config']}'`)
+  .replaceAll("from './lib/sunmoon.js'", `from '${urls['lib/sunmoon']}'`)
+  .replaceAll('from "./lib/sunmoon.js"', `from '${urls['lib/sunmoon']}'`)
+  .replaceAll("from 'lib/sunmoon'", `from '${urls['lib/sunmoon']}'`)
+  .replaceAll('from "lib/sunmoon"', `from '${urls['lib/sunmoon']}'`)
+  .replaceAll("from './lib/googleLoader.js'", `from '${urls['lib/googleLoader']}'`)
+  .replaceAll('from "./lib/googleLoader.js"', `from '${urls['lib/googleLoader']}'`)
+  .replaceAll("from 'lib/googleLoader'", `from '${urls['lib/googleLoader']}'`)
+  .replaceAll('from "lib/googleLoader"', `from '${urls['lib/googleLoader']}'`)
+  .replaceAll("from './map-google.js'", `from '${urls['map-google']}'`)
+  .replaceAll('from "./map-google.js"', `from '${urls['map-google']}'`)
+  .replaceAll("from 'map-google'", `from '${urls['map-google']}'`)
+  .replaceAll('from "map-google"', `from '${urls['map-google']}'`)
+  .replaceAll("from './map-leaflet.js'", `from '${urls['map-leaflet']}'`)
+  .replaceAll('from "./map-leaflet.js"', `from '${urls['map-leaflet']}'`)
+  .replaceAll("from 'map-leaflet'", `from '${urls['map-leaflet']}'`)
+  .replaceAll('from "map-leaflet"', `from '${urls['map-leaflet']}'`);
+
+const appUrl = URL.createObjectURL(new Blob([appSrc], {type:'text/javascript'}));
+import(appUrl);
 </script>
 </body>
 </html>
