@@ -548,6 +548,131 @@
             margin: 1rem 0;
         }
 
+        /* New Card Sections Styling */
+        .card-section {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .card-section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-section-title svg {
+            color: var(--accent-color);
+            flex-shrink: 0;
+        }
+
+        /* Micro Pins Styling */
+        .micro-pins {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .micro-pin-item {
+            background-color: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 0.75rem;
+        }
+
+        .micro-pin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .micro-pin-title {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .micro-pin-info {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .micro-pin-bearing {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .micro-pin-distance {
+            background-color: var(--info-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .micro-pin-detail {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        /* Photography Tips Styling */
+        .pins-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+
+        .pin-item {
+            padding-left: 1rem;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .pin-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .pin-detail {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        /* Shot List Styling */
+        .shots-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+
+        .shot-item {
+            background-color: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 0.75rem;
+        }
+
+        .shot-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .shot-detail {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
         .btn {
             padding: 0.375rem 0.75rem;
             border: 1px solid var(--border-color);
@@ -949,521 +1074,201 @@
         // Location Data
         const LOCATIONS_DATA = [
             {
-                        "id": "dumbo_washington_water_manhattan_bridge_keyhole",
-                        "name": "DUMBO \u2014 Washington & Water (Manhattan Bridge Keyhole)",
-                        "day": "2025-10-03",
-                        "block": "Morning",
-                        "rank": 1,
-                        "bearing": "NNE toward Manhattan Bridge/ESB",
-                        "whyNow": "Arrive pre\u2011dawn; classic ESB-in-arch alignment.",
-                        "gear": "24\u201370mm; CPL/ND",
-                        "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7034225,
-                                                "lon": -73.9893714
-                                    }
-                        ]
+                "id": "dumbo_washington_water_manhattan_bridge_keyhole",
+                "name": "DUMBO — Washington & Water (Manhattan Bridge Keyhole)",
+                "day": "2025-10-03",
+                "block": "Morning",
+                "rank": 1,
+                "bearing": "NNE toward Manhattan Bridge/ESB",
+                "whyNow": "Arrive pre‑dawn; classic ESB-in-arch alignment.",
+                "gear": "24–70mm; CPL/ND",
+                "settings": "Arrive 30–60 min before sunrise; handheld 1/250s+ @ f/5.6–8, ISO 100–400.",
+                "activeAnchor": 0,
+                "anchors": [
+                    {
+                        "label": "Main view",
+                        "lat": 40.7034225,
+                        "lon": -73.9893714
+                    }
+                ],
+                "micro": [
+                    {
+                        "title": "Centerline",
+                        "r": 0.0,
+                        "bearing": 22.5,
+                        "dir": "",
+                        "detail": "Main alignment from anchor."
+                    },
+                    {
+                        "title": "Step‑back",
+                        "r": 10.0,
+                        "bearing": 22.5,
+                        "dir": "",
+                        "detail": "Step back ~10 m; arrow still toward subject."
+                    },
+                    {
+                        "title": "Corner curb",
+                        "r": 22.0,
+                        "bearing": 22.5,
+                        "dir": "",
+                        "detail": "Diagonal curb vantage; arrow toward subject."
+                    }
+                ],
+                "pins": [
+                    {
+                        "title": "Parking gap watch",
+                        "detail": "Scan for a temporary gap to remove parked cars; be ready to shoot quickly."
+                    },
+                    {
+                        "title": "Reflections after wash",
+                        "detail": "Street or lawn irrigation leaves sheen—use CPL to control glare."
+                    },
+                    {
+                        "title": "Taxi or jogger streaks",
+                        "detail": "If traffic begins, try 1/8–1/2s for motion streaks."
+                    }
+                ],
+                "shots": [
+                    {
+                        "title": "Establishing wide (16–24mm)",
+                        "detail": "Include context and sky color; keep verticals straight."
+                    },
+                    {
+                        "title": "Low angle leading lines",
+                        "detail": "Camera close to ground; emphasize texture or rails."
+                    },
+                    {
+                        "title": "Human scale",
+                        "detail": "Single figure walking/running; time the stride."
+                    },
+                    {
+                        "title": "Compressed crop (50/70mm)",
+                        "detail": "Use longer end for a clean graphic frame; crop if needed."
+                    },
+                    {
+                        "title": "Detail cutaway",
+                        "detail": "Reflections, signage, patterns that summarize place."
+                    }
+                ]
             },
             {
-                        "id": "dumbo_time_out_market_manhattan_bridge_keyhole",
-                        "name": "DUMBO \u2014 Time Out Market (Manhattan Bridge Keyhole)",
-                        "day": "2025-10-03",
-                        "block": "Morning",
-                        "rank": 2,
-                        "bearing": "NNW toward Manhattan Bridge/ESB",
-                        "whyNow": "Arrive pre\u2011dawn; classic ESB-in-arch alignment from elevated indoor vantage.",
-                        "gear": "24\u201370mm; CPL/ND",
-                        "settings": "Arrive 30\u201360 min before sunrise; handheld 1/250s+ @ f/5.6\u20138, ISO 100\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7037,
-                                                "lon": -73.9901
-                                    }
-                        ]
+                "id": "pebble_beach_empire_fulton_ferry",
+                "name": "Pebble Beach / Empire–Fulton Ferry",
+                "day": "2025-10-03",
+                "block": "Morning",
+                "rank": 2,
+                "bearing": "WSW toward Lower Manhattan",
+                "whyNow": "Rising tide likely; long exposures for water smoothing.",
+                "gear": "16–24mm; 3–6‑stop ND; tripod",
+                "settings": "Arrive 30–60 min before sunrise; handheld 1/250s+ @ f/5.6–8, ISO 100–400.",
+                "activeAnchor": 0,
+                "anchors": [
+                    {
+                        "label": "Main view",
+                        "lat": 40.7041667,
+                        "lon": -73.9922222
+                    }
+                ],
+                "micro": [
+                    {
+                        "title": "Centerline",
+                        "r": 0.0,
+                        "bearing": 247.5,
+                        "dir": "",
+                        "detail": "Main alignment from anchor."
+                    },
+                    {
+                        "title": "Step‑back",
+                        "r": 10.0,
+                        "bearing": 247.5,
+                        "dir": "",
+                        "detail": "Step back ~10 m; arrow still toward subject."
+                    },
+                    {
+                        "title": "Corner curb",
+                        "r": 22.0,
+                        "bearing": 247.5,
+                        "dir": "",
+                        "detail": "Diagonal curb vantage; arrow toward subject."
+                    }
+                ],
+                "pins": [
+                    {
+                        "title": "Tide timing",
+                        "detail": "Check NOAA Battery data; rising tide smooths water texture."
+                    },
+                    {
+                        "title": "Wind direction",
+                        "detail": "SW wind creates ripples; calm conditions better for long exposures."
+                    }
+                ],
+                "shots": [
+                    {
+                        "title": "Ultra-wide context",
+                        "detail": "14–16mm to capture full Manhattan span and foreground rocks."
+                    },
+                    {
+                        "title": "Long exposure smooth",
+                        "detail": "30s–2min with ND filters; silky water against sharp buildings."
+                    }
+                ]
             },
             {
-                        "id": "dumbo_brooklyn_bridge_park_pier_1_manhattan_skyline",
-                        "name": "DUMBO \u2014 Brooklyn Bridge Park Pier 1 (Manhattan Skyline)",
-                        "day": "2025-10-03",
-                        "block": "Morning",
-                        "rank": 3,
-                        "bearing": "NW toward Manhattan",
-                        "whyNow": "Golden hour light on Manhattan skyline with Brooklyn Bridge in frame.",
-                        "gear": "24\u201370mm; CPL/ND",
-                        "settings": "Golden hour; handheld 1/250s+ @ f/8\u201311, ISO 100\u2013200.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7021,
-                                                "lon": -73.9968
-                                    }
-                        ]
-            },
-            {
-                        "id": "dumbo_main_street_park_manhattan_bridge",
-                        "name": "DUMBO \u2014 Main Street Park (Manhattan Bridge)",
-                        "day": "2025-10-03",
-                        "block": "Morning",
-                        "rank": 4,
-                        "bearing": "N toward Manhattan Bridge",
-                        "whyNow": "Golden hour light on the Manhattan Bridge with ESB visible through arch.",
-                        "gear": "24\u201370mm; CPL",
-                        "settings": "Golden hour; handheld 1/250s+ @ f/8\u201311, ISO 100\u2013200.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7031,
-                                                "lon": -73.9900
-                                    }
-                        ]
-            },
-            {
-                        "id": "tribeca_staple_street_skybridge",
-                        "name": "Tribeca \u2014 Staple Street Skybridge",
-                        "day": "2025-10-03",
-                        "block": "Afternoon",
-                        "rank": 1,
-                        "bearing": "Looking up at skybridge",
-                        "whyNow": "Soft afternoon light filtering through historic architecture.",
-                        "gear": "16\u201335mm; polarizer optional",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7185,
-                                                "lon": -74.0091
-                                    }
-                        ]
-            },
-            {
-                        "id": "soho_greene_street_cobblestones",
-                        "name": "SoHo \u2014 Greene Street Cobblestones",
-                        "day": "2025-10-03",
-                        "block": "Afternoon",
-                        "rank": 2,
-                        "bearing": "N/S along Greene Street",
-                        "whyNow": "Soft afternoon light on cast-iron architecture and cobblestones.",
-                        "gear": "24\u201370mm",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7209,
-                                                "lon": -74.0024
-                                    }
-                        ]
-            },
-            {
-                        "id": "washington_square_park_arch",
-                        "name": "Washington Square Park \u2014 The Arch",
-                        "day": "2025-10-03",
-                        "block": "Afternoon",
-                        "rank": 3,
-                        "bearing": "N toward arch",
-                        "whyNow": "Soft afternoon light with people activity around iconic arch.",
-                        "gear": "24\u201370mm",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7308,
-                                                "lon": -73.9973
-                                    }
-                        ]
-            },
-            {
-                        "id": "flatiron_building",
-                        "name": "Flatiron Building",
-                        "day": "2025-10-03",
-                        "block": "Afternoon",
-                        "rank": 4,
-                        "bearing": "Various angles around building",
-                        "whyNow": "Afternoon light highlighting the unique triangular architecture.",
-                        "gear": "24\u201370mm; wide angle for full building",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7411,
-                                                "lon": -73.9897
-                                    }
-                        ]
-            },
-            {
-                        "id": "top_of_the_rock_sunset",
-                        "name": "Top of the Rock \u2014 Sunset View",
-                        "day": "2025-10-03",
-                        "block": "Evening",
-                        "rank": 1,
-                        "bearing": "S toward Empire State Building",
-                        "whyNow": "Prime sunset timing with Empire State Building and Manhattan skyline.",
-                        "gear": "24\u201370mm; ND filters",
-                        "settings": "Tripod recommended; 1/60s\u20131/250s @ f/8\u201311, ISO 100\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7594,
-                                                "lon": -73.9794
-                                    }
-                        ]
-            },
-            {
-                        "id": "central_park_bow_bridge",
-                        "name": "Central Park \u2014 Bow Bridge",
-                        "day": "2025-10-03",
-                        "block": "Evening",
-                        "rank": 2,
-                        "bearing": "Various, bridge and lake views",
-                        "whyNow": "Golden hour light on autumn foliage and romantic bridge setting.",
-                        "gear": "24\u201370mm; polarizer for water",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7764,
-                                                "lon": -73.9719
-                                    }
-                        ]
-            },
-            {
-                        "id": "central_park_bethesda_fountain",
-                        "name": "Central Park \u2014 Bethesda Fountain",
-                        "day": "2025-10-03",
-                        "block": "Evening",
-                        "rank": 3,
-                        "bearing": "Various around fountain",
-                        "whyNow": "Golden hour light with fountain as central focus and autumn colors.",
-                        "gear": "24\u201370mm",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7739,
-                                                "lon": -73.9715
-                                    }
-                        ]
-            },
-            {
-                        "id": "times_square_night",
-                        "name": "Times Square \u2014 Night Lights",
-                        "day": "2025-10-03",
-                        "block": "Night",
-                        "rank": 1,
-                        "bearing": "Various, capturing neon and crowds",
-                        "whyNow": "Peak neon lighting with evening crowd activity.",
-                        "gear": "24\u201370mm; tripod for stability",
-                        "settings": "Tripod recommended; 1/30s\u20131/125s @ f/5.6\u20138, ISO 800\u20133200.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7580,
-                                                "lon": -73.9855
-                                    }
-                        ]
-            },
-            {
-                        "id": "brooklyn_bridge_night",
-                        "name": "Brooklyn Bridge \u2014 Night Walk",
-                        "day": "2025-10-03",
-                        "block": "Night",
-                        "rank": 2,
-                        "bearing": "Both directions, Manhattan and Brooklyn views",
-                        "whyNow": "Bridge lighting with Manhattan skyline illuminated backdrop.",
-                        "gear": "24\u201370mm; tripod essential",
-                        "settings": "Tripod required; 1/15s\u20131/60s @ f/8\u201311, ISO 400\u20131600.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7061,
-                                                "lon": -73.9969
-                                    }
-                        ]
-            },
-            {
-                        "id": "brooklyn_heights_promenade_night",
-                        "name": "Brooklyn Heights Promenade \u2014 Night Skyline",
-                        "day": "2025-10-03",
-                        "block": "Night",
-                        "rank": 3,
-                        "bearing": "W toward Manhattan",
-                        "whyNow": "Classic Manhattan skyline view with full building illumination.",
-                        "gear": "24\u201370mm; tripod essential",
-                        "settings": "Tripod required; 1/15s\u20131/60s @ f/8\u201311, ISO 400\u20131600.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.6962,
-                                                "lon": -73.9961
-                                    }
-                        ]
-            },
-            {
-                        "id": "high_line_meatpacking_district",
-                        "name": "High Line \u2014 Meatpacking District",
-                        "day": "2025-10-04",
-                        "block": "Morning",
-                        "rank": 1,
-                        "bearing": "Various along elevated walkway",
-                        "whyNow": "Morning light on urban park setting with Hudson River views.",
-                        "gear": "24\u201370mm",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7480,
-                                                "lon": -74.0048
-                                    }
-                        ]
-            },
-            {
-                        "id": "chelsea_market_interior",
-                        "name": "Chelsea Market \u2014 Interior Halls",
-                        "day": "2025-10-04",
-                        "block": "Morning",
-                        "rank": 2,
-                        "bearing": "Through market halls",
-                        "whyNow": "Morning activity in historic market with interesting architecture.",
-                        "gear": "24\u201350mm; wide angle for halls",
-                        "settings": "Handheld OK; 1/60s+ @ f/5.6\u20138, ISO 400\u2013800.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7424,
-                                                "lon": -74.0061
-                                    }
-                        ]
-            },
-            {
-                        "id": "vessel_hudson_yards",
-                        "name": "Vessel \u2014 Hudson Yards",
-                        "day": "2025-10-04",
-                        "block": "Morning",
-                        "rank": 3,
-                        "bearing": "Various angles around structure",
-                        "whyNow": "Morning light on unique honeycomb architecture.",
-                        "gear": "16\u201335mm wide angle; 24\u201370mm for details",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7547,
-                                                "lon": -74.0018
-                                    }
-                        ]
-            },
-            {
-                        "id": "little_italy_mulberry_street",
-                        "name": "Little Italy \u2014 Mulberry Street",
-                        "day": "2025-10-04",
-                        "block": "Afternoon",
-                        "rank": 1,
-                        "bearing": "N/S along Mulberry Street",
-                        "whyNow": "Afternoon activity with authentic Italian-American street life.",
-                        "gear": "24\u201370mm",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7184,
-                                                "lon": -73.9967
-                                    }
-                        ]
-            },
-            {
-                        "id": "chinatown_mott_street",
-                        "name": "Chinatown \u2014 Mott Street",
-                        "day": "2025-10-04",
-                        "block": "Afternoon",
-                        "rank": 2,
-                        "bearing": "N/S along Mott Street",
-                        "whyNow": "Afternoon activity with authentic Chinese-American street life and markets.",
-                        "gear": "24\u201370mm",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7155,
-                                                "lon": -73.9976
-                                    }
-                        ]
-            },
-            {
-                        "id": "south_street_seaport_pier_17",
-                        "name": "South Street Seaport \u2014 Pier 17",
-                        "day": "2025-10-04",
-                        "block": "Afternoon",
-                        "rank": 3,
-                        "bearing": "E toward Brooklyn Bridge, W toward Manhattan",
-                        "whyNow": "Afternoon light with historic ships and Brooklyn Bridge views.",
-                        "gear": "24\u201370mm",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7069,
-                                                "lon": -74.0021
-                                    }
-                        ]
-            },
-            {
-                        "id": "stone_street_historic_district",
-                        "name": "Stone Street Historic District",
-                        "day": "2025-10-04",
-                        "block": "Afternoon",
-                        "rank": 4,
-                        "bearing": "Along cobblestone streets",
-                        "whyNow": "Afternoon light on historic cobblestone streets and architecture.",
-                        "gear": "24\u201370mm",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7037,
-                                                "lon": -74.0093
-                                    }
-                        ]
-            },
-            {
-                        "id": "one_world_observatory_sunset",
-                        "name": "One World Observatory \u2014 Sunset",
-                        "day": "2025-10-04",
-                        "block": "Evening",
-                        "rank": 1,
-                        "bearing": "Various, 360-degree views",
-                        "whyNow": "Sunset timing with panoramic NYC views from highest observation deck.",
-                        "gear": "24\u201370mm; ND filters for windows",
-                        "settings": "Handheld through glass; 1/125s+ @ f/8\u201311, ISO 400\u2013800.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7127,
-                                                "lon": -74.0134
-                                    }
-                        ]
-            },
-            {
-                        "id": "staten_island_ferry_sunset",
-                        "name": "Staten Island Ferry \u2014 Sunset Ride",
-                        "day": "2025-10-04",
-                        "block": "Evening",
-                        "rank": 2,
-                        "bearing": "W toward Statue of Liberty, N toward Manhattan",
-                        "whyNow": "Sunset timing with free Statue of Liberty and Manhattan skyline views.",
-                        "gear": "24\u201370mm; 70\u2013200mm for Statue",
-                        "settings": "Handheld on moving ferry; 1/250s+ @ f/8\u201311, ISO 400\u2013800.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7433,
-                                                "lon": -74.0093
-                                    }
-                        ]
-            },
-            {
-                        "id": "battery_park_sunset",
-                        "name": "Battery Park \u2014 Sunset Views",
-                        "day": "2025-10-04",
-                        "block": "Evening",
-                        "rank": 3,
-                        "bearing": "SW toward Statue of Liberty",
-                        "whyNow": "Sunset light with Statue of Liberty views and harbor activity.",
-                        "gear": "24\u201370mm; 70\u2013200mm for Statue",
-                        "settings": "Handheld OK; 1/125s+ @ f/8\u201311, ISO 200\u2013400.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7033,
-                                                "lon": -74.0170
-                                    }
-                        ]
-            },
-            {
-                        "id": "empire_state_building_night",
-                        "name": "Empire State Building \u2014 Night Views",
-                        "day": "2025-10-04",
-                        "block": "Night",
-                        "rank": 1,
-                        "bearing": "Various, 360-degree observation decks",
-                        "whyNow": "Classic NYC night views from iconic observation deck.",
-                        "gear": "24\u201370mm; tripod if allowed",
-                        "settings": "Through glass; 1/60s+ @ f/8\u201311, ISO 800\u20133200.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7484,
-                                                "lon": -73.9857
-                                    }
-                        ]
-            },
-            {
-                        "id": "grand_central_terminal_night",
-                        "name": "Grand Central Terminal \u2014 Night Interior",
-                        "day": "2025-10-04",
-                        "block": "Night",
-                        "rank": 2,
-                        "bearing": "Main concourse and architectural details",
-                        "whyNow": "Evening commuter activity with beautiful architectural lighting.",
-                        "gear": "16\u201335mm wide angle for full space",
-                        "settings": "Handheld OK; 1/60s+ @ f/5.6\u20138, ISO 800\u20131600.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7527,
-                                                "lon": -73.9772
-                                    }
-                        ]
-            },
-            {
-                        "id": "rockefeller_center_night",
-                        "name": "Rockefeller Center \u2014 Night Plaza",
-                        "day": "2025-10-04",
-                        "block": "Night",
-                        "rank": 3,
-                        "bearing": "Various around plaza and rink",
-                        "whyNow": "Evening lighting of iconic plaza with seasonal activities.",
-                        "gear": "24\u201370mm",
-                        "settings": "Handheld OK; 1/60s+ @ f/5.6\u20138, ISO 800\u20131600.",
-                        "activeAnchor": 0,
-                        "anchors": [
-                                    {
-                                                "label": "Main view",
-                                                "lat": 40.7589,
-                                                "lon": -73.9785
-                                    }
-                        ]
-            }
-        ];
+                "id": "brooklyn_heights_promenade",
+                "name": "Brooklyn Heights Promenade",
+                "day": "2025-10-03",
+                "block": "Morning",
+                "rank": 3,
+                "bearing": "WSW across East River",
+                "whyNow": "Tele compression of skyline; benches and trees for layers.",
+                "gear": "24–70mm (at 70mm) or 50mm (crop); 24–70mm",
+                "settings": "Arrive 30–60 min before sunrise; handheld 1/250s+ @ f/5.6–8, ISO 100–400.",
+                "activeAnchor": 0,
+                "anchors": [
+                    {
+                        "label": "Main view",
+                        "lat": 40.6969,
+                        "lon": -73.9969
+                    }
+                ],
+                "micro": [
+                    {
+                        "title": "Centerline",
+                        "r": 0.0,
+                        "bearing": 247.5,
+                        "dir": "",
+                        "detail": "Main alignment from promenade center."
+                    },
+                    {
+                        "title": "North section",
+                        "r": 50.0,
+                        "bearing": 270.0,
+                        "dir": "",
+                        "detail": "Walk north for different skyline angles."
+                    }
+                ],
+                "pins": [
+                    {
+                        "title": "Bench positioning",
+                        "detail": "Use benches as foreground elements; vary height by standing on them."
+                    },
+                    {
+                        "title": "Tree framing",
+                        "detail": "Seasonal foliage can frame shots; winter gives cleaner skyline view."
+                    }
+                ],
+                "shots": [
+                    {
+                        "title": "Compressed skyline",
+                        "detail": "70mm+ to stack buildings; shallow DOF isolates layers."
+                    },
+                    {
+                        "title": "Foreground bench",
+                        "detail": "Include promenade elements for human scale and depth."
+                    }
+                ]
+            }];
 
-        // Application State
         class PhotoGuideApp {
             constructor() {
                 this.locations = LOCATIONS_DATA;
@@ -1877,6 +1682,7 @@
                                                     <span class="card-row-label">Settings:</span>
                                                     <span class="card-row-value">${location.settings}</span>
                                                 </div>
+                                                
                                                 <div class="card-actions">
                                                     ${location.anchors.map((anchor, index) => 
                                                         `<button class="btn ${index === location.activeAnchor ? 'btn-primary' : ''}" 
@@ -1888,6 +1694,75 @@
                                                         Show on Map
                                                     </button>
                                                 </div>
+
+                                                ${location.micro && location.micro.length > 0 ? `
+                                                <div class="card-section">
+                                                    <h5 class="card-section-title">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <circle cx="12" cy="12" r="3"></circle>
+                                                            <line x1="8.5" y1="8.5" x2="7" y2="7"></line>
+                                                            <line x1="15.5" y1="8.5" x2="17" y2="7"></line>
+                                                            <line x1="15.5" y1="15.5" x2="17" y2="17"></line>
+                                                            <line x1="8.5" y1="15.5" x2="7" y2="17"></line>
+                                                        </svg>
+                                                        Micro Pins
+                                                    </h5>
+                                                    <div class="micro-pins">
+                                                        ${location.micro.map(micro => `
+                                                            <div class="micro-pin-item">
+                                                                <div class="micro-pin-header">
+                                                                    <span class="micro-pin-title">${micro.title}</span>
+                                                                    <div class="micro-pin-info">
+                                                                        <span class="micro-pin-bearing">↗ ${micro.bearing}°</span>
+                                                                        ${micro.r > 0 ? `<span class="micro-pin-distance">${micro.r}m</span>` : ''}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="micro-pin-detail">${micro.detail}</div>
+                                                            </div>
+                                                        `).join('')}
+                                                    </div>
+                                                </div>
+                                                ` : ''}
+
+                                                ${location.pins && location.pins.length > 0 ? `
+                                                <div class="card-section">
+                                                    <h5 class="card-section-title">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                                            <circle cx="12" cy="12" r="4"></circle>
+                                                        </svg>
+                                                        Photography Tips
+                                                    </h5>
+                                                    <div class="pins-list">
+                                                        ${location.pins.map(pin => `
+                                                            <div class="pin-item">
+                                                                <div class="pin-title">${pin.title}</div>
+                                                                <div class="pin-detail">${pin.detail}</div>
+                                                            </div>
+                                                        `).join('')}
+                                                    </div>
+                                                </div>
+                                                ` : ''}
+
+                                                ${location.shots && location.shots.length > 0 ? `
+                                                <div class="card-section">
+                                                    <h5 class="card-section-title">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                                            <circle cx="12" cy="13" r="4"></circle>
+                                                        </svg>
+                                                        Shot List
+                                                    </h5>
+                                                    <div class="shots-list">
+                                                        ${location.shots.map(shot => `
+                                                            <div class="shot-item">
+                                                                <div class="shot-title">${shot.title}</div>
+                                                                <div class="shot-detail">${shot.detail}</div>
+                                                            </div>
+                                                        `).join('')}
+                                                    </div>
+                                                </div>
+                                                ` : ''}
                                             </div>
                                         </div>
                                     `;
@@ -2051,45 +1926,60 @@
 
                     this.markers.push(mainMarker);
 
-                    // Micro pins for multiple anchors
-                    if (location.anchors.length > 1) {
-                        location.anchors.forEach((anchor, index) => {
-                            if (index !== location.activeAnchor) {
-                                const microPos = this.calculateMicroPinPosition(
-                                    activeAnchor, index, location.anchors.length
-                                );
-                                
-                                const microMarker = new google.maps.Marker({
-                                    position: microPos,
-                                    map: this.map,
-                                    title: `${location.name} - ${anchor.label}`,
-                                    icon: {
-                                        path: google.maps.SymbolPath.CIRCLE,
-                                        scale: 4,
-                                        fillColor: this.getColorForBlock(location.block),
-                                        fillOpacity: 0.7,
-                                        strokeWeight: 1,
-                                        strokeColor: '#ffffff'
-                                    },
-                                    zIndex: 1000
-                                });
+                    // Micro pins using actual bearing and distance data
+                    if (location.micro && location.micro.length > 0) {
+                        location.micro.forEach((microPin, index) => {
+                            const microPos = this.calculateMicroPinPositionFromData(
+                                activeAnchor, microPin
+                            );
+                            
+                            const microMarker = new google.maps.Marker({
+                                position: microPos,
+                                map: this.map,
+                                title: `${location.name} - ${microPin.title}`,
+                                icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    scale: 4,
+                                    fillColor: '#17a2b8',
+                                    fillOpacity: 0.8,
+                                    strokeWeight: 1,
+                                    strokeColor: '#ffffff'
+                                },
+                                zIndex: 1000
+                            });
 
-                                const microInfoWindow = new google.maps.InfoWindow({
-                                    content: `
-                                        <div style="padding: 8px;">
-                                            <h5 style="margin: 0 0 4px 0;">${location.name}</h5>
-                                            <p style="margin: 0; color: #666;">${anchor.label}</p>
-                                        </div>
-                                    `
-                                });
+                            // Add directional arrow pointing towards the bearing
+                            const arrowMarker = new google.maps.Marker({
+                                position: microPos,
+                                map: this.map,
+                                icon: {
+                                    path: 'M 0,-2 L 0,2 M 0,0 L 4,-2 M 0,0 L 4,2',
+                                    scale: 2,
+                                    strokeColor: this.getColorForBlock(location.block),
+                                    strokeWeight: 2,
+                                    rotation: microPin.bearing || 0
+                                },
+                                zIndex: 1001
+                            });
 
-                                microMarker.addListener('click', (e) => {
-                                    e.stop();
-                                    microInfoWindow.open(this.map, microMarker);
-                                });
+                            const microInfoWindow = new google.maps.InfoWindow({
+                                content: `
+                                    <div style="padding: 8px;">
+                                        <h5 style="margin: 0 0 4px 0;">${location.name}</h5>
+                                        <p style="margin: 2px 0; color: #666;"><strong>${microPin.title}</strong></p>
+                                        <p style="margin: 2px 0; color: #555; font-size: 0.85rem;">Bearing: ${microPin.bearing}°</p>
+                                        <p style="margin: 2px 0 0 0; color: #555; font-size: 0.85rem;">${microPin.detail}</p>
+                                    </div>
+                                `
+                            });
 
-                                this.markers.push(microMarker);
-                            }
+                            microMarker.addListener('click', (e) => {
+                                e.stop();
+                                microInfoWindow.open(this.map, microMarker);
+                            });
+
+                            this.markers.push(microMarker);
+                            this.markers.push(arrowMarker);
                         });
                     }
                 });
@@ -2136,32 +2026,45 @@
 
                     this.markers.push(mainMarker);
 
-                    // Micro pins for multiple anchors
-                    if (location.anchors.length > 1) {
-                        location.anchors.forEach((anchor, index) => {
-                            if (index !== location.activeAnchor) {
-                                const microPos = this.calculateMicroPinPosition(
-                                    activeAnchor, index, location.anchors.length
-                                );
-                                
-                                const microMarker = L.circleMarker([microPos.lat, microPos.lng], {
-                                    radius: 4,
-                                    fillColor: this.getColorForBlock(location.block),
-                                    color: '#ffffff',
-                                    weight: 1,
-                                    opacity: 1,
-                                    fillOpacity: 0.7
-                                }).addTo(this.leafletMap);
+                    // Micro pins using actual bearing and distance data
+                    if (location.micro && location.micro.length > 0) {
+                        location.micro.forEach((microPin, index) => {
+                            const microPos = this.calculateMicroPinPositionFromData(
+                                activeAnchor, microPin
+                            );
+                            
+                            const microMarker = L.circleMarker([microPos.lat, microPos.lng], {
+                                radius: 4,
+                                fillColor: '#17a2b8',
+                                color: '#ffffff',
+                                weight: 1,
+                                opacity: 1,
+                                fillOpacity: 0.8
+                            }).addTo(this.leafletMap);
 
-                                microMarker.bindPopup(`
-                                    <div>
-                                        <h5 style="margin: 0 0 4px 0;">${location.name}</h5>
-                                        <p style="margin: 0;">${anchor.label}</p>
-                                    </div>
-                                `);
+                            // Add directional arrow pointing towards the bearing
+                            const arrowIcon = L.divIcon({
+                                html: `<div style="transform: rotate(${microPin.bearing}deg); width: 20px; height: 20px; text-align: center; line-height: 20px; font-size: 16px; color: ${this.getColorForBlock(location.block)};">→</div>`,
+                                className: 'arrow-icon',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            });
 
-                                this.markers.push(microMarker);
-                            }
+                            const arrowMarker = L.marker([microPos.lat, microPos.lng], {
+                                icon: arrowIcon
+                            }).addTo(this.leafletMap);
+
+                            microMarker.bindPopup(`
+                                <div>
+                                    <h5 style="margin: 0 0 4px 0;">${location.name}</h5>
+                                    <p style="margin: 2px 0; font-weight: bold;">${microPin.title}</p>
+                                    <p style="margin: 2px 0; font-size: 0.85rem;">Bearing: ${microPin.bearing}°</p>
+                                    <p style="margin: 2px 0 0 0; font-size: 0.85rem;">${microPin.detail}</p>
+                                </div>
+                            `);
+
+                            this.markers.push(microMarker);
+                            this.markers.push(arrowMarker);
                         });
                     }
                 });
@@ -2186,6 +2089,30 @@
                 
                 const deltaLat = distance * Math.cos(angleRad);
                 const deltaLng = distance * Math.sin(angleRad);
+                
+                return {
+                    lat: mainPos.lat + deltaLat,
+                    lng: mainPos.lon + deltaLng
+                };
+            }
+
+            calculateMicroPinPositionFromData(mainPos, microPin) {
+                // Use actual bearing and distance from microPin data
+                const bearing = microPin.bearing || 0; // degrees
+                let distance = microPin.r || 10; // meters, default 10m if not specified
+                
+                // Convert distance from meters to approximate lat/lng offset
+                // 1 degree latitude ≈ 111,000 meters
+                // 1 degree longitude ≈ 111,000 * cos(latitude) meters
+                const metersPerDegreeLat = 111000;
+                const metersPerDegreeLng = 111000 * Math.cos(mainPos.lat * Math.PI / 180);
+                
+                // Convert bearing to radians (bearing is measured clockwise from North)
+                const bearingRad = (bearing - 90) * Math.PI / 180; // Adjust for coordinate system
+                
+                // Calculate position offset
+                const deltaLat = (distance * Math.sin(bearingRad + Math.PI / 2)) / metersPerDegreeLat;
+                const deltaLng = (distance * Math.cos(bearingRad + Math.PI / 2)) / metersPerDegreeLng;
                 
                 return {
                     lat: mainPos.lat + deltaLat,
