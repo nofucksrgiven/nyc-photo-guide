@@ -10,12 +10,10 @@
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-zL8M9D9Rt0GvQ7vC18JNpDutZCRa14Qdqg+3GkN0wYg="
     crossorigin=""
   />
   <script
     src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-o9N1j7kGStG3MZ8v+DnUE7aO7mG3oGJ4E1qf0y4bPmA="
     crossorigin=""
     defer
   ></script>
@@ -676,34 +674,17 @@
     });
 
     async function init() {
+      applyPersistedState();
+      await loadLocations();
+      ensureDefaultDates();
+      renderControlPanel();
+      renderMapTabs();
+      setupImportHandler();
+      updateLightPanels();
+      applyFilters();
+
       try {
-        console.log('Starting app initialization...');
-        applyPersistedState();
-        console.log('Applied persisted state');
-        
-        await loadLocations();
-        console.log('Loaded locations data');
-        
-        ensureDefaultDates();
-        console.log('Set default dates');
-        
-        renderControlPanel();
-        console.log('Rendered control panel');
-        
-        renderMapTabs();
-        console.log('Rendered map tabs');
-        
-        setupImportHandler();
-        console.log('Set up import handler');
-        
-        updateLightPanels();
-        console.log('Updated light panels');
-        
-        applyFilters();
-      try {
-        console.log('Initializing Leaflet map...');
         await ensureLeafletMap();
-        console.log('Leaflet map initialized');
       } catch (error) {
         console.error('Leaflet failed to initialize', error);
         showToast('Leaflet map unavailable.', 'error');
@@ -711,29 +692,12 @@
 
       if (state.mapMode === 'google') {
         try {
-          console.log('Initializing Google Maps...');
           await ensureGoogleMap();
-          console.log('Google Maps initialized');
         } catch (error) {
           console.error('Google Maps failed to initialize', error);
           showToast('Google Maps failed. Falling back to Leaflet.', 'error');
           state.mapMode = 'leaflet';
           updateMapVisibility();
-        }
-      }
-
-      console.log('Rendering locations...');
-      renderLocations();
-      console.log('Updating map markers...');
-      updateMapMarkers();
-      console.log('Persisting state...');
-      persistState();
-      console.log('App initialization complete!');
-    } catch (error) {
-      console.error('Init failed:', error);
-      showToast('App initialization failed. Check console for details.', 'error');
-    }
-  }
         }
       }
 
@@ -781,15 +745,10 @@
         return haystack.includes(normalizedSearch);
       });
     }
+      });
+    }
 
     function renderLocations() {
-      elements.locationStream.innerHTML = '';
-      if (!state.filtered.length) {
-        const empty = document.createElement('div');
-        empty.className = 'empty-state';
-        empty.innerHTML = '<strong>No locations match your filters.</strong><br/>Try broadening your search or rank range.';
-        elements.locationStream.append(empty);
-        return;
       }
       const fragment = document.createDocumentFragment();
       const template = document.getElementById('location-card-template');
